@@ -86,6 +86,11 @@ export const anthropicProvider: ProviderAdapter = {
     const { settings, messages, tools, systemPrompt, signal } = options
     const { provider } = settings
 
+    if (!provider.apiKey) {
+      yield { type: 'error', error: 'Anthropic API key is not set. Please add your key in Settings.' }
+      return
+    }
+
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -245,6 +250,12 @@ async function* openAICompatibleComplete(
   options: CompletionOptions
 ): AsyncGenerator<CompletionEvent> {
   const { settings, messages, tools, systemPrompt, signal } = options
+  const providerName = settings.provider.provider
+
+  if (!apiKey && providerName !== 'ollama') {
+    yield { type: 'error', error: `${providerName} API key is not set. Please add your key in Settings.` }
+    return
+  }
 
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',

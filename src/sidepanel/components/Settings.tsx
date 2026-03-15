@@ -25,8 +25,10 @@ const THEME_OPTIONS = [
 
 export default function Settings({ settings, theme, onSave, onBack }: Props) {
   const [provider, setProvider]       = useState<ProviderName>(settings.provider.provider as ProviderName)
-  const [model, setModel]             = useState(settings.provider.model)
-  const [customModel, setCustomModel] = useState('')
+  const initialModels = DEFAULT_MODELS[settings.provider.provider as ProviderName] ?? []
+  const isCustomModel = !initialModels.includes(settings.provider.model)
+  const [model, setModel]             = useState(isCustomModel ? (initialModels[0] ?? '') : settings.provider.model)
+  const [customModel, setCustomModel] = useState(isCustomModel ? settings.provider.model : '')
   const [apiKey, setApiKey]           = useState(settings.provider.apiKey ?? '')
   const [baseUrl, setBaseUrl]         = useState(settings.provider.baseUrl ?? '')
   const [maxTokens, setMaxTokens]     = useState(settings.maxTokens ?? 8192)

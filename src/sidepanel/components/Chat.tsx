@@ -33,7 +33,7 @@ export default function Chat({ settings, currentSessionId, onOpenSettings, onVie
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-[rgb(var(--harbor-border))]">
         <div className="flex items-center gap-2 min-w-0">
-          <img src="/icons/icon48.png" alt="Harbor" className="w-5 h-5 rounded-sm flex-shrink-0" />
+          <img src="/icons/harbor-logo.svg" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0" />
           <span className="font-semibold text-sm text-[rgb(var(--harbor-text))]">Harbor</span>
           <span className="text-[11px] text-[rgb(var(--harbor-text-faint))] border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] px-1.5 py-0.5 rounded-md font-mono truncate max-w-[130px]">
             {modelLabel}
