@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function Chat({ settings, currentSessionId, onOpenSettings, onViewHistory }: Props) {
-  const { messages, isRunning, sendMessage, stopAgent, toggleThinkingBlock } =
+  const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock } =
     useChat(settings, currentSessionId)
 
   const hasApiKey =
@@ -33,9 +33,7 @@ export default function Chat({ settings, currentSessionId, onOpenSettings, onVie
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-3 py-2.5 border-b border-[rgb(var(--harbor-border))]">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="w-6 h-6 rounded-md bg-harbor-600 flex items-center justify-center flex-shrink-0">
-            <span className="text-white text-[11px] font-bold">H</span>
-          </div>
+          <img src="/icons/icon48.png" alt="Harbor" className="w-5 h-5 rounded-sm flex-shrink-0" />
           <span className="font-semibold text-sm text-[rgb(var(--harbor-text))]">Harbor</span>
           <span className="text-[11px] text-[rgb(var(--harbor-text-faint))] border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] px-1.5 py-0.5 rounded-md font-mono truncate max-w-[130px]">
             {modelLabel}
@@ -62,6 +60,13 @@ export default function Chat({ settings, currentSessionId, onOpenSettings, onVie
         </div>
       )}
 
+      {/* ── Runtime error banner ─────────────────────────────────────────────── */}
+      {error && (
+        <div className="mx-3 mt-2.5 px-3 py-2 rounded-lg text-xs border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300">
+          {error}
+        </div>
+      )}
+
       {/* ── Messages / Empty state ──────────────────────────────────────────── */}
       <div className="flex-1 overflow-hidden">
         {messages.length === 0 ? (
@@ -82,7 +87,16 @@ export default function Chat({ settings, currentSessionId, onOpenSettings, onVie
 
       {/* ── Input ──────────────────────────────────────────────────────────── */}
       <ChatInput
-        onSend={sendMessage}
+        onSend={(text, attachments) => {
+          let fullText = text
+          if (attachments && attachments.length > 0) {
+            const attText = attachments
+              .map((a) => `\n\n[Attached file: ${a.name}]\n${a.dataUrl}`)
+              .join('')
+            fullText = text + attText
+          }
+          sendMessage(fullText)
+        }}
         onStop={stopAgent}
         isRunning={isRunning}
         disabled={!hasApiKey}

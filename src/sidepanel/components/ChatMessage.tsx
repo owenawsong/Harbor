@@ -73,9 +73,7 @@ export default function ChatMessage({ message, onToggleThinking }: Props) {
   return (
     <div className="flex items-start gap-2.5 animate-fade-up">
       {/* Avatar */}
-      <div className="w-6 h-6 rounded-md bg-harbor-600 flex items-center justify-center flex-shrink-0 mt-0.5">
-        <span className="text-white text-[10px] font-bold">H</span>
-      </div>
+      <img src="/icons/icon48.png" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0 mt-0.5" />
 
       {/* Content */}
       <div className="flex-1 min-w-0 flex flex-col gap-2">

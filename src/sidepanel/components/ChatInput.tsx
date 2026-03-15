@@ -1,8 +1,14 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { ArrowUp, Square } from 'lucide-react'
+import { ArrowUp, Square, Paperclip, X } from 'lucide-react'
+
+interface Attachment {
+  name: string
+  dataUrl: string
+  mimeType: string
+}
 
 interface Props {
-  onSend: (text: string) => void
+  onSend: (text: string, attachments?: Attachment[]) => void
   onStop: () => void
   isRunning: boolean
   disabled?: boolean
@@ -11,17 +17,20 @@ interface Props {
 
 export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder }: Props) {
   const [value, setValue] = useState('')
-  const ref = useRef<HTMLTextAreaElement>(null)
+  const [attachments, setAttachments] = useState<Attachment[]>([])
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const canSend = value.trim().length > 0 && !disabled && !isRunning
+  const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && !isRunning
 
   const send = useCallback(() => {
     const text = value.trim()
-    if (!text || !canSend) return
+    if ((!text && attachments.length === 0) || !canSend) return
     setValue('')
-    if (ref.current) ref.current.style.height = 'auto'
-    onSend(text)
-  }, [value, canSend, onSend])
+    setAttachments([])
+    if (textareaRef.current) textareaRef.current.style.height = 'auto'
+    onSend(text, attachments.length > 0 ? attachments : undefined)
+  }, [value, attachments, canSend, onSend])
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -37,15 +46,72 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
     el.style.height = Math.min(el.scrollHeight, 160) + 'px'
   }
 
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? [])
+    if (!files.length) return
+    files.forEach((file) => {
+      const reader = new FileReader()
+      reader.onload = (ev) => {
+        const dataUrl = ev.target?.result as string
+        setAttachments((prev) => [...prev, { name: file.name, dataUrl, mimeType: file.type }])
+      }
+      reader.readAsDataURL(file)
+    })
+    // Reset so the same file can be re-selected
+    e.target.value = ''
+  }
+
+  const removeAttachment = (name: string) => {
+    setAttachments((prev) => prev.filter((a) => a.name !== name))
+  }
+
   useEffect(() => {
-    if (!isRunning) ref.current?.focus()
+    if (!isRunning) textareaRef.current?.focus()
   }, [isRunning])
 
   return (
     <div className="px-3 pb-3 pt-2 border-t border-[rgb(var(--harbor-border))]">
+      {/* Attachment previews */}
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {attachments.map((a) => (
+            <div
+              key={a.name}
+              className="flex items-center gap-1 px-2 py-1 rounded-md border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[180px]"
+            >
+              <span className="truncate">{a.name}</span>
+              <button
+                onClick={() => removeAttachment(a.name)}
+                className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))] hover:text-red-500"
+              >
+                <X size={11} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-end gap-2 rounded-xl border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] px-3 py-2.5 focus-within:border-harbor-400">
+        {/* File upload button */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled || isRunning}
+          title="Attach file"
+          className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] disabled:opacity-40 mb-0.5"
+        >
+          <Paperclip size={15} />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={onFileChange}
+          accept="image/*,text/*,.pdf,.csv,.json,.md"
+        />
+
         <textarea
-          ref={ref}
+          ref={textareaRef}
           value={value}
           onChange={onInput}
           onKeyDown={onKeyDown}

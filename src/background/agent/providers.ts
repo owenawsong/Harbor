@@ -92,7 +92,6 @@ export const anthropicProvider: ProviderAdapter = {
         'Content-Type': 'application/json',
         'x-api-key': provider.apiKey ?? '',
         'anthropic-version': '2023-06-01',
-        'anthropic-beta': 'interleaved-thinking-2025-05-14',
       },
       body: JSON.stringify({
         model: provider.model,
@@ -113,6 +112,8 @@ export const anthropicProvider: ProviderAdapter = {
 
     const toolInputBuffers: Record<string, string> = {}
     const toolNames: Record<string, string> = {}
+    // Maps content block index → tool ID (fixes index mismatch when text/thinking blocks precede tool blocks)
+    const toolIdByIndex: Record<number, string> = {}
 
     for await (const data of parseSSE(response)) {
       let event: Record<string, unknown>
@@ -129,8 +130,10 @@ export const anthropicProvider: ProviderAdapter = {
         if (block.type === 'tool_use') {
           const id = block.id as string
           const name = block.name as string
+          const blockIndex = event.index as number
           toolInputBuffers[id] = ''
           toolNames[id] = name
+          toolIdByIndex[blockIndex] = id
           yield { type: 'tool_call_start', id, name }
         }
       } else if (eventType === 'content_block_delta') {
@@ -138,9 +141,7 @@ export const anthropicProvider: ProviderAdapter = {
         if (delta.type === 'text_delta') {
           yield { type: 'text_delta', text: delta.text as string }
         } else if (delta.type === 'input_json_delta') {
-          const id = (event.index as number).toString()
-          // Find the tool by index
-          const toolId = Object.keys(toolInputBuffers)[event.index as number]
+          const toolId = toolIdByIndex[event.index as number]
           if (toolId) {
             toolInputBuffers[toolId] += delta.partial_json as string
             yield { type: 'tool_call_input_delta', id: toolId, delta: delta.partial_json as string }
@@ -148,7 +149,7 @@ export const anthropicProvider: ProviderAdapter = {
         }
       } else if (eventType === 'content_block_stop') {
         const idx = event.index as number
-        const toolId = Object.keys(toolInputBuffers)[idx]
+        const toolId = toolIdByIndex[idx]
         if (toolId && toolNames[toolId]) {
           let input: Record<string, unknown> = {}
           try {
@@ -159,6 +160,7 @@ export const anthropicProvider: ProviderAdapter = {
           yield { type: 'tool_call_complete', id: toolId, name: toolNames[toolId], input }
           delete toolInputBuffers[toolId]
           delete toolNames[toolId]
+          delete toolIdByIndex[idx]
         }
       } else if (eventType === 'message_delta') {
         const delta = event.delta as Record<string, unknown>

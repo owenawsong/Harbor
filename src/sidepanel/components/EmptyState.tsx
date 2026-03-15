@@ -19,9 +19,7 @@ export default function EmptyState({ onSuggestionClick }: Props) {
     <div className="flex flex-col items-center justify-center h-full px-5 py-6 gap-6 animate-fade-in">
       {/* Brand */}
       <div className="flex flex-col items-center gap-3 text-center">
-        <div className="w-14 h-14 rounded-2xl bg-harbor-600 flex items-center justify-center shadow-sm">
-          <span className="text-white text-2xl font-bold tracking-tight">H</span>
-        </div>
+        <img src="/icons/icon128.png" alt="Harbor" className="w-14 h-14 rounded-2xl shadow-sm" />
         <div>
           <h1 className="font-semibold text-[rgb(var(--harbor-text))]">Harbor AI Agent</h1>
           <p className="text-sm text-[rgb(var(--harbor-text-muted))] mt-0.5 leading-relaxed">
