@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Settings as SettingsIcon, Plus, RotateCcw } from 'lucide-react'
+import { Settings as SettingsIcon, Clock, Plus } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
 import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
@@ -8,11 +8,13 @@ import EmptyState from './EmptyState'
 
 interface ChatProps {
   settings: AgentSettings
+  currentSessionId?: string | null
   onOpenSettings: () => void
+  onViewHistory: () => void
 }
 
-export default function Chat({ settings, onOpenSettings }: ChatProps) {
-  const { messages, isRunning, error, sendMessage, stopAgent, clearMessages, toggleThinkingBlock } = useChat(settings)
+export default function Chat({ settings, currentSessionId, onOpenSettings, onViewHistory }: ChatProps) {
+  const { messages, isRunning, error, sendMessage, stopAgent, clearMessages, toggleThinkingBlock } = useChat(settings, currentSessionId)
   const [activeTab, setActiveTab] = useState<chrome.tabs.Tab | null>(null)
   const [attachActiveTab, setAttachActiveTab] = useState(false)
 
@@ -23,8 +25,8 @@ export default function Chat({ settings, onOpenSettings }: ChatProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[rgb(var(--harbor-border))]">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-harbor-600 flex items-center justify-center">
-            <span className="text-white text-xs font-bold">H</span>
+          <div className="w-6 h-6 rounded-lg bg-harbor-500 flex items-center justify-center text-white font-bold text-xs">
+            H
           </div>
           <span className="font-semibold text-[rgb(var(--harbor-text))]">Harbor</span>
           <span className="text-xs text-[rgb(var(--harbor-text-muted))] bg-[rgb(var(--harbor-surface))] px-1.5 py-0.5 rounded">
@@ -33,15 +35,13 @@ export default function Chat({ settings, onOpenSettings }: ChatProps) {
         </div>
 
         <div className="flex items-center gap-1">
-          {messages.length > 0 && (
-            <button
-              onClick={clearMessages}
-              className="p-1.5 rounded-md hover:bg-[rgb(var(--harbor-surface))] text-[rgb(var(--harbor-text-muted))] hover:text-[rgb(var(--harbor-text))] transition-colors"
-              title="New conversation"
-            >
-              <Plus size={16} />
-            </button>
-          )}
+          <button
+            onClick={onViewHistory}
+            className="p-1.5 rounded-md hover:bg-[rgb(var(--harbor-surface))] text-[rgb(var(--harbor-text-muted))] hover:text-[rgb(var(--harbor-text))] transition-colors"
+            title="Conversation history"
+          >
+            <Clock size={16} />
+          </button>
           <button
             onClick={onOpenSettings}
             className="p-1.5 rounded-md hover:bg-[rgb(var(--harbor-surface))] text-[rgb(var(--harbor-text-muted))] hover:text-[rgb(var(--harbor-text))] transition-colors"

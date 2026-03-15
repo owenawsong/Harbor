@@ -1,54 +1,91 @@
 import React, { useState } from 'react'
-import { ChevronDown, ChevronRight, CheckCircle, XCircle, Loader2, Terminal } from 'lucide-react'
+import {
+  ChevronDown,
+  ChevronRight,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Globe,
+  RefreshCw,
+  Plus,
+  X,
+  Shuffle,
+  List,
+  FileText,
+  Eye,
+  Camera,
+  FileJson,
+  Link2,
+  Zap,
+  Mouse,
+  Type,
+  Trash2,
+  Keyboard,
+  Move,
+  ArrowUpDown,
+  Focus,
+  CheckSquare,
+  MessageCircle,
+  Grid3x3,
+  Search,
+  Bookmark,
+  Download,
+  Save,
+  Clock,
+  Square,
+  Layers,
+} from 'lucide-react'
 import type { UIToolCall } from '../hooks/useChat'
 
 interface ToolCallDisplayProps {
   toolCall: UIToolCall
 }
 
-const TOOL_ICONS: Record<string, string> = {
-  navigate_to_url: '🌐',
-  navigate_page: '🔄',
-  new_tab: '➕',
-  close_page: '✖️',
-  switch_to_page: '🔀',
-  list_pages: '📑',
-  get_active_page: '📄',
-  take_snapshot: '👁️',
-  take_screenshot: '📸',
-  get_page_content: '📋',
-  get_page_links: '🔗',
-  evaluate_script: '⚡',
-  click: '🖱️',
-  click_at: '🖱️',
-  fill: '✏️',
-  clear: '🗑️',
-  press_key: '⌨️',
-  scroll: '↕️',
-  hover: '🖱️',
-  focus: '🎯',
-  select_option: '📋',
-  check: '☑️',
-  handle_dialog: '💬',
-  drag: '↔️',
-  get_dom: '🏗️',
-  search_dom: '🔍',
-  search_bookmarks: '🔖',
-  get_bookmarks: '🔖',
-  add_bookmark: '🔖',
-  delete_bookmark: '🗑️',
-  search_history: '🕐',
-  get_recent_history: '🕐',
-  list_windows: '🪟',
-  new_window: '🪟',
-  list_tab_groups: '📁',
-  create_tab_group: '📁',
-  download_file: '⬇️',
-  save_content_to_file: '💾',
+type IconProps = { size: number; className?: string }
+
+const TOOL_ICONS: Record<string, React.ComponentType<IconProps>> = {
+  navigate_to_url: Globe,
+  navigate_page: RefreshCw,
+  new_tab: Plus,
+  close_page: X,
+  switch_to_page: Shuffle,
+  list_pages: List,
+  get_active_page: FileText,
+  take_snapshot: Eye,
+  take_screenshot: Camera,
+  get_page_content: FileJson,
+  get_page_links: Link2,
+  evaluate_script: Zap,
+  click: Mouse,
+  click_at: Mouse,
+  fill: Type,
+  clear: Trash2,
+  press_key: Keyboard,
+  scroll: ArrowUpDown,
+  hover: Mouse,
+  focus: Focus,
+  select_option: FileJson,
+  check: CheckSquare,
+  handle_dialog: MessageCircle,
+  drag: Move,
+  get_dom: Grid3x3,
+  search_dom: Search,
+  search_bookmarks: Bookmark,
+  get_bookmarks: Bookmark,
+  add_bookmark: Bookmark,
+  delete_bookmark: Trash2,
+  search_history: Clock,
+  get_recent_history: Clock,
+  list_windows: Square,
+  new_window: Square,
+  list_tab_groups: Layers,
+  create_tab_group: Layers,
+  download_file: Download,
+  save_content_to_file: Save,
 }
 
-function getToolIcon(name: string): string {
-  return TOOL_ICONS[name] ?? '🔧'
+function getToolIcon(name: string): React.ComponentType<IconProps> {
+  return TOOL_ICONS[name] ?? Search
 }
 
 function formatToolName(name: string): string {
@@ -116,7 +153,9 @@ export default function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
         </span>
 
         {/* Tool icon + name */}
-        <span className="flex-shrink-0">{getToolIcon(toolCall.name)}</span>
+        <span className="flex-shrink-0 text-[rgb(var(--harbor-text))]">
+          {React.createElement(getToolIcon(toolCall.name), { size: 13 })}
+        </span>
         <span className="font-medium text-[rgb(var(--harbor-text))]">{formatToolName(toolCall.name)}</span>
 
         {/* Summary */}

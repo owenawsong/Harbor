@@ -1,9 +1,12 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import type { UIMessage, UIThinkingBlock } from '../hooks/useChat'
 import ToolCallDisplay from './ToolCallDisplay'
+import 'katex/dist/katex.min.css'
 
 interface ChatMessageProps {
   message: UIMessage
@@ -83,7 +86,7 @@ export default function ChatMessage({ message, onToggleThinking }: ChatMessagePr
               <div className="text-sm text-[rgb(var(--harbor-text))] leading-relaxed">
                 {message.text ? (
                   <div className="harbor-markdown">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
                       {message.text}
                     </ReactMarkdown>
                   </div>

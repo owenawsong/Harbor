@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import Chat from './components/Chat'
 import Settings from './components/Settings'
-import type { AgentSettings } from '../shared/types'
+import ConversationList from './components/ConversationList'
+import type { AgentSettings, StoredSession } from '../shared/types'
 
 type View = 'chat' | 'settings' | 'history'
 
@@ -9,6 +10,8 @@ export default function App() {
   const [view, setView] = useState<View>('chat')
   const [settings, setSettings] = useState<AgentSettings | null>(null)
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
+  const [sessions, setSessions] = useState<StoredSession[]>([])
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
 
   useEffect(() => {
     // Load settings from service worker
@@ -31,7 +34,23 @@ export default function App() {
       const savedTheme = data.harbor_theme as 'light' | 'dark' | 'system' | undefined
       if (savedTheme) setTheme(savedTheme)
     })
+
+    // Load sessions
+    loadSessions()
   }, [])
+
+  const loadSessions = () => {
+    chrome.runtime.sendMessage({ type: 'get_sessions' }, (response) => {
+      if (response?.success && response.data) {
+        setSessions(response.data)
+        // Load current session from storage
+        chrome.storage.local.get('harbor_current_session', (data) => {
+          const saved = data.harbor_current_session as string | undefined
+          if (saved) setCurrentSessionId(saved)
+        })
+      }
+    })
+  }
 
   useEffect(() => {
     // Apply theme
@@ -51,8 +70,29 @@ export default function App() {
     setSettings(newSettings)
     setTheme(newTheme)
     chrome.storage.local.set({ harbor_theme: newTheme })
-    await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings })
+    await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: newTheme })
     setView('chat')
+  }
+
+  const handleSelectSession = (sessionId: string) => {
+    setCurrentSessionId(sessionId)
+    chrome.storage.local.set({ harbor_current_session: sessionId })
+    setView('chat')
+  }
+
+  const handleNewConversation = () => {
+    setCurrentSessionId(null)
+    chrome.storage.local.remove('harbor_current_session')
+    setView('chat')
+  }
+
+  const handleDeleteSession = (sessionId: string) => {
+    chrome.runtime.sendMessage({ type: 'delete_session', sessionId }, () => {
+      loadSessions()
+      if (currentSessionId === sessionId) {
+        handleNewConversation()
+      }
+    })
   }
 
   if (!settings) {
@@ -72,7 +112,9 @@ export default function App() {
       {view === 'chat' && (
         <Chat
           settings={settings}
+          currentSessionId={currentSessionId}
           onOpenSettings={() => setView('settings')}
+          onViewHistory={() => setView('history')}
         />
       )}
       {view === 'settings' && (
@@ -81,6 +123,15 @@ export default function App() {
           theme={theme}
           onSave={handleSaveSettings}
           onBack={() => setView('chat')}
+        />
+      )}
+      {view === 'history' && (
+        <ConversationList
+          sessions={sessions}
+          currentSessionId={currentSessionId}
+          onSelectSession={handleSelectSession}
+          onNewConversation={handleNewConversation}
+          onDeleteSession={handleDeleteSession}
         />
       )}
     </div>

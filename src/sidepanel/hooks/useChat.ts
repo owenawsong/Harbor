@@ -32,11 +32,27 @@ function generateId(): string {
   return Math.random().toString(36).slice(2, 11)
 }
 
-export function useChat(settings: AgentSettings) {
+export function useChat(settings: AgentSettings, loadSessionId?: string | null) {
   const [messages, setMessages] = useState<UIMessage[]>([])
-  const [sessionId] = useState(() => generateId())
+  const [sessionId] = useState(() => loadSessionId || generateId())
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Load previous session messages if available
+  useEffect(() => {
+    if (loadSessionId) {
+      chrome.runtime.sendMessage({ type: 'get_session', sessionId: loadSessionId }, (response) => {
+        if (response?.success && response.data?.messages) {
+          const loaded = response.data.messages as typeof messages
+          // Convert stored messages back to UI format
+          setMessages(loaded.map(msg => ({
+            ...msg,
+            thinkingBlocks: msg.thinkingBlocks || []
+          })))
+        }
+      })
+    }
+  }, [loadSessionId])
 
   const portRef = useRef<chrome.runtime.Port | null>(null)
   const currentAssistantMsgId = useRef<string | null>(null)

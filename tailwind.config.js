@@ -20,11 +20,26 @@ export default {
           900: '#2d3888',
         },
       },
+      transitionDuration: {
+        '100': '100ms',
+        '150': '150ms',
+        '200': '200ms',
+        '250': '250ms',
+        '300': '300ms',
+      },
+      transitionTimingFunction: {
+        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'bounce-smooth': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+      },
       animation: {
         'spin-slow': 'spin 2s linear infinite',
         'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'fade-in': 'fadeIn 0.2s ease-in-out',
         'slide-up': 'slideUp 0.2s ease-out',
+        'slide-in': 'slideIn 0.25s ease-out',
+        'fade-in-scale': 'fadeInScale 0.3s ease-out',
+        'slide-in-right': 'slideInFromRight 0.25s ease-out',
+        'slide-in-left': 'slideInFromLeft 0.25s ease-out',
       },
       keyframes: {
         fadeIn: {

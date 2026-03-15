@@ -1,16 +1,17 @@
 import React from 'react'
+import { Search, FileText, ShoppingCart, Mail, Bookmark, BarChart3 } from 'lucide-react'
 
 interface EmptyStateProps {
   onSuggestionClick: (text: string) => void
 }
 
 const SUGGESTIONS = [
-  { icon: '🔍', text: 'Search Google for the latest AI news' },
-  { icon: '📋', text: 'Summarize this page for me' },
-  { icon: '🛒', text: 'Find the best price for this product' },
-  { icon: '📧', text: 'Draft a reply to the email I have open' },
-  { icon: '🔖', text: 'Bookmark all my open tabs into a folder' },
-  { icon: '📊', text: 'Extract data from this table into CSV' },
+  { icon: Search, text: 'Search Google for the latest AI news' },
+  { icon: FileText, text: 'Summarize this page for me' },
+  { icon: ShoppingCart, text: 'Find the best price for this product' },
+  { icon: Mail, text: 'Draft a reply to the email I have open' },
+  { icon: Bookmark, text: 'Bookmark all my open tabs into a folder' },
+  { icon: BarChart3, text: 'Extract data from this table into CSV' },
 ]
 
 export default function EmptyState({ onSuggestionClick }: EmptyStateProps) {
@@ -18,7 +19,7 @@ export default function EmptyState({ onSuggestionClick }: EmptyStateProps) {
     <div className="flex flex-col items-center justify-center h-full px-6 py-8 gap-6">
       {/* Logo */}
       <div className="flex flex-col items-center gap-3">
-        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-harbor-500 to-harbor-700 flex items-center justify-center shadow-lg">
+        <div className="w-16 h-16 rounded-2xl bg-harbor-600 flex items-center justify-center shadow-lg">
           <span className="text-white text-3xl font-bold">H</span>
         </div>
         <div className="text-center">
@@ -37,7 +38,9 @@ export default function EmptyState({ onSuggestionClick }: EmptyStateProps) {
             onClick={() => onSuggestionClick(suggestion.text)}
             className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-[rgb(var(--harbor-border))] hover:border-harbor-400 hover:bg-[rgb(var(--harbor-surface))] transition-all text-left group"
           >
-            <span className="text-base flex-shrink-0">{suggestion.icon}</span>
+            <span className="text-[rgb(var(--harbor-text))] group-hover:text-harbor-600 dark:group-hover:text-harbor-400 transition-colors flex-shrink-0">
+              {React.createElement(suggestion.icon, { size: 18 })}
+            </span>
             <span className="text-sm text-[rgb(var(--harbor-text))] group-hover:text-harbor-600 dark:group-hover:text-harbor-400 transition-colors">
               {suggestion.text}
             </span>
