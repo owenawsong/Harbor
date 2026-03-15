@@ -1,0 +1,60 @@
+{
+  "manifest_version": 3,
+  "name": "Harbor - AI Browser Agent",
+  "version": "1.0.0",
+  "description": "AI-powered browser agent - bring any AI to control your browser. Supports Claude, GPT, Gemini, Ollama & more.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "Open Harbor AI Agent",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "scripting",
+    "sidePanel",
+    "storage",
+    "history",
+    "bookmarks",
+    "downloads",
+    "tabGroups",
+    "windows",
+    "webNavigation",
+    "alarms",
+    "unlimitedStorage",
+    "clipboardWrite",
+    "clipboardRead",
+    "notifications"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*", "assets/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
