@@ -3,114 +3,131 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Brain } from 'lucide-react'
+import 'katex/dist/katex.min.css'
 import type { UIMessage, UIThinkingBlock } from '../hooks/useChat'
 import ToolCallDisplay from './ToolCallDisplay'
-import 'katex/dist/katex.min.css'
 
-interface ChatMessageProps {
-  message: UIMessage
-  onToggleThinking?: (messageId: string, blockId: string) => void
-}
+// ─── Thinking Block ───────────────────────────────────────────────────────────
 
-function ThinkingBlock({ block, isOpen, onToggle }: { block: UIThinkingBlock; isOpen: boolean; onToggle: () => void }) {
+function ThinkingBlock({
+  block,
+  onToggle,
+}: {
+  block: UIThinkingBlock
+  onToggle: () => void
+}) {
   return (
-    <div className="bg-[rgb(var(--harbor-surface))] border border-[rgb(var(--harbor-border))] rounded-lg overflow-hidden text-xs">
-      {/* Header */}
+    <div className="rounded-lg border border-[rgb(var(--harbor-border))] overflow-hidden text-xs animate-fade-in">
       <button
         onClick={onToggle}
-        className="w-full px-3 py-2 flex items-center gap-2 hover:bg-[rgb(var(--harbor-border))] transition-colors"
+        className="flex items-center gap-1.5 w-full px-2.5 py-1.5 bg-[rgb(var(--harbor-surface-2))] hover:bg-[rgb(var(--harbor-border))] text-left"
       >
-        {isOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        <span className="text-[rgb(var(--harbor-text-muted))] font-medium">Thinking</span>
+        <Brain size={11} className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))]" />
+        <span className="font-medium text-[rgb(var(--harbor-text-muted))] flex-1">Reasoning</span>
+        {block.isOpen
+          ? <ChevronDown size={11} className="text-[rgb(var(--harbor-text-faint))]" />
+          : <ChevronRight size={11} className="text-[rgb(var(--harbor-text-faint))]" />
+        }
       </button>
-
-      {/* Content */}
-      {isOpen && (
-        <div className="px-3 py-2 border-t border-[rgb(var(--harbor-border))] text-[rgb(var(--harbor-text-muted))] max-h-32 overflow-y-auto harbor-scrollbar">
-          <p className="leading-relaxed whitespace-pre-wrap">{block.text}</p>
+      {block.isOpen && (
+        <div className="px-3 py-2 border-t border-[rgb(var(--harbor-border))] max-h-36 overflow-y-auto harbor-scroll">
+          <p className="text-[rgb(var(--harbor-text-muted))] leading-relaxed whitespace-pre-wrap">
+            {block.text}
+          </p>
         </div>
       )}
     </div>
   )
 }
 
-export default function ChatMessage({ message, onToggleThinking }: ChatMessageProps) {
+// ─── Message ──────────────────────────────────────────────────────────────────
+
+interface Props {
+  message: UIMessage
+  onToggleThinking?: (messageId: string, blockId: string) => void
+}
+
+export default function ChatMessage({ message, onToggleThinking }: Props) {
   const isUser = message.role === 'user'
 
-  return (
-    <div className={`flex items-start gap-3 animate-fade-in ${isUser ? 'flex-row-reverse' : ''}`}>
-      {/* Avatar */}
-      {!isUser && (
-        <div className="w-7 h-7 rounded-full bg-harbor-500 flex items-center justify-center flex-shrink-0 mt-0.5 text-white font-bold text-xs">
-          H
+  if (isUser) {
+    return (
+      <div className="flex justify-end animate-fade-up">
+        <div
+          className="max-w-[82%] px-3 py-2 rounded-2xl rounded-tr-sm text-sm leading-relaxed text-white"
+          style={{ background: 'rgb(79 95 232)' }}
+        >
+          {message.text}
         </div>
-      )}
+      </div>
+    )
+  }
 
-      <div className={`flex flex-col gap-2 max-w-[85%] ${isUser ? 'items-end' : 'items-start'}`}>
-        {/* User message bubble */}
-        {isUser && (
-          <div className="bg-harbor-600 text-white px-3 py-2 rounded-lg text-sm leading-relaxed">
-            {message.text}
+  // Assistant message
+  const hasContent =
+    message.text || message.thinkingBlocks.length > 0 || message.toolCalls.length > 0 || message.error
+
+  if (!hasContent && !message.isStreaming) return null
+
+  return (
+    <div className="flex items-start gap-2.5 animate-fade-up">
+      {/* Avatar */}
+      <div className="w-6 h-6 rounded-md bg-harbor-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <span className="text-white text-[10px] font-bold">H</span>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col gap-2">
+        {/* Thinking blocks */}
+        {message.thinkingBlocks.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            {message.thinkingBlocks.map((block) => (
+              <ThinkingBlock
+                key={block.id}
+                block={block}
+                onToggle={() => onToggleThinking?.(message.id, block.id)}
+              />
+            ))}
           </div>
         )}
 
-        {/* Assistant message */}
-        {!isUser && (
-          <>
-            {/* Thinking blocks */}
-            {message.thinkingBlocks.length > 0 && (
-              <div className="flex flex-col gap-1.5 w-full">
-                {message.thinkingBlocks.map((block) => (
-                  <ThinkingBlock
-                    key={block.id}
-                    block={block}
-                    isOpen={block.isOpen}
-                    onToggle={() => onToggleThinking?.(message.id, block.id)}
-                  />
-                ))}
-              </div>
-            )}
+        {/* Tool calls */}
+        {message.toolCalls.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            {message.toolCalls.map((tc) => (
+              <ToolCallDisplay key={tc.id} toolCall={tc} />
+            ))}
+          </div>
+        )}
 
-            {/* Tool calls */}
-            {message.toolCalls.length > 0 && (
-              <div className="flex flex-col gap-1.5 w-full">
-                {message.toolCalls.map((tc) => (
-                  <ToolCallDisplay key={tc.id} toolCall={tc} />
-                ))}
+        {/* Text content */}
+        {(message.text || (message.isStreaming && !message.toolCalls.length)) && (
+          <div className={`text-sm text-[rgb(var(--harbor-text))] ${message.isStreaming && message.text ? 'streaming-cursor' : ''}`}>
+            {message.text ? (
+              <div className="md">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkMath]}
+                  rehypePlugins={[rehypeKatex]}
+                >
+                  {message.text}
+                </ReactMarkdown>
               </div>
-            )}
+            ) : message.isStreaming ? (
+              <div className="flex items-center gap-1 py-0.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-harbor-500 typing-dot" />
+                <div className="w-1.5 h-1.5 rounded-full bg-harbor-500 typing-dot" />
+                <div className="w-1.5 h-1.5 rounded-full bg-harbor-500 typing-dot" />
+              </div>
+            ) : null}
+          </div>
+        )}
 
-            {/* Text content */}
-            {(message.text || message.isStreaming) && (
-              <div className="text-sm text-[rgb(var(--harbor-text))] leading-relaxed">
-                {message.text ? (
-                  <div className="harbor-markdown">
-                    <ReactMarkdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]}>
-                      {message.text}
-                    </ReactMarkdown>
-                  </div>
-                ) : null}
-                {message.isStreaming && !message.text && (
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 rounded-full bg-harbor-500 typing-dot" />
-                    <div className="w-2 h-2 rounded-full bg-harbor-500 typing-dot" />
-                    <div className="w-2 h-2 rounded-full bg-harbor-500 typing-dot" />
-                  </div>
-                )}
-                {message.isStreaming && message.text && (
-                  <span className="inline-block w-0.5 h-4 bg-harbor-500 ml-0.5 animate-pulse align-text-bottom" />
-                )}
-              </div>
-            )}
-
-            {/* Error */}
-            {message.error && (
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 px-3 py-2 rounded-lg">
-                {message.error}
-              </div>
-            )}
-          </>
+        {/* Error */}
+        {message.error && (
+          <div className="text-xs px-3 py-2 rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400">
+            {message.error}
+          </div>
         )}
       </div>
     </div>

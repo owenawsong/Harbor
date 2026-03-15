@@ -1,55 +1,54 @@
 import React from 'react'
 import { Search, FileText, ShoppingCart, Mail, Bookmark, BarChart3 } from 'lucide-react'
 
-interface EmptyStateProps {
+const SUGGESTIONS = [
+  { Icon: Search,       text: 'Search Google for the latest AI news' },
+  { Icon: FileText,     text: 'Summarize this page for me' },
+  { Icon: ShoppingCart, text: 'Find the best price for this product' },
+  { Icon: Mail,         text: 'Draft a reply to this email' },
+  { Icon: Bookmark,     text: 'Bookmark all my open tabs into a folder' },
+  { Icon: BarChart3,    text: 'Extract data from this table into CSV' },
+]
+
+interface Props {
   onSuggestionClick: (text: string) => void
 }
 
-const SUGGESTIONS = [
-  { icon: Search, text: 'Search Google for the latest AI news' },
-  { icon: FileText, text: 'Summarize this page for me' },
-  { icon: ShoppingCart, text: 'Find the best price for this product' },
-  { icon: Mail, text: 'Draft a reply to the email I have open' },
-  { icon: Bookmark, text: 'Bookmark all my open tabs into a folder' },
-  { icon: BarChart3, text: 'Extract data from this table into CSV' },
-]
-
-export default function EmptyState({ onSuggestionClick }: EmptyStateProps) {
+export default function EmptyState({ onSuggestionClick }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6 py-8 gap-6">
-      {/* Logo */}
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-16 h-16 rounded-2xl bg-harbor-600 flex items-center justify-center shadow-lg">
-          <span className="text-white text-3xl font-bold">H</span>
+    <div className="flex flex-col items-center justify-center h-full px-5 py-6 gap-6 animate-fade-in">
+      {/* Brand */}
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-harbor-600 flex items-center justify-center shadow-sm">
+          <span className="text-white text-2xl font-bold tracking-tight">H</span>
         </div>
-        <div className="text-center">
-          <h1 className="text-lg font-semibold text-[rgb(var(--harbor-text))]">Harbor AI Agent</h1>
-          <p className="text-sm text-[rgb(var(--harbor-text-muted))] mt-1">
-            I can control your browser, automate tasks, and help you get things done.
+        <div>
+          <h1 className="font-semibold text-[rgb(var(--harbor-text))]">Harbor AI Agent</h1>
+          <p className="text-sm text-[rgb(var(--harbor-text-muted))] mt-0.5 leading-relaxed">
+            Control your browser, automate tasks, get things done.
           </p>
         </div>
       </div>
 
       {/* Suggestions */}
-      <div className="w-full grid grid-cols-1 gap-2">
-        {SUGGESTIONS.map((suggestion) => (
+      <div className="w-full flex flex-col gap-1.5">
+        {SUGGESTIONS.map(({ Icon, text }) => (
           <button
-            key={suggestion.text}
-            onClick={() => onSuggestionClick(suggestion.text)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl border border-[rgb(var(--harbor-border))] hover:border-harbor-400 hover:bg-[rgb(var(--harbor-surface))] transition-all text-left group"
+            key={text}
+            onClick={() => onSuggestionClick(text)}
+            className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] hover:border-harbor-400 hover:bg-[rgb(var(--harbor-surface-2))] text-left group"
           >
-            <span className="text-[rgb(var(--harbor-text))] group-hover:text-harbor-600 dark:group-hover:text-harbor-400 transition-colors flex-shrink-0">
-              {React.createElement(suggestion.icon, { size: 18 })}
-            </span>
-            <span className="text-sm text-[rgb(var(--harbor-text))] group-hover:text-harbor-600 dark:group-hover:text-harbor-400 transition-colors">
-              {suggestion.text}
-            </span>
+            <Icon
+              size={15}
+              className="flex-shrink-0 text-[rgb(var(--harbor-text-muted))] group-hover:text-harbor-600 dark:group-hover:text-harbor-400"
+            />
+            <span className="text-sm text-[rgb(var(--harbor-text))]">{text}</span>
           </button>
         ))}
       </div>
 
-      <p className="text-xs text-[rgb(var(--harbor-text-muted))] text-center">
-        Supports Claude, GPT, Gemini, Ollama & more
+      <p className="text-xs text-[rgb(var(--harbor-text-faint))]">
+        Supports Claude, GPT, Gemini, Ollama &amp; more
       </p>
     </div>
   )

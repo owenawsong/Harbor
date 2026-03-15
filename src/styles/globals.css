@@ -2,284 +2,242 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Design Tokens ────────────────────────────────────────────────────────── */
+
 @layer base {
   :root {
-    --harbor-bg: 255 255 255;
-    --harbor-surface: 248 249 252;
-    --harbor-border: 229 231 235;
-    --harbor-text: 17 24 39;
-    --harbor-text-muted: 107 114 128;
-    --harbor-accent: 79 95 232;
-    --harbor-accent-hover: 61 75 214;
+    --harbor-bg:          250 250 250;
+    --harbor-surface:     255 255 255;
+    --harbor-surface-2:   245 245 245;
+    --harbor-border:      229 229 229;
+    --harbor-border-2:    212 212 212;
+    --harbor-text:         23  23  23;
+    --harbor-text-muted:  115 115 115;
+    --harbor-text-faint:  163 163 163;
+    --harbor-accent:       79  95 232;
+    --harbor-accent-hover: 61  75 214;
   }
 
   .dark {
-    --harbor-bg: 15 17 23;
-    --harbor-surface: 24 27 36;
-    --harbor-border: 45 48 60;
-    --harbor-text: 237 242 255;
-    --harbor-text-muted: 148 156 175;
-    --harbor-accent: 107 127 243;
-    --harbor-accent-hover: 133 150 248;
+    --harbor-bg:           10  10  10;
+    --harbor-surface:      18  18  18;
+    --harbor-surface-2:    24  24  24;
+    --harbor-border:       38  38  38;
+    --harbor-border-2:     52  52  52;
+    --harbor-text:        250 250 250;
+    --harbor-text-muted:  163 163 163;
+    --harbor-text-faint:  115 115 115;
+    --harbor-accent:      107 127 243;
+    --harbor-accent-hover:133 150 248;
   }
 
-  * {
+  *, *::before, *::after {
     box-sizing: border-box;
   }
 
-  html, body {
+  html, body, #root {
     margin: 0;
     padding: 0;
     width: 100%;
     height: 100%;
+  }
+
+  body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
     font-size: 14px;
     line-height: 1.5;
-    background-color: rgb(var(--harbor-bg));
+    background: rgb(var(--harbor-bg));
     color: rgb(var(--harbor-text));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   #root {
-    width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
   }
+
+  /* Smooth color transitions everywhere */
+  * {
+    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;
+    transition-duration: 150ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* But NOT for transforms/layout (would kill animations) */
+  *[class*='translate'], *[class*='scale'], *[class*='rotate'] {
+    transition-property: transform, opacity;
+  }
 }
 
-@layer utilities {
-  .harbor-scrollbar {
+/* ─── Component Classes ─────────────────────────────────────────────────────── */
+
+@layer components {
+  /* Icon button — used throughout the header */
+  .icon-btn {
+    @apply p-1.5 rounded-md cursor-pointer
+           text-[rgb(var(--harbor-text-muted))]
+           hover:text-[rgb(var(--harbor-text))]
+           hover:bg-[rgb(var(--harbor-surface-2))];
+    transition: color 150ms, background-color 150ms;
+  }
+
+  /* Scrollbar — thin and subtle */
+  .harbor-scroll {
+    overflow-y: auto;
     scrollbar-width: thin;
-    scrollbar-color: rgb(var(--harbor-border)) transparent;
+    scrollbar-color: rgb(var(--harbor-border-2)) transparent;
   }
 
-  .harbor-scrollbar::-webkit-scrollbar {
-    width: 4px;
+  .harbor-scroll::-webkit-scrollbar        { width: 4px; }
+  .harbor-scroll::-webkit-scrollbar-track  { background: transparent; }
+  .harbor-scroll::-webkit-scrollbar-thumb  {
+    background: rgb(var(--harbor-border-2));
+    border-radius: 9999px;
   }
 
-  .harbor-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .harbor-scrollbar::-webkit-scrollbar-thumb {
-    background-color: rgb(var(--harbor-border));
-    border-radius: 2px;
-  }
+  /* Legacy alias */
+  .harbor-scrollbar { @apply harbor-scroll; }
 }
 
-/* Markdown styling */
-.harbor-markdown {
-  line-height: 1.6;
+/* ─── Markdown Rendering ────────────────────────────────────────────────────── */
+
+.md {
+  line-height: 1.65;
+  color: rgb(var(--harbor-text));
 }
 
-.harbor-markdown p {
-  margin: 0.5em 0;
-}
+.md > *:first-child { margin-top: 0 !important; }
+.md > *:last-child  { margin-bottom: 0 !important; }
 
-.harbor-markdown p:first-child {
-  margin-top: 0;
-}
+.md p { margin: 0.6em 0; }
 
-.harbor-markdown p:last-child {
-  margin-bottom: 0;
-}
-
-.harbor-markdown h1, .harbor-markdown h2, .harbor-markdown h3,
-.harbor-markdown h4, .harbor-markdown h5, .harbor-markdown h6 {
-  margin: 1em 0 0.5em;
+.md h1, .md h2, .md h3, .md h4, .md h5, .md h6 {
+  margin: 1.1em 0 0.4em;
   font-weight: 600;
   line-height: 1.3;
+  color: rgb(var(--harbor-text));
 }
+.md h1 { font-size: 1.25em; }
+.md h2 { font-size: 1.1em; }
+.md h3 { font-size: 1em; }
 
-.harbor-markdown h1:first-child, .harbor-markdown h2:first-child,
-.harbor-markdown h3:first-child {
-  margin-top: 0;
+.md ul, .md ol {
+  padding-left: 1.4em;
+  margin: 0.4em 0;
 }
+.md li { margin: 0.2em 0; }
 
-.harbor-markdown code {
-  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Monaco', monospace;
-  font-size: 0.875em;
-  background: rgb(var(--harbor-surface));
-  padding: 0.1em 0.3em;
-  border-radius: 3px;
+.md strong { font-weight: 600; }
+.md em     { font-style: italic; }
+
+.md code {
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', ui-monospace, monospace;
+  font-size: 0.85em;
+  background: rgb(var(--harbor-surface-2));
   border: 1px solid rgb(var(--harbor-border));
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
 }
 
-.harbor-markdown pre {
-  background: rgb(var(--harbor-surface));
-  border: 1px solid rgb(var(--harbor-border));
-  border-radius: 6px;
-  padding: 0.75em 1em;
-  overflow-x: auto;
+.md pre {
   margin: 0.75em 0;
+  border-radius: 8px;
+  background: rgb(var(--harbor-surface));
+  border: 1px solid rgb(var(--harbor-border));
+  overflow-x: auto;
 }
-
-.harbor-markdown pre code {
+.dark .md pre {
+  background: rgb(15 15 15);
+  border-color: rgb(38 38 38);
+}
+.md pre code {
+  display: block;
+  padding: 0.85em 1em;
   background: none;
   border: none;
-  padding: 0;
-  font-size: 0.85em;
+  font-size: 0.82em;
+  line-height: 1.6;
+  color: rgb(var(--harbor-text));
 }
 
-.harbor-markdown ul, .harbor-markdown ol {
-  padding-left: 1.5em;
-  margin: 0.5em 0;
-}
-
-.harbor-markdown li {
-  margin: 0.25em 0;
-}
-
-.harbor-markdown a {
-  color: rgb(var(--harbor-accent));
-  text-decoration: underline;
-  text-decoration-color: rgb(var(--harbor-accent) / 0.4);
-}
-
-.harbor-markdown a:hover {
-  text-decoration-color: rgb(var(--harbor-accent));
-}
-
-.harbor-markdown blockquote {
-  border-left: 3px solid rgb(var(--harbor-border));
-  padding-left: 1em;
-  margin: 0.5em 0;
+.md blockquote {
+  margin: 0.6em 0;
+  padding: 0.3em 0 0.3em 1em;
+  border-left: 3px solid rgb(var(--harbor-border-2));
   color: rgb(var(--harbor-text-muted));
 }
 
-.harbor-markdown table {
-  border-collapse: collapse;
+.md a {
+  color: rgb(var(--harbor-accent));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.md a:hover { opacity: 0.8; }
+
+.md table {
   width: 100%;
+  border-collapse: collapse;
   margin: 0.75em 0;
   font-size: 0.9em;
 }
-
-.harbor-markdown th, .harbor-markdown td {
+.md th, .md td {
   border: 1px solid rgb(var(--harbor-border));
-  padding: 0.4em 0.75em;
+  padding: 0.35em 0.65em;
   text-align: left;
 }
-
-.harbor-markdown th {
-  background: rgb(var(--harbor-surface));
+.md th {
+  background: rgb(var(--harbor-surface-2));
   font-weight: 600;
 }
 
-.harbor-markdown hr {
+.md hr {
   border: none;
   border-top: 1px solid rgb(var(--harbor-border));
   margin: 1em 0;
 }
 
-/* Animations */
-@keyframes blink {
-  0%, 80%, 100% { opacity: 0; }
-  40% { opacity: 1; }
-}
+/* ─── KaTeX (LaTeX math) ────────────────────────────────────────────────────── */
 
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+.md .katex { font-size: 1em; }
 
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.98);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes slideInFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.typing-dot {
-  animation: blink 1.4s infinite;
-}
-
-.typing-dot:nth-child(2) {
-  animation-delay: 0.2s;
-}
-
-.typing-dot:nth-child(3) {
-  animation-delay: 0.4s;
-}
-
-.animate-fade-in {
-  animation: fadeInScale 0.3s ease-out;
-}
-
-.animate-slide-in {
-  animation: slideIn 0.25s ease-out;
-}
-
-.animate-slide-in-right {
-  animation: slideInFromRight 0.25s ease-out;
-}
-
-.animate-slide-in-left {
-  animation: slideInFromLeft 0.25s ease-out;
-}
-
-/* Smooth transitions */
-button, input, select, textarea {
-  transition: all 0.2s ease-in-out;
-}
-
-/* Prevent animation jank */
-* {
-  transition-property: background-color, border-color, color, opacity;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;
-}
-
-/* KaTeX math rendering */
-.harbor-markdown .katex {
-  font-size: 1em;
-  margin: 0.1em 0;
-}
-
-.harbor-markdown .katex-display {
-  margin: 0.5em 0;
-  padding: 0.75em;
-  background: rgb(var(--harbor-surface));
-  border-radius: 6px;
+.md .katex-display {
+  margin: 0.75em 0;
+  padding: 0.75em 1em;
+  background: rgb(var(--harbor-surface-2));
   border: 1px solid rgb(var(--harbor-border));
+  border-radius: 8px;
   overflow-x: auto;
 }
 
-.harbor-markdown .katex .base {
-  font-size: inherit;
+/* ─── Typing Indicator ──────────────────────────────────────────────────────── */
+
+.typing-dot {
+  animation: blink 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.2; }
+  40%           { opacity: 1; }
 }
 
-.harbor-markdown .katex .tag {
-  color: rgb(var(--harbor-text-muted));
+/* ─── Streaming Cursor ──────────────────────────────────────────────────────── */
+
+.streaming-cursor::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 0.9em;
+  background: rgb(var(--harbor-accent));
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  border-radius: 1px;
+  animation: cursorBlink 0.8s ease-in-out infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
 }

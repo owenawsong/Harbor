@@ -1,182 +1,137 @@
 import React, { useState } from 'react'
 import {
-  ChevronDown,
-  ChevronRight,
-  CheckCircle,
-  XCircle,
-  Loader2,
-  Globe,
-  RefreshCw,
-  Plus,
-  X,
-  Shuffle,
-  List,
-  FileText,
-  Eye,
-  Camera,
-  FileJson,
-  Link2,
-  Zap,
-  Mouse,
-  Type,
-  Trash2,
-  Keyboard,
-  Move,
-  ArrowUpDown,
-  Focus,
-  CheckSquare,
-  MessageCircle,
-  Grid3x3,
-  Search,
-  Bookmark,
-  Download,
-  Save,
-  Clock,
-  Square,
-  Layers,
+  ChevronRight, ChevronDown,
+  Loader2, CheckCircle2, XCircle,
+  Globe, RefreshCw, Plus, X, ArrowLeftRight, List, FileText,
+  Eye, Camera, Link2, Zap, MousePointer2, Type, Trash2,
+  Keyboard, ArrowUpDown, Focus, CheckSquare, MessageSquare,
+  GripHorizontal, LayoutGrid, Search, Bookmark, Download, Save,
+  Clock, Square, Layers, Wrench,
 } from 'lucide-react'
 import type { UIToolCall } from '../hooks/useChat'
 
-interface ToolCallDisplayProps {
-  toolCall: UIToolCall
-}
+// ─── Icon Map ─────────────────────────────────────────────────────────────────
 
-type IconProps = { size: number; className?: string }
+type Icon = React.ComponentType<{ size?: number; className?: string }>
 
-const TOOL_ICONS: Record<string, React.ComponentType<IconProps>> = {
-  navigate_to_url: Globe,
-  navigate_page: RefreshCw,
-  new_tab: Plus,
-  close_page: X,
-  switch_to_page: Shuffle,
-  list_pages: List,
-  get_active_page: FileText,
-  take_snapshot: Eye,
-  take_screenshot: Camera,
-  get_page_content: FileJson,
-  get_page_links: Link2,
-  evaluate_script: Zap,
-  click: Mouse,
-  click_at: Mouse,
-  fill: Type,
-  clear: Trash2,
-  press_key: Keyboard,
-  scroll: ArrowUpDown,
-  hover: Mouse,
-  focus: Focus,
-  select_option: FileJson,
-  check: CheckSquare,
-  handle_dialog: MessageCircle,
-  drag: Move,
-  get_dom: Grid3x3,
-  search_dom: Search,
-  search_bookmarks: Bookmark,
-  get_bookmarks: Bookmark,
-  add_bookmark: Bookmark,
-  delete_bookmark: Trash2,
-  search_history: Clock,
+const TOOL_ICON_MAP: Record<string, Icon> = {
+  navigate_to_url:    Globe,
+  navigate_page:      RefreshCw,
+  new_tab:            Plus,
+  close_page:         X,
+  switch_to_page:     ArrowLeftRight,
+  list_pages:         List,
+  get_active_page:    FileText,
+  take_snapshot:      Eye,
+  take_screenshot:    Camera,
+  get_page_content:   FileText,
+  get_page_links:     Link2,
+  evaluate_script:    Zap,
+  click:              MousePointer2,
+  click_at:           MousePointer2,
+  fill:               Type,
+  clear:              Trash2,
+  press_key:          Keyboard,
+  scroll:             ArrowUpDown,
+  hover:              MousePointer2,
+  focus:              Focus,
+  select_option:      ChevronDown,
+  check:              CheckSquare,
+  handle_dialog:      MessageSquare,
+  drag:               GripHorizontal,
+  get_dom:            LayoutGrid,
+  search_dom:         Search,
+  search_bookmarks:   Bookmark,
+  get_bookmarks:      Bookmark,
+  add_bookmark:       Bookmark,
+  delete_bookmark:    Trash2,
+  search_history:     Clock,
   get_recent_history: Clock,
-  list_windows: Square,
-  new_window: Square,
-  list_tab_groups: Layers,
-  create_tab_group: Layers,
-  download_file: Download,
+  list_windows:       Square,
+  new_window:         Square,
+  list_tab_groups:    Layers,
+  create_tab_group:   Layers,
+  download_file:      Download,
   save_content_to_file: Save,
 }
 
-function getToolIcon(name: string): React.ComponentType<IconProps> {
-  return TOOL_ICONS[name] ?? Search
+function getIcon(name: string): Icon {
+  return TOOL_ICON_MAP[name] ?? Wrench
 }
 
-function formatToolName(name: string): string {
+function formatName(name: string): string {
   return name.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
 }
 
-function getToolSummary(toolCall: UIToolCall): string {
-  const input = toolCall.input ?? {}
-
-  switch (toolCall.name) {
+function getSummary(tc: UIToolCall): string {
+  const inp = tc.input ?? {}
+  switch (tc.name) {
     case 'navigate_to_url':
-    case 'navigate_page':
-      return (input.url as string) ?? (input.action as string) ?? ''
-    case 'click':
-      return `Element ${input.elementId ?? input.selector ?? ''}`
-    case 'fill':
-      return `"${String(input.text ?? '').slice(0, 30)}${String(input.text ?? '').length > 30 ? '...' : ''}"`
-    case 'press_key':
-      return `"${input.key}"`
+    case 'navigate_page':  return (inp.url ?? inp.action ?? '') as string
+    case 'click':          return `#${inp.elementId ?? inp.selector ?? ''}`
+    case 'fill':           return `"${String(inp.text ?? '').slice(0, 35)}"`
+    case 'press_key':      return String(inp.key ?? '')
     case 'search_history':
     case 'search_bookmarks':
-    case 'search_dom':
-      return `"${input.query ?? ''}"`
-    case 'evaluate_script':
-      return String(input.expression ?? '').slice(0, 40)
-    case 'scroll':
-      return `${input.direction} ${input.amount ?? 300}px`
-    case 'take_screenshot':
-      return 'Capturing screenshot...'
-    case 'take_snapshot':
-      return 'Reading page elements...'
-    case 'get_page_content':
-      return 'Reading page content...'
-    default:
-      return ''
+    case 'search_dom':     return `"${inp.query ?? ''}"`
+    case 'evaluate_script':return String(inp.expression ?? '').slice(0, 40)
+    case 'scroll':         return `${inp.direction} ${inp.amount ?? 300}px`
+    case 'take_screenshot':return 'capturing screenshot'
+    case 'take_snapshot':  return 'reading page'
+    case 'get_page_content':return 'reading content'
+    default:               return ''
   }
 }
 
-export default function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
-  const [expanded, setExpanded] = useState(false)
-  const hasDetails = toolCall.result !== undefined || toolCall.input !== undefined
-  const summary = getToolSummary(toolCall)
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function ToolCallDisplay({ toolCall }: { toolCall: UIToolCall }) {
+  const [open, setOpen] = useState(false)
+  const Icon = getIcon(toolCall.name)
+  const summary = getSummary(toolCall)
+  const hasDetails = toolCall.input !== undefined || toolCall.result !== undefined
 
   return (
-    <div className="border border-[rgb(var(--harbor-border))] rounded-lg overflow-hidden text-xs">
-      {/* Header */}
+    <div className="rounded-lg border border-[rgb(var(--harbor-border))] overflow-hidden text-xs">
+      {/* Header row */}
       <button
-        onClick={() => hasDetails && setExpanded(!expanded)}
-        className={`flex items-center gap-2 w-full px-3 py-2 bg-[rgb(var(--harbor-surface))] hover:brightness-95 transition-all text-left ${hasDetails ? 'cursor-pointer' : 'cursor-default'}`}
+        onClick={() => hasDetails && setOpen((v) => !v)}
+        className={`flex items-center gap-2 w-full px-2.5 py-2 bg-[rgb(var(--harbor-surface-2))] text-left ${hasDetails ? 'cursor-pointer hover:bg-[rgb(var(--harbor-border))]' : 'cursor-default'}`}
+        style={{ transition: 'background-color 150ms' }}
       >
-        {/* Status icon */}
+        {/* Status */}
         <span className="flex-shrink-0">
-          {toolCall.status === 'running' && (
-            <Loader2 size={13} className="text-harbor-500 animate-spin" />
-          )}
-          {toolCall.status === 'done' && (
-            <CheckCircle size={13} className="text-green-500" />
-          )}
-          {toolCall.status === 'error' && (
-            <XCircle size={13} className="text-red-500" />
-          )}
-          {toolCall.status === 'pending' && (
-            <div className="w-3 h-3 rounded-full border-2 border-[rgb(var(--harbor-border))]" />
-          )}
+          {toolCall.status === 'running' && <Loader2 size={12} className="animate-spin text-harbor-500" />}
+          {toolCall.status === 'done'    && <CheckCircle2 size={12} className="text-emerald-500" />}
+          {toolCall.status === 'error'   && <XCircle size={12} className="text-red-500" />}
+          {toolCall.status === 'pending' && <div className="w-3 h-3 rounded-full border border-[rgb(var(--harbor-border-2))]" />}
         </span>
 
-        {/* Tool icon + name */}
-        <span className="flex-shrink-0 text-[rgb(var(--harbor-text))]">
-          {React.createElement(getToolIcon(toolCall.name), { size: 13 })}
-        </span>
-        <span className="font-medium text-[rgb(var(--harbor-text))]">{formatToolName(toolCall.name)}</span>
+        {/* Tool icon */}
+        <Icon size={12} className="flex-shrink-0 text-[rgb(var(--harbor-text-muted))]" />
+
+        {/* Name */}
+        <span className="font-medium text-[rgb(var(--harbor-text))]">{formatName(toolCall.name)}</span>
 
         {/* Summary */}
         {summary && (
-          <span className="text-[rgb(var(--harbor-text-muted))] truncate flex-1 min-w-0">
+          <span className="text-[rgb(var(--harbor-text-faint))] truncate flex-1 min-w-0 font-mono">
             {summary}
           </span>
         )}
 
-        {/* Expand toggle */}
+        {/* Expand chevron */}
         {hasDetails && (
-          <span className="flex-shrink-0 text-[rgb(var(--harbor-text-muted))] ml-auto">
-            {expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          <span className="flex-shrink-0 ml-auto text-[rgb(var(--harbor-text-faint))]">
+            {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
           </span>
         )}
       </button>
 
       {/* Expanded details */}
-      {expanded && hasDetails && (
-        <div className="border-t border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-bg))]">
-          {/* Screenshot result */}
+      {open && hasDetails && (
+        <div className="border-t border-[rgb(var(--harbor-border))] divide-y divide-[rgb(var(--harbor-border))]">
+          {/* Screenshot */}
           {toolCall.result?.screenshot && (
             <div className="p-2">
               <img
@@ -189,9 +144,9 @@ export default function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
 
           {/* Input */}
           {toolCall.input && Object.keys(toolCall.input).length > 0 && (
-            <div className="px-3 py-2 border-b border-[rgb(var(--harbor-border))]">
-              <div className="text-[rgb(var(--harbor-text-muted))] mb-1 font-medium uppercase tracking-wide text-[10px]">Input</div>
-              <pre className="text-[rgb(var(--harbor-text))] whitespace-pre-wrap break-all overflow-x-auto">
+            <div className="px-2.5 py-2">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-[rgb(var(--harbor-text-faint))] mb-1.5">Input</div>
+              <pre className="text-[rgb(var(--harbor-text))] font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-all">
                 {JSON.stringify(toolCall.input, null, 2)}
               </pre>
             </div>
@@ -199,14 +154,14 @@ export default function ToolCallDisplay({ toolCall }: ToolCallDisplayProps) {
 
           {/* Result */}
           {toolCall.result && (
-            <div className="px-3 py-2">
-              <div className="text-[rgb(var(--harbor-text-muted))] mb-1 font-medium uppercase tracking-wide text-[10px]">
+            <div className="px-2.5 py-2">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-[rgb(var(--harbor-text-faint))] mb-1.5">
                 {toolCall.result.success ? 'Result' : 'Error'}
               </div>
               {toolCall.result.error ? (
-                <div className="text-red-500">{toolCall.result.error}</div>
+                <p className="text-red-500">{toolCall.result.error}</p>
               ) : (
-                <pre className="text-[rgb(var(--harbor-text))] whitespace-pre-wrap break-all overflow-x-auto max-h-48 overflow-y-auto harbor-scrollbar">
+                <pre className="text-[rgb(var(--harbor-text))] font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-all max-h-40 overflow-y-auto harbor-scroll">
                   {typeof toolCall.result.output === 'string'
                     ? toolCall.result.output
                     : JSON.stringify(toolCall.result.output, null, 2)}

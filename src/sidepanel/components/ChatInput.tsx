@@ -1,88 +1,84 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { Send, Square, ArrowUp } from 'lucide-react'
+import { ArrowUp, Square } from 'lucide-react'
 
-interface ChatInputProps {
-  onSend: (text: string, attachedTabId?: number) => void
+interface Props {
+  onSend: (text: string) => void
   onStop: () => void
   isRunning: boolean
   disabled?: boolean
   placeholder?: string
 }
 
-export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder }: ChatInputProps) {
-  const [input, setInput] = useState('')
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
+export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder }: Props) {
+  const [value, setValue] = useState('')
+  const ref = useRef<HTMLTextAreaElement>(null)
 
-  const handleSend = useCallback(() => {
-    const text = input.trim()
-    if (!text || disabled || isRunning) return
-    setInput('')
+  const canSend = value.trim().length > 0 && !disabled && !isRunning
+
+  const send = useCallback(() => {
+    const text = value.trim()
+    if (!text || !canSend) return
+    setValue('')
+    if (ref.current) ref.current.style.height = 'auto'
     onSend(text)
-    // Reset textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto'
-    }
-  }, [input, disabled, isRunning, onSend])
+  }, [value, canSend, onSend])
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      handleSend()
+      send()
     }
   }
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(e.target.value)
-    // Auto-resize
+  const onInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(e.target.value)
     const el = e.target
     el.style.height = 'auto'
     el.style.height = Math.min(el.scrollHeight, 160) + 'px'
   }
 
   useEffect(() => {
-    if (!isRunning) {
-      textareaRef.current?.focus()
-    }
+    if (!isRunning) ref.current?.focus()
   }, [isRunning])
 
   return (
     <div className="px-3 pb-3 pt-2 border-t border-[rgb(var(--harbor-border))]">
-      <div className="flex items-end gap-2 bg-[rgb(var(--harbor-surface))] rounded-xl border border-[rgb(var(--harbor-border))] px-3 py-2 focus-within:border-harbor-400 transition-colors">
+      <div className="flex items-end gap-2 rounded-xl border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] px-3 py-2.5 focus-within:border-harbor-400">
         <textarea
-          ref={textareaRef}
-          value={input}
-          onChange={handleInput}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder ?? 'Ask Harbor to do anything...'}
+          ref={ref}
+          value={value}
+          onChange={onInput}
+          onKeyDown={onKeyDown}
+          placeholder={placeholder ?? 'Ask Harbor anything…'}
           disabled={disabled || isRunning}
           rows={1}
-          className="flex-1 bg-transparent resize-none outline-none text-sm text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-muted))] disabled:opacity-50 min-h-[24px] max-h-[160px] leading-6"
+          className="flex-1 bg-transparent resize-none outline-none text-sm leading-6 min-h-[24px] max-h-[160px] disabled:opacity-40 text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))]"
         />
 
-        <div className="flex-shrink-0 mb-0.5">
+        <div className="flex-shrink-0">
           {isRunning ? (
             <button
               onClick={onStop}
-              className="w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
               title="Stop"
+              className="w-7 h-7 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center"
             >
-              <Square size={14} className="text-white fill-white" />
+              <Square size={12} className="text-white fill-white" />
             </button>
           ) : (
             <button
-              onClick={handleSend}
-              disabled={!input.trim() || disabled}
-              className="w-8 h-8 rounded-lg bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed flex items-center justify-center transition-colors"
+              onClick={send}
+              disabled={!canSend}
               title="Send (Enter)"
+              className="w-7 h-7 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed"
             >
-              <ArrowUp size={15} className="text-white" />
+              <ArrowUp size={14} className="text-white" />
             </button>
           )}
         </div>
       </div>
 
-      <p className="text-center text-[10px] text-[rgb(var(--harbor-text-muted))] mt-1.5">
-        Press Enter to send · Shift+Enter for new line
+      <p className="text-center text-[10px] mt-1.5 text-[rgb(var(--harbor-text-faint))]">
+        Enter to send · Shift+Enter for new line
       </p>
     </div>
   )
