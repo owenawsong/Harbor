@@ -2,11 +2,19 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import type { AgentSettings, AgentEvent } from '../../shared/types'
 import { PORT_NAME } from '../../shared/constants'
 
+export interface UIThinkingBlock {
+  id: string
+  text: string
+  isOpen: boolean
+  timestamp: number
+}
+
 export interface UIMessage {
   id: string
   role: 'user' | 'assistant'
   text: string
   toolCalls: UIToolCall[]
+  thinkingBlocks: UIThinkingBlock[]
   isStreaming: boolean
   error?: string
   timestamp: number
@@ -57,10 +65,47 @@ export function useChat(settings: AgentSettings) {
               role: 'assistant',
               text,
               toolCalls: [],
+              thinkingBlocks: [],
               isStreaming: true,
               timestamp: Date.now(),
             }
             return [...prev, newMsg]
+          })
+          break
+        }
+
+        case 'thinking': {
+          const { text, messageId } = event as { type: 'thinking'; text: string; messageId?: string }
+          const id = messageId || currentAssistantMsgId.current
+          if (!id) break
+
+          setMessages((prev) => {
+            const msgIdx = prev.findIndex((m) => m.id === id && m.role === 'assistant')
+            if (msgIdx === -1) return prev
+
+            const updated = [...prev]
+            const msg = { ...updated[msgIdx] }
+
+            // Find or create thinking block
+            const lastThinking = msg.thinkingBlocks[msg.thinkingBlocks.length - 1]
+            if (lastThinking && !lastThinking.isOpen) {
+              // Create new thinking block
+              msg.thinkingBlocks = [
+                ...msg.thinkingBlocks,
+                { id: generateId(), text, isOpen: true, timestamp: Date.now() },
+              ]
+            } else if (lastThinking && lastThinking.isOpen) {
+              // Append to existing open thinking block
+              lastThinking.text += text
+            } else {
+              // First thinking block
+              msg.thinkingBlocks = [
+                { id: generateId(), text, isOpen: true, timestamp: Date.now() },
+              ]
+            }
+
+            updated[msgIdx] = msg
+            return updated
           })
           break
         }
@@ -78,9 +123,14 @@ export function useChat(settings: AgentSettings) {
           setMessages((prev) => {
             const last = prev[prev.length - 1]
             if (last?.id === messageId && last.role === 'assistant') {
+              // Close any open thinking blocks when tool starts
+              const updated = { ...last }
+              updated.thinkingBlocks = updated.thinkingBlocks.map((tb) =>
+                tb.isOpen ? { ...tb, isOpen: false } : tb
+              )
               return [
                 ...prev.slice(0, -1),
-                { ...last, toolCalls: [...last.toolCalls, newToolCall], isStreaming: true },
+                { ...updated, toolCalls: [...updated.toolCalls, newToolCall], isStreaming: true },
               ]
             }
             // Create new assistant message if it doesn't exist
@@ -89,6 +139,7 @@ export function useChat(settings: AgentSettings) {
               role: 'assistant',
               text: '',
               toolCalls: [newToolCall],
+              thinkingBlocks: [],
               isStreaming: true,
               timestamp: Date.now(),
             }
@@ -170,6 +221,7 @@ export function useChat(settings: AgentSettings) {
         role: 'user',
         text,
         toolCalls: [],
+        thinkingBlocks: [],
         isStreaming: false,
         timestamp: Date.now(),
       }
@@ -210,5 +262,19 @@ export function useChat(settings: AgentSettings) {
     portRef.current?.postMessage({ type: 'clear_session', sessionId })
   }, [sessionId])
 
-  return { messages, isRunning, error, sendMessage, stopAgent, clearMessages }
+  const toggleThinkingBlock = useCallback((messageId: string, blockId: string) => {
+    setMessages((prev) =>
+      prev.map((msg) => {
+        if (msg.id !== messageId) return msg
+        return {
+          ...msg,
+          thinkingBlocks: msg.thinkingBlocks.map((tb) =>
+            tb.id === blockId ? { ...tb, isOpen: !tb.isOpen } : tb
+          ),
+        }
+      })
+    )
+  }, [])
+
+  return { messages, isRunning, error, sendMessage, stopAgent, clearMessages, toggleThinkingBlock }
 }

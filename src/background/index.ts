@@ -211,13 +211,17 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         }
 
         case 'save_settings': {
-          const { settings } = message as { settings: AgentSettings }
+          const { settings, theme } = message as { settings: AgentSettings; theme?: string }
           const stored: StoredSettings = {
             agentSettings: settings,
-            theme: 'system',
+            theme: (theme as 'light' | 'dark' | 'system') || 'system',
           }
-          await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: stored })
-          sendResponse({ success: true })
+          await chrome.storage.local.set({
+            [STORAGE_KEYS.SETTINGS]: stored,
+            'harbor_settings_cache': JSON.stringify(settings) // Debug cache
+          })
+          console.log('[Harbor] Settings saved:', stored)
+          sendResponse({ success: true, data: stored })
           break
         }
 

@@ -5,9 +5,10 @@ import ChatMessage from './ChatMessage'
 interface ChatMessagesProps {
   messages: UIMessage[]
   isRunning: boolean
+  onToggleThinking?: (messageId: string, blockId: string) => void
 }
 
-export default function ChatMessages({ messages, isRunning }: ChatMessagesProps) {
+export default function ChatMessages({ messages, isRunning, onToggleThinking }: ChatMessagesProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -18,7 +19,7 @@ export default function ChatMessages({ messages, isRunning }: ChatMessagesProps)
     <div className="h-full overflow-y-auto harbor-scrollbar">
       <div className="flex flex-col gap-2 p-4">
         {messages.map((msg) => (
-          <ChatMessage key={msg.id} message={msg} />
+          <ChatMessage key={msg.id} message={msg} onToggleThinking={onToggleThinking} />
         ))}
 
         {isRunning && messages[messages.length - 1]?.role === 'user' && (

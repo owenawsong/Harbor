@@ -12,7 +12,7 @@ interface ChatProps {
 }
 
 export default function Chat({ settings, onOpenSettings }: ChatProps) {
-  const { messages, isRunning, error, sendMessage, stopAgent, clearMessages } = useChat(settings)
+  const { messages, isRunning, error, sendMessage, stopAgent, clearMessages, toggleThinkingBlock } = useChat(settings)
   const [activeTab, setActiveTab] = useState<chrome.tabs.Tab | null>(null)
   const [attachActiveTab, setAttachActiveTab] = useState(false)
 
@@ -75,7 +75,7 @@ export default function Chat({ settings, onOpenSettings }: ChatProps) {
             }}
           />
         ) : (
-          <ChatMessages messages={messages} isRunning={isRunning} />
+          <ChatMessages messages={messages} isRunning={isRunning} onToggleThinking={toggleThinkingBlock} />
         )}
       </div>
 

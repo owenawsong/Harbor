@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
-import { ArrowLeft, Eye, EyeOff, ExternalLink, Info } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import { ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check } from 'lucide-react'
 import type { AgentSettings, ProviderName } from '../../shared/types'
-import { DEFAULT_MODELS, PROVIDER_LABELS, API_ENDPOINTS } from '../../shared/constants'
+import { DEFAULT_MODELS, PROVIDER_LABELS } from '../../shared/constants'
 
 interface SettingsProps {
   settings: AgentSettings
@@ -18,20 +18,30 @@ const PROVIDER_API_KEY_LINKS: Partial<Record<ProviderName, string>> = {
 }
 
 export default function Settings({ settings, theme, onSave, onBack }: SettingsProps) {
-  const [provider, setProvider] = useState(settings.provider.provider as ProviderName)
-  const [model, setModel] = useState(settings.provider.model)
+  const [provider, setProvider] = useState<ProviderName>(settings.provider.provider as ProviderName || 'anthropic')
+  const [model, setModel] = useState(settings.provider.model || 'claude-opus-4-5-20251101')
   const [apiKey, setApiKey] = useState(settings.provider.apiKey ?? '')
   const [baseUrl, setBaseUrl] = useState(settings.provider.baseUrl ?? '')
   const [maxTokens, setMaxTokens] = useState(settings.maxTokens ?? 8192)
   const [enableMemory, setEnableMemory] = useState(settings.enableMemory ?? false)
-  const [currentTheme, setCurrentTheme] = useState(theme)
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'system'>(theme || 'system')
   const [showApiKey, setShowApiKey] = useState(false)
   const [customModel, setCustomModel] = useState('')
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
 
   const availableModels = DEFAULT_MODELS[provider] ?? []
   const apiKeyLink = PROVIDER_API_KEY_LINKS[provider]
   const needsApiKey = provider !== 'ollama'
   const needsBaseUrl = provider === 'openai-compatible' || provider === 'ollama'
+
+  useEffect(() => {
+    // Set default base URLs when provider changes
+    if (provider === 'ollama' && !baseUrl) {
+      setBaseUrl('http://localhost:11434')
+    } else if (provider === 'openai-compatible' && !baseUrl) {
+      setBaseUrl('http://localhost:1234/v1')
+    }
+  }, [provider])
 
   const handleProviderChange = (newProvider: ProviderName) => {
     setProvider(newProvider)
@@ -39,30 +49,36 @@ export default function Settings({ settings, theme, onSave, onBack }: SettingsPr
     if (models && models.length > 0) {
       setModel(models[0])
     }
-    // Set default base URLs
-    if (newProvider === 'ollama') {
-      setBaseUrl('http://localhost:11434')
-    } else if (newProvider === 'openai-compatible') {
-      setBaseUrl('http://localhost:1234/v1')
-    }
   }
 
-  const handleSave = () => {
-    const effectiveModel = customModel || model
-    onSave(
-      {
-        provider: {
-          provider,
-          model: effectiveModel,
-          apiKey: apiKey || undefined,
-          baseUrl: baseUrl || undefined,
-        },
-        maxTokens,
-        enableMemory,
-        enableScreenshots: true,
+  const handleSave = async () => {
+    const effectiveModel = customModel.trim() || model
+    const newSettings: AgentSettings = {
+      provider: {
+        provider,
+        model: effectiveModel,
+        apiKey: apiKey || undefined,
+        baseUrl: baseUrl || undefined,
       },
-      currentTheme
-    )
+      maxTokens,
+      enableMemory,
+      enableScreenshots: true,
+    }
+
+    setSaveStatus('saving')
+
+    // Save via background script
+    await chrome.runtime.sendMessage({
+      type: 'save_settings',
+      settings: newSettings,
+      theme: currentTheme,
+    })
+
+    // Trigger parent save
+    onSave(newSettings, currentTheme)
+
+    setSaveStatus('saved')
+    setTimeout(() => setSaveStatus('idle'), 2000)
   }
 
   return (
@@ -247,13 +263,14 @@ export default function Settings({ settings, theme, onSave, onBack }: SettingsPr
                 <button
                   key={t}
                   onClick={() => setCurrentTheme(t)}
-                  className={`py-2 rounded-lg border text-sm font-medium transition-all capitalize ${
+                  className={`py-2 px-3 rounded-lg border text-sm font-medium transition-all capitalize flex items-center justify-center gap-1 ${
                     currentTheme === t
-                      ? 'border-harbor-500 bg-harbor-50 dark:bg-harbor-950/50 text-harbor-700 dark:text-harbor-300'
-                      : 'border-[rgb(var(--harbor-border))] text-[rgb(var(--harbor-text-muted))] hover:border-harbor-300'
+                      ? 'border-harbor-500 bg-harbor-500/10 text-harbor-600 dark:text-harbor-400'
+                      : 'border-[rgb(var(--harbor-border))] text-[rgb(var(--harbor-text-muted))] hover:border-harbor-400'
                   }`}
                 >
-                  {t === 'system' ? '⚙️ Auto' : t === 'light' ? '☀️ Light' : '🌙 Dark'}
+                  {currentTheme === t && <Check size={12} />}
+                  {t === 'system' ? 'Auto' : t === 'light' ? 'Light' : 'Dark'}
                 </button>
               ))}
             </div>
@@ -284,9 +301,17 @@ export default function Settings({ settings, theme, onSave, onBack }: SettingsPr
       <div className="px-4 py-3 border-t border-[rgb(var(--harbor-border))]">
         <button
           onClick={handleSave}
-          className="w-full py-2.5 bg-harbor-600 hover:bg-harbor-700 text-white font-medium rounded-xl transition-colors"
+          disabled={saveStatus === 'saving'}
+          className={`w-full py-2.5 font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${
+            saveStatus === 'saved'
+              ? 'bg-green-600 hover:bg-green-700 text-white'
+              : saveStatus === 'saving'
+                ? 'bg-harbor-500 text-white opacity-75 cursor-not-allowed'
+                : 'bg-harbor-600 hover:bg-harbor-700 text-white'
+          }`}
         >
-          Save Settings
+          {saveStatus === 'saved' && <Check size={16} />}
+          {saveStatus === 'saved' ? 'Settings saved' : saveStatus === 'saving' ? 'Saving...' : 'Save settings'}
         </button>
       </div>
     </div>
