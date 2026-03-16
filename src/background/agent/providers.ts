@@ -97,6 +97,7 @@ export const anthropicProvider: ProviderAdapter = {
         'Content-Type': 'application/json',
         'x-api-key': provider.apiKey ?? '',
         'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-only-api': 'true',
       },
       body: JSON.stringify({
         model: provider.model,
