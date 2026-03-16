@@ -1,15 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import type { AgentSettings, AgentEvent } from '../../shared/types'
+import type { AgentSettings, AgentEvent, ChatMessage } from '../../shared/types'
 import { PORT_NAME } from '../../shared/constants'
 
-export interface UIMessage {
+// ─── UI Types ─────────────────────────────────────────────────────────────────
+
+export interface UIThinkingBlock {
   id: string
-  role: 'user' | 'assistant'
   text: string
-  toolCalls: UIToolCall[]
-  isStreaming: boolean
-  error?: string
-  timestamp: number
+  isOpen: boolean
 }
 
 export interface UIToolCall {
@@ -20,129 +18,207 @@ export interface UIToolCall {
   status: 'pending' | 'running' | 'done' | 'error'
 }
 
-function generateId(): string {
+export interface UIMessage {
+  id: string
+  role: 'user' | 'assistant'
+  text: string
+  toolCalls: UIToolCall[]
+  thinkingBlocks: UIThinkingBlock[]
+  isStreaming: boolean
+  error?: string
+  timestamp: number
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function uid(): string {
   return Math.random().toString(36).slice(2, 11)
 }
 
-export function useChat(settings: AgentSettings) {
+function convertStoredMessages(messages: ChatMessage[]): UIMessage[] {
+  const result: UIMessage[] = []
+
+  for (const msg of messages) {
+    if (msg.role !== 'user' && msg.role !== 'assistant') continue
+
+    const textPart = msg.content.find((c) => c.type === 'text')
+    const text = textPart?.type === 'text' ? textPart.text : ''
+
+    const toolCalls: UIToolCall[] = msg.content
+      .filter((c) => c.type === 'tool_call')
+      .map((c) => {
+        if (c.type !== 'tool_call') return null
+        return { id: c.id, name: c.name, input: c.input, status: 'done' as const }
+      })
+      .filter(Boolean) as UIToolCall[]
+
+    if (text || toolCalls.length) {
+      result.push({
+        id: msg.id,
+        role: msg.role as 'user' | 'assistant',
+        text,
+        toolCalls,
+        thinkingBlocks: [],
+        isStreaming: false,
+        timestamp: msg.timestamp,
+      })
+    }
+  }
+
+  return result
+}
+
+// ─── Hook ─────────────────────────────────────────────────────────────────────
+
+export function useChat(settings: AgentSettings, loadSessionId?: string | null) {
   const [messages, setMessages] = useState<UIMessage[]>([])
-  const [sessionId] = useState(() => generateId())
+  const [sessionId] = useState(() => loadSessionId ?? uid())
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const portRef = useRef<chrome.runtime.Port | null>(null)
-  const currentAssistantMsgId = useRef<string | null>(null)
+  // Load session when sessionId changes
+  useEffect(() => {
+    setMessages([])
+    setIsRunning(false)
+    setError(null)
 
-  // Connect to background service worker
+    if (loadSessionId) {
+      chrome.runtime.sendMessage({ type: 'get_session', sessionId: loadSessionId }, (res) => {
+        if (res?.success && res.data?.messages) {
+          setMessages(convertStoredMessages(res.data.messages))
+        }
+      })
+    }
+  }, [loadSessionId])
+
+  const portRef = useRef<chrome.runtime.Port | null>(null)
+  const currentMsgId = useRef<string | null>(null)
+
   useEffect(() => {
     const port = chrome.runtime.connect({ name: PORT_NAME })
     portRef.current = port
 
     port.onMessage.addListener((event: AgentEvent) => {
       switch (event.type) {
+        // ── Streaming text ──────────────────────────────────────────────────
         case 'text_delta': {
           const { text, messageId } = event
-          currentAssistantMsgId.current = messageId
+          currentMsgId.current = messageId
           setMessages((prev) => {
             const last = prev[prev.length - 1]
             if (last?.id === messageId && last.role === 'assistant') {
-              return [
-                ...prev.slice(0, -1),
-                { ...last, text: last.text + text, isStreaming: true },
-              ]
+              return [...prev.slice(0, -1), { ...last, text: last.text + text, isStreaming: true }]
             }
-            // New assistant message
-            const newMsg: UIMessage = {
-              id: messageId,
-              role: 'assistant',
-              text,
-              toolCalls: [],
-              isStreaming: true,
-              timestamp: Date.now(),
-            }
-            return [...prev, newMsg]
+            return [...prev, {
+              id: messageId, role: 'assistant', text, toolCalls: [],
+              thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
+            }]
           })
           break
         }
 
+        // ── Thinking blocks ─────────────────────────────────────────────────
+        case 'thinking': {
+          const { text } = event
+          const msgId = currentMsgId.current ?? (() => {
+            const id = uid()
+            currentMsgId.current = id
+            return id
+          })()
+
+          setMessages((prev) => {
+            const idx = prev.findIndex((m) => m.id === msgId && m.role === 'assistant')
+
+            if (idx === -1) {
+              return [...prev, {
+                id: msgId, role: 'assistant', text: '', toolCalls: [],
+                thinkingBlocks: [{ id: uid(), text, isOpen: true }],
+                isStreaming: true, timestamp: Date.now(),
+              }]
+            }
+
+            const updated = [...prev]
+            const msg = { ...updated[idx] }
+            const lastBlock = msg.thinkingBlocks[msg.thinkingBlocks.length - 1]
+
+            if (lastBlock?.isOpen) {
+              msg.thinkingBlocks = [
+                ...msg.thinkingBlocks.slice(0, -1),
+                { ...lastBlock, text: lastBlock.text + text },
+              ]
+            } else {
+              msg.thinkingBlocks = [...msg.thinkingBlocks, { id: uid(), text, isOpen: true }]
+            }
+
+            updated[idx] = msg
+            return updated
+          })
+          break
+        }
+
+        // ── Tool call start ─────────────────────────────────────────────────
         case 'tool_call_start': {
           const { messageId, toolCallId, toolName } = event
-          currentAssistantMsgId.current = messageId
-
-          const newToolCall: UIToolCall = {
-            id: toolCallId,
-            name: toolName,
-            status: 'running',
-          }
+          currentMsgId.current = messageId
 
           setMessages((prev) => {
             const last = prev[prev.length - 1]
+            const newTool: UIToolCall = { id: toolCallId, name: toolName, status: 'running' }
+
             if (last?.id === messageId && last.role === 'assistant') {
-              return [
-                ...prev.slice(0, -1),
-                { ...last, toolCalls: [...last.toolCalls, newToolCall], isStreaming: true },
-              ]
+              return [...prev.slice(0, -1), {
+                ...last,
+                thinkingBlocks: last.thinkingBlocks.map((b) => ({ ...b, isOpen: false })),
+                toolCalls: [...last.toolCalls, newTool],
+                isStreaming: true,
+              }]
             }
-            // Create new assistant message if it doesn't exist
-            const newMsg: UIMessage = {
-              id: messageId,
-              role: 'assistant',
-              text: '',
-              toolCalls: [newToolCall],
-              isStreaming: true,
-              timestamp: Date.now(),
-            }
-            return [...prev, newMsg]
+            return [...prev, {
+              id: messageId, role: 'assistant', text: '', toolCalls: [newTool],
+              thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
+            }]
           })
           break
         }
 
+        // ── Tool call result ────────────────────────────────────────────────
         case 'tool_call_result': {
           const { toolCallId, result } = event
           setMessages((prev) =>
             prev.map((msg) => {
-              if (msg.role !== 'assistant') return msg
-              const toolCallIdx = msg.toolCalls.findIndex((tc) => tc.id === toolCallId)
-              if (toolCallIdx === -1) return msg
-              const updatedCalls = [...msg.toolCalls]
-              updatedCalls[toolCallIdx] = {
-                ...updatedCalls[toolCallIdx],
-                result,
-                status: result.success ? 'done' : 'error',
-              }
-              return { ...msg, toolCalls: updatedCalls }
-            })
+              const i = msg.toolCalls.findIndex((t) => t.id === toolCallId)
+              if (i === -1) return msg
+              const calls = [...msg.toolCalls]
+              calls[i] = { ...calls[i], result, status: result.success ? 'done' : 'error' }
+              return { ...msg, toolCalls: calls }
+            }),
           )
           break
         }
 
+        // ── Message complete ────────────────────────────────────────────────
         case 'message_complete': {
           const { messageId } = event
           setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === messageId ? { ...msg, isStreaming: false } : msg
-            )
+            prev.map((m) => (m.id === messageId ? { ...m, isStreaming: false } : m)),
           )
           setIsRunning(false)
-          currentAssistantMsgId.current = null
+          currentMsgId.current = null
           break
         }
 
+        // ── Error ───────────────────────────────────────────────────────────
         case 'error': {
-          const { error } = event
-          setError(error)
+          const { error: err } = event
+          setError(err)
           setIsRunning(false)
-
-          // Mark current message as having error
-          const msgId = currentAssistantMsgId.current
-          if (msgId) {
+          const mid = currentMsgId.current
+          if (mid) {
             setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === msgId ? { ...msg, isStreaming: false, error } : msg
-              )
+              prev.map((m) => (m.id === mid ? { ...m, isStreaming: false, error: err } : m)),
             )
           }
-          currentAssistantMsgId.current = null
+          currentMsgId.current = null
           break
         }
       }
@@ -152,54 +228,36 @@ export function useChat(settings: AgentSettings) {
       portRef.current = null
     })
 
-    return () => {
-      port.disconnect()
-    }
+    return () => port.disconnect()
   }, [])
+
+  // ─── Actions ───────────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
     (text: string, attachedTabId?: number) => {
       if (!portRef.current || isRunning) return
-
       setError(null)
       setIsRunning(true)
 
-      // Add user message
       const userMsg: UIMessage = {
-        id: generateId(),
-        role: 'user',
-        text,
-        toolCalls: [],
-        isStreaming: false,
-        timestamp: Date.now(),
+        id: uid(), role: 'user', text, toolCalls: [],
+        thinkingBlocks: [], isStreaming: false, timestamp: Date.now(),
       }
       setMessages((prev) => [...prev, userMsg])
 
-      // Send to background
-      portRef.current.postMessage({
-        type: 'chat',
-        sessionId,
-        message: text,
-        attachedTabId,
-      })
+      portRef.current.postMessage({ type: 'chat', sessionId, message: text, attachedTabId })
     },
-    [sessionId, isRunning]
+    [sessionId, isRunning],
   )
 
   const stopAgent = useCallback(() => {
     if (!portRef.current) return
     portRef.current.postMessage({ type: 'stop', sessionId })
     setIsRunning(false)
-
-    // Mark current message as stopped
-    const msgId = currentAssistantMsgId.current
-    if (msgId) {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === msgId ? { ...msg, isStreaming: false } : msg
-        )
-      )
-      currentAssistantMsgId.current = null
+    const mid = currentMsgId.current
+    if (mid) {
+      setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, isStreaming: false } : m)))
+      currentMsgId.current = null
     }
   }, [sessionId])
 
@@ -210,5 +268,23 @@ export function useChat(settings: AgentSettings) {
     portRef.current?.postMessage({ type: 'clear_session', sessionId })
   }, [sessionId])
 
-  return { messages, isRunning, error, sendMessage, stopAgent, clearMessages }
+  const toggleThinkingBlock = useCallback((messageId: string, blockId: string) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id !== messageId
+          ? msg
+          : {
+              ...msg,
+              thinkingBlocks: msg.thinkingBlocks.map((b) =>
+                b.id === blockId ? { ...b, isOpen: !b.isOpen } : b,
+              ),
+            },
+      ),
+    )
+  }, [])
+
+  return {
+    messages, isRunning, error, sessionId,
+    sendMessage, stopAgent, clearMessages, toggleThinkingBlock,
+  }
 }

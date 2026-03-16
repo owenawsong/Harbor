@@ -1,71 +1,73 @@
-import React, { useState } from 'react'
-import { Settings as SettingsIcon, Plus, RotateCcw } from 'lucide-react'
+import React from 'react'
+import { Settings as SettingsIcon, Clock } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
 import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
 import ChatInput from './ChatInput'
 import EmptyState from './EmptyState'
 
-interface ChatProps {
+interface Props {
   settings: AgentSettings
+  currentSessionId?: string | null
   onOpenSettings: () => void
+  onViewHistory: () => void
 }
 
-export default function Chat({ settings, onOpenSettings }: ChatProps) {
-  const { messages, isRunning, error, sendMessage, stopAgent, clearMessages } = useChat(settings)
-  const [activeTab, setActiveTab] = useState<chrome.tabs.Tab | null>(null)
-  const [attachActiveTab, setAttachActiveTab] = useState(false)
+export default function Chat({ settings, currentSessionId, onOpenSettings, onViewHistory }: Props) {
+  const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock } =
+    useChat(settings, currentSessionId)
 
-  const hasApiKey = Boolean(settings.provider.apiKey) || settings.provider.provider === 'ollama'
+  const hasApiKey =
+    Boolean(settings.provider.apiKey) || settings.provider.provider === 'ollama'
+
+  // Show just the short model name without version hash
+  const modelLabel = (() => {
+    const m = settings.provider.model
+    const parts = m.split('/')
+    const name = parts[parts.length - 1]
+    return name.split('-').slice(0, 3).join('-')
+  })()
 
   return (
     <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[rgb(var(--harbor-border))]">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-lg bg-harbor-600 flex items-center justify-center">
-            <span className="text-white text-xs font-bold">H</span>
-          </div>
-          <span className="font-semibold text-[rgb(var(--harbor-text))]">Harbor</span>
-          <span className="text-xs text-[rgb(var(--harbor-text-muted))] bg-[rgb(var(--harbor-surface))] px-1.5 py-0.5 rounded">
-            {settings.provider.model.split('/').pop()?.split('-').slice(0, 2).join('-') ?? settings.provider.model}
+      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between px-3 py-2.5 border-b border-[rgb(var(--harbor-border))]">
+        <div className="flex items-center gap-2 min-w-0">
+          <img src="/icons/harbor-logo.svg" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0" />
+          <span className="font-semibold text-sm text-[rgb(var(--harbor-text))]">Harbor</span>
+          <span className="text-[11px] text-[rgb(var(--harbor-text-faint))] border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] px-1.5 py-0.5 rounded-md font-mono truncate max-w-[130px]">
+            {modelLabel}
           </span>
         </div>
 
-        <div className="flex items-center gap-1">
-          {messages.length > 0 && (
-            <button
-              onClick={clearMessages}
-              className="p-1.5 rounded-md hover:bg-[rgb(var(--harbor-surface))] text-[rgb(var(--harbor-text-muted))] hover:text-[rgb(var(--harbor-text))] transition-colors"
-              title="New conversation"
-            >
-              <Plus size={16} />
-            </button>
-          )}
-          <button
-            onClick={onOpenSettings}
-            className="p-1.5 rounded-md hover:bg-[rgb(var(--harbor-surface))] text-[rgb(var(--harbor-text-muted))] hover:text-[rgb(var(--harbor-text))] transition-colors"
-            title="Settings"
-          >
-            <SettingsIcon size={16} />
+        <div className="flex items-center gap-0.5">
+          <button onClick={onViewHistory} className="icon-btn" title="History">
+            <Clock size={15} />
+          </button>
+          <button onClick={onOpenSettings} className="icon-btn" title="Settings">
+            <SettingsIcon size={15} />
           </button>
         </div>
       </div>
 
-      {/* No API Key Warning */}
+      {/* ── API key warning ─────────────────────────────────────────────────── */}
       {!hasApiKey && (
-        <div className="mx-4 mt-3 p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
-          <p className="text-sm text-amber-800 dark:text-amber-300">
-            No API key configured.{' '}
-            <button onClick={onOpenSettings} className="underline font-medium hover:no-underline">
-              Open Settings
-            </button>{' '}
-            to get started.
-          </p>
+        <div className="mx-3 mt-2.5 px-3 py-2 rounded-lg text-xs border border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300">
+          No API key configured.{' '}
+          <button onClick={onOpenSettings} className="font-semibold underline underline-offset-2 hover:no-underline">
+            Open Settings
+          </button>
         </div>
       )}
 
-      {/* Messages or Empty State */}
+      {/* ── Runtime error banner ─────────────────────────────────────────────── */}
+      {error && (
+        <div className="mx-3 mt-2.5 px-3 py-2 rounded-lg text-xs border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-300">
+          {error}
+        </div>
+      )}
+
+      {/* ── Messages / Empty state ──────────────────────────────────────────── */}
       <div className="flex-1 overflow-hidden">
         {messages.length === 0 ? (
           <EmptyState
@@ -75,17 +77,30 @@ export default function Chat({ settings, onOpenSettings }: ChatProps) {
             }}
           />
         ) : (
-          <ChatMessages messages={messages} isRunning={isRunning} />
+          <ChatMessages
+            messages={messages}
+            isRunning={isRunning}
+            onToggleThinking={toggleThinkingBlock}
+          />
         )}
       </div>
 
-      {/* Input */}
+      {/* ── Input ──────────────────────────────────────────────────────────── */}
       <ChatInput
-        onSend={sendMessage}
+        onSend={(text, attachments) => {
+          let fullText = text
+          if (attachments && attachments.length > 0) {
+            const attText = attachments
+              .map((a) => `\n\n[Attached file: ${a.name}]\n${a.dataUrl}`)
+              .join('')
+            fullText = text + attText
+          }
+          sendMessage(fullText)
+        }}
         onStop={stopAgent}
         isRunning={isRunning}
         disabled={!hasApiKey}
-        placeholder={hasApiKey ? 'Ask Harbor to do anything...' : 'Configure API key in settings first'}
+        placeholder={hasApiKey ? 'Ask Harbor anything…' : 'Configure your API key first'}
       />
     </div>
   )
