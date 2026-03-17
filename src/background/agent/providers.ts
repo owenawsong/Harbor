@@ -250,13 +250,31 @@ function* parseThinkChunk(
 
 // ─── OpenAI Provider ──────────────────────────────────────────────────────────
 
-// Strip base64 image data from tool result content to avoid token blowups.
-// Replaces data:image/...;base64,<data> blobs with a short placeholder.
+// Strip base64 image data to avoid token blowups for text-only providers.
+// Also strips the [Attached file: ...] marker added by the chat UI.
 function stripBase64Images(content: string): string {
-  return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[screenshot]')
+  let s = content
+  // Remove full attachment blocks: \n\n[Attached file: name]\ndata:image/...
+  s = s.replace(/\n\n\[Attached file: [^\]]+\]\ndata:image\/[^\s]+/g, '')
+  // Remove bare data URLs (e.g. from tool results / screenshots)
+  s = s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[screenshot]')
+  return s
 }
 
-function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string): unknown[] {
+// Extract [Attached file: name]\ndata:image/... blocks from user text into image URLs.
+// Returns cleaned text and an array of image data URLs.
+function extractAttachments(text: string): { cleanText: string; images: string[] } {
+  const images: string[] = []
+  const cleanText = text
+    .replace(/\n\n\[Attached file: [^\]]+\]\n(data:image\/[^\s]+)/g, (_, url) => {
+      images.push(url)
+      return ''
+    })
+    .trim()
+  return { cleanText, images }
+}
+
+function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string, imageSupport = false): unknown[] {
   const result: unknown[] = [{ role: 'system', content: systemPrompt }]
 
   for (const msg of messages) {
@@ -265,10 +283,21 @@ function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string): 
       const toolResults = msg.content.filter((p) => p.type === 'tool_result')
 
       if (textParts.length > 0) {
-        result.push({
-          role: 'user',
-          content: textParts.map((p) => (p.type === 'text' ? p.text : '')).join('\n'),
-        })
+        const combined = textParts.map((p) => (p.type === 'text' ? p.text : '')).join('\n')
+
+        if (imageSupport) {
+          const { cleanText, images } = extractAttachments(combined)
+          if (images.length > 0) {
+            const parts: unknown[] = []
+            if (cleanText) parts.push({ type: 'text', text: cleanText })
+            for (const url of images) parts.push({ type: 'image_url', image_url: { url } })
+            result.push({ role: 'user', content: parts })
+          } else {
+            result.push({ role: 'user', content: combined })
+          }
+        } else {
+          result.push({ role: 'user', content: stripBase64Images(combined) })
+        }
       }
 
       for (const tr of toolResults) {
@@ -323,6 +352,7 @@ async function* openAICompatibleComplete(
   apiKey: string,
   options: CompletionOptions,
   extraBody?: { temperature?: number; top_p?: number; max_tokens?: number },
+  imageSupport = false,
 ): AsyncGenerator<CompletionEvent> {
   const { settings, messages, tools, systemPrompt, signal } = options
   const providerName = settings.provider.provider
@@ -343,7 +373,7 @@ async function* openAICompatibleComplete(
     },
     body: JSON.stringify({
       model: settings.provider.model,
-      messages: toOpenAIMessages(messages, systemPrompt),
+      messages: toOpenAIMessages(messages, systemPrompt, imageSupport),
       tools: tools.length > 0 ? toOpenAITools(tools) : undefined,
       tool_choice: tools.length > 0 ? 'auto' : undefined,
       max_tokens: extraBody?.max_tokens ?? settings.maxTokens ?? 8192,
@@ -592,9 +622,11 @@ const HARBOR_FREE_POE_MODEL = 'minimax-m2.5'
 function hasImageContent(messages: NormalizedMessage[]): boolean {
   return messages.some((msg) =>
     msg.content.some((part) => {
-      if (part.type !== 'tool_result') return false
-      // Screenshots are stored as base64 in JSON-serialised tool output
-      return part.content.includes('data:image') || part.content.includes('"screenshot"')
+      if (part.type === 'text') return part.text.includes('data:image')
+      if (part.type === 'tool_result') {
+        return part.content.includes('data:image') || part.content.includes('"screenshot"')
+      }
+      return false
     }),
   )
 }
@@ -613,7 +645,7 @@ export const harborFreeProvider: ProviderAdapter = {
           provider: { ...options.settings.provider, model: HARBOR_FREE_POE_MODEL },
         },
       }
-      return openAICompatibleComplete(HARBOR_FREE_POE_URL, HARBOR_FREE_KEY, poeOptions)
+      return openAICompatibleComplete(HARBOR_FREE_POE_URL, HARBOR_FREE_KEY, poeOptions, undefined, true)
     }
 
     const nvidiaOptions = {

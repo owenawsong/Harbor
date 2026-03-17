@@ -19,7 +19,9 @@ export default function Chat({ settings, currentSessionId, onOpenSettings, onVie
     useChat(settings, currentSessionId)
 
   const hasApiKey =
-    Boolean(settings.provider.apiKey) || settings.provider.provider === 'ollama'
+    Boolean(settings.provider.apiKey) ||
+    settings.provider.provider === 'ollama' ||
+    settings.provider.provider === 'harbor-free'
 
   return (
     <div className="flex flex-col h-full">
