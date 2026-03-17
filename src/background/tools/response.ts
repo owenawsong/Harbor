@@ -52,20 +52,29 @@ export async function waitForNavigation(tabId: number, timeoutMs = 10000): Promi
 }
 
 export async function ensureContentScript(tabId: number): Promise<void> {
+  // Check if already loaded
   try {
-    // Try to ping the content script
     await chrome.tabs.sendMessage(tabId, { type: 'harbor_ping' })
+    return // Already running
   } catch {
-    // Content script not loaded, inject it
+    // Not loaded, inject it
+  }
+
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] })
+  } catch {
+    // Page may not allow injection (chrome:// pages, PDFs, etc.) — silently continue
+    return
+  }
+
+  // Retry ping up to 5 times (300ms each) to wait for content script to initialize
+  for (let i = 0; i < 5; i++) {
+    await new Promise((r) => setTimeout(r, 300))
     try {
-      await chrome.scripting.executeScript({
-        target: { tabId },
-        files: ['content.js'],
-      })
-      // Wait a bit for it to initialize
-      await new Promise((r) => setTimeout(r, 200))
+      await chrome.tabs.sendMessage(tabId, { type: 'harbor_ping' })
+      return // Ready
     } catch {
-      // May already be injected or page doesn't allow injection
+      continue
     }
   }
 }

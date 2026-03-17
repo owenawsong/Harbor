@@ -187,7 +187,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           break
 
         case 'get_active_tab': {
-          const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+          const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
           sendResponse({ success: true, data: tab })
           break
         }

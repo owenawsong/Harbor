@@ -66,13 +66,13 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       return chrome.tabs.sendMessage(tabId, msg)
     },
     async getActiveTab() {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
       return tab
     },
     async captureScreenshot(tabId?: number) {
       let targetTabId = tabId
       if (!targetTabId) {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+        const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
         targetTabId = tab?.id
       }
       if (!targetTabId) throw new Error('No tab to screenshot')

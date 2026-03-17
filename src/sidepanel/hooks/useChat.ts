@@ -93,12 +93,12 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
 
   const portRef = useRef<chrome.runtime.Port | null>(null)
   const currentMsgId = useRef<string | null>(null)
+  // Holds the reconnect function so sendMessage can call it
+  const connectPortRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
-    const port = chrome.runtime.connect({ name: PORT_NAME })
-    portRef.current = port
-
-    port.onMessage.addListener((event: AgentEvent) => {
+    // Event handler defined once; state setters are stable refs so no deps needed
+    function handleEvent(event: AgentEvent) {
       switch (event.type) {
         // ── Streaming text ──────────────────────────────────────────────────
         case 'text_delta': {
@@ -222,28 +222,52 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           break
         }
       }
-    })
+    }
 
-    port.onDisconnect.addListener(() => {
+    function connectPort() {
+      const port = chrome.runtime.connect({ name: PORT_NAME })
+      portRef.current = port
+      port.onMessage.addListener(handleEvent)
+      port.onDisconnect.addListener(() => {
+        portRef.current = null
+      })
+    }
+
+    connectPortRef.current = connectPort
+    connectPort()
+
+    return () => {
+      connectPortRef.current = null
+      portRef.current?.disconnect()
       portRef.current = null
-    })
-
-    return () => port.disconnect()
+    }
   }, [])
 
   // ─── Actions ───────────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
     (text: string, attachedTabId?: number) => {
-      if (!portRef.current || isRunning) return
+      if (isRunning) return
       setError(null)
       setIsRunning(true)
 
+      // Always show the user's message immediately
       const userMsg: UIMessage = {
         id: uid(), role: 'user', text, toolCalls: [],
         thinkingBlocks: [], isStreaming: false, timestamp: Date.now(),
       }
       setMessages((prev) => [...prev, userMsg])
+
+      // Reconnect port if background service worker went idle
+      if (!portRef.current) {
+        connectPortRef.current?.()
+      }
+
+      if (!portRef.current) {
+        setError('Lost connection to agent. Please try again.')
+        setIsRunning(false)
+        return
+      }
 
       portRef.current.postMessage({ type: 'chat', sessionId, message: text, attachedTabId })
     },

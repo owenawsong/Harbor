@@ -3,7 +3,7 @@ import { ok, error, sendToContentScript } from './response'
 import { SCREENSHOT_QUALITY } from '../../shared/constants'
 
 async function getActiveTabId(): Promise<number | undefined> {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+  const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
   return tab?.id
 }
 
