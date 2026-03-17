@@ -57,7 +57,7 @@ export const DEFAULT_MODELS: Record<string, string[]> = {
     'o3-mini',
     'Grok-2',
   ],
-  'harbor-free': ['minimaxai/minimax-m2.5'],
+  'harbor-free': ['qwen/qwen3.5-122b-a10b'],
 }
 
 export const PROVIDER_LABELS: Record<string, string> = {

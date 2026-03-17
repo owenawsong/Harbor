@@ -250,28 +250,31 @@ function* parseThinkChunk(
 
 // ─── OpenAI Provider ──────────────────────────────────────────────────────────
 
-// Strip base64 image data to avoid token blowups for text-only providers.
-// Also strips the [Attached file: ...] marker added by the chat UI.
+// Strip base64 media data to avoid token blowups for text-only providers.
+// Also strips the [Attached file: ...] markers added by the chat UI.
 function stripBase64Images(content: string): string {
   let s = content
-  // Remove full attachment blocks: \n\n[Attached file: name]\ndata:image/...
-  s = s.replace(/\n\n\[Attached file: [^\]]+\]\ndata:image\/[^\s]+/g, '')
+  // Remove full attachment blocks: \n\n[Attached file: name]\ndata:image/... or data:video/...
+  s = s.replace(/\n\n\[Attached file: [^\]]+\]\ndata:(?:image|video)\/[^\s]+/g, '')
   // Remove bare data URLs (e.g. from tool results / screenshots)
-  s = s.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[screenshot]')
+  s = s.replace(/data:(?:image|video)\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[media]')
   return s
 }
 
-// Extract [Attached file: name]\ndata:image/... blocks from user text into image URLs.
-// Returns cleaned text and an array of image data URLs.
-function extractAttachments(text: string): { cleanText: string; images: string[] } {
-  const images: string[] = []
+// Extract [Attached file: name]\ndata:image/... and data:video/... blocks from user text.
+// Returns cleaned text and typed media items.
+function extractAttachments(text: string): {
+  cleanText: string
+  media: Array<{ kind: 'image' | 'video'; url: string }>
+} {
+  const media: Array<{ kind: 'image' | 'video'; url: string }> = []
   const cleanText = text
-    .replace(/\n\n\[Attached file: [^\]]+\]\n(data:image\/[^\s]+)/g, (_, url) => {
-      images.push(url)
+    .replace(/\n\n\[Attached file: [^\]]+\]\n(data:(?:image|video)\/[^\s]+)/g, (_, url) => {
+      media.push({ kind: url.startsWith('data:video/') ? 'video' : 'image', url })
       return ''
     })
     .trim()
-  return { cleanText, images }
+  return { cleanText, media }
 }
 
 function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string, imageSupport = false): unknown[] {
@@ -286,11 +289,17 @@ function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string, i
         const combined = textParts.map((p) => (p.type === 'text' ? p.text : '')).join('\n')
 
         if (imageSupport) {
-          const { cleanText, images } = extractAttachments(combined)
-          if (images.length > 0) {
+          const { cleanText, media } = extractAttachments(combined)
+          if (media.length > 0) {
             const parts: unknown[] = []
             if (cleanText) parts.push({ type: 'text', text: cleanText })
-            for (const url of images) parts.push({ type: 'image_url', image_url: { url } })
+            for (const m of media) {
+              if (m.kind === 'video') {
+                parts.push({ type: 'video_url', video_url: { url: m.url } })
+              } else {
+                parts.push({ type: 'image_url', image_url: { url: m.url } })
+              }
+            }
             result.push({ role: 'user', content: parts })
           } else {
             result.push({ role: 'user', content: combined })
@@ -351,7 +360,7 @@ async function* openAICompatibleComplete(
   baseUrl: string,
   apiKey: string,
   options: CompletionOptions,
-  extraBody?: { temperature?: number; top_p?: number; max_tokens?: number },
+  extraBody?: { temperature?: number; top_p?: number; max_tokens?: number; chat_template_kwargs?: Record<string, unknown> },
   imageSupport = false,
 ): AsyncGenerator<CompletionEvent> {
   const { settings, messages, tools, systemPrompt, signal } = options
@@ -380,6 +389,7 @@ async function* openAICompatibleComplete(
       stream: true,
       ...(extraBody?.temperature !== undefined ? { temperature: extraBody.temperature } : {}),
       ...(extraBody?.top_p !== undefined ? { top_p: extraBody.top_p } : {}),
+      ...(extraBody?.chat_template_kwargs !== undefined ? { chat_template_kwargs: extraBody.chat_template_kwargs } : {}),
     }),
     signal,
   })
@@ -615,61 +625,36 @@ export const googleProvider: ProviderAdapter = {
 
 const HARBOR_FREE_KEY = 'FRBYc_WFolgpYEQFdTh0YCdlscP_ig3PBR6vpOgjrsw'
 const HARBOR_FREE_NVIDIA_URL = 'https://integrate.api.nvidia.com/v1'
-const HARBOR_FREE_NVIDIA_MODEL = 'minimaxai/minimax-m2.5'
-const HARBOR_FREE_POE_URL = 'https://api.poe.com/v1'
-// GPT-4o is vision-capable on Poe; minimax-m2.5 is text-only
-const HARBOR_FREE_POE_VISION_MODEL = 'GPT-4o'
-
-function hasImageContent(messages: NormalizedMessage[]): boolean {
-  return messages.some((msg) =>
-    msg.content.some((part) => {
-      if (part.type === 'text') return part.text.includes('data:image')
-      if (part.type === 'tool_result') {
-        return part.content.includes('data:image') || part.content.includes('"screenshot"')
-      }
-      return false
-    }),
-  )
-}
+// Qwen3.5-122B supports images (png/jpg/jpeg/webp, up to 5) and video (mp4/mov/webm, 1)
+const HARBOR_FREE_NVIDIA_MODEL = 'qwen/qwen3.5-122b-a10b'
 
 export const harborFreeProvider: ProviderAdapter = {
   name: 'harbor-free',
-  complete: (options) => {
-    const useImages = hasImageContent(options.messages)
-
-    if (useImages) {
-      // Poe supports multimodal; NVIDIA NIM does not
-      const poeOptions = {
+  // Qwen3.5 handles text, images, and video natively — no Poe fallback needed.
+  complete: (options) =>
+    openAICompatibleComplete(
+      HARBOR_FREE_NVIDIA_URL,
+      options.settings.provider.apiKey || HARBOR_FREE_KEY,
+      {
         ...options,
         settings: {
           ...options.settings,
-          provider: { ...options.settings.provider, model: HARBOR_FREE_POE_VISION_MODEL },
-        },
-      }
-      return openAICompatibleComplete(HARBOR_FREE_POE_URL, HARBOR_FREE_KEY, poeOptions, undefined, true)
-    }
-
-    const nvidiaOptions = {
-      ...options,
-      settings: {
-        ...options.settings,
-        provider: {
-          ...options.settings.provider,
-          model: options.settings.provider.apiKey
-            ? options.settings.provider.model // allow custom model when user brings own key
-            : HARBOR_FREE_NVIDIA_MODEL,
+          provider: {
+            ...options.settings.provider,
+            model: options.settings.provider.apiKey
+              ? options.settings.provider.model
+              : HARBOR_FREE_NVIDIA_MODEL,
+          },
         },
       },
-    }
-    return openAICompatibleComplete(
-      HARBOR_FREE_NVIDIA_URL,
-      options.settings.provider.apiKey || HARBOR_FREE_KEY,
-      nvidiaOptions,
-      // max_tokens capped at 8192 — NVIDIA NIM Minimax has 196608 total context;
-      // large output budgets leave insufficient room for conversation history.
-      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 8192, 8192) },
-    )
-  },
+      {
+        temperature: 0.45,
+        top_p: 0.95,
+        max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768),
+        chat_template_kwargs: { enable_thinking: true },
+      },
+      true, // imageSupport=true: extract image/video attachments into content parts
+    ),
 }
 
 // ─── Poe Provider ─────────────────────────────────────────────────────────────

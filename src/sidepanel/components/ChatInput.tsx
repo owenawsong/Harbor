@@ -107,7 +107,7 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
           multiple
           className="hidden"
           onChange={onFileChange}
-          accept="image/*,text/*,.pdf,.csv,.json,.md"
+          accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,text/*,.pdf,.csv,.json,.md"
         />
 
         <textarea

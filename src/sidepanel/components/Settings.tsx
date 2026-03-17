@@ -189,8 +189,8 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
               <div className="flex gap-2 px-3 py-2.5 rounded-lg bg-harbor-50 dark:bg-harbor-950/20 border border-harbor-200 dark:border-harbor-900">
                 <Info size={13} className="text-harbor-500 flex-shrink-0 mt-0.5" />
                 <p className="text-xs text-harbor-700 dark:text-harbor-300 leading-relaxed">
-                  No API key needed — powered by Minimax M2.5 via NVIDIA NIM.
-                  Pages with screenshots auto-switch to Poe for multimodal support.
+                  No API key needed — powered by Qwen3.5-122B via NVIDIA NIM.
+                  Supports images (png/jpg/webp, up to 5) and video (mp4/mov/webm).
                 </p>
               </div>
             )}
