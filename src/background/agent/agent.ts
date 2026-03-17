@@ -164,6 +164,8 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
           case 'message_complete':
             stopReason = event.stopReason
+            // Emit message_complete so the frontend stops the streaming cursor on this message.
+            // NOTE: isRunning stays true — agent_complete is emitted at the end of the full loop.
             onEvent({ type: 'message_complete', messageId, stopReason: event.stopReason })
             break
 
@@ -257,4 +259,6 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       error: `Agent reached maximum iterations (${MAX_TOOL_ITERATIONS}). Task may be incomplete.`,
     })
   }
+
+  onEvent({ type: 'agent_complete' })
 }

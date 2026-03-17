@@ -499,104 +499,14 @@ export const googleProvider: ProviderAdapter = {
 }
 
 // ─── Poe Provider ─────────────────────────────────────────────────────────────
-
-function toPoeMessages(messages: NormalizedMessage[]): unknown[] {
-  const result: unknown[] = []
-  for (const msg of messages) {
-    const textPart = msg.content.find((p) => p.type === 'text')
-    if (textPart && textPart.type === 'text' && textPart.text) {
-      result.push({
-        role: msg.role === 'assistant' ? 'bot' : 'user',
-        content: textPart.text,
-        content_type: 'text/markdown',
-        timestamp: 0,
-        attachments: [],
-      })
-    }
-  }
-  return result
-}
+// Poe exposes an OpenAI-compatible API at api.poe.com/v1.
+// Model name = the Poe bot handle (e.g. "Claude-3-7-Sonnet", "GPT-4o").
+// Thinking is embedded in the response text as *Thinking...*\n> ... (extracted by frontend).
 
 export const poeProvider: ProviderAdapter = {
   name: 'poe',
-  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-    const { settings, messages, systemPrompt, signal } = options
-    const { provider } = settings
-
-    if (!provider.apiKey) {
-      yield { type: 'error', error: 'Poe API key is not set. Please add your key in Settings.' }
-      return
-    }
-
-    const botName = provider.model
-
-    // Include system prompt as a first user/bot exchange if present
-    const poeMessages = toPoeMessages(messages)
-    if (systemPrompt && poeMessages.length === 0) {
-      poeMessages.unshift({ role: 'user', content: systemPrompt, content_type: 'text/markdown', timestamp: 0, attachments: [] })
-    }
-
-    const response = await fetch(`https://api.poe.com/bot/${botName}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${provider.apiKey}`,
-        'Accept': 'text/event-stream',
-      },
-      body: JSON.stringify({
-        version: '1',
-        type: 'query',
-        query: poeMessages,
-        skip_system_prompt: false,
-      }),
-      signal,
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      yield { type: 'error', error: `Poe API error ${response.status}: ${errorText}` }
-      return
-    }
-
-    // Poe SSE format: each data chunk is JSON.
-    // Native format: {"text": "...", "index": 0}
-    // Or wrapped:    {"type": "text", "text": "{\"text\": \"...\", \"index\": 0}"}
-    for await (const data of parseSSE(response)) {
-      let outer: Record<string, unknown>
-      try {
-        outer = JSON.parse(data)
-      } catch {
-        continue
-      }
-
-      // Wrapped format: {"type": "text", "text": "{...}"}
-      if (outer.type === 'text' && typeof outer.text === 'string') {
-        let textContent = ''
-        try {
-          const inner = JSON.parse(outer.text as string) as { text?: string }
-          textContent = inner.text ?? ''
-        } catch {
-          textContent = outer.text as string
-        }
-        if (textContent) yield { type: 'text_delta', text: textContent }
-      }
-      // Native format: {"text": "...", "index": 0}
-      else if (typeof outer.text === 'string' && outer.text) {
-        yield { type: 'text_delta', text: outer.text as string }
-      }
-      // Done event
-      else if (outer.type === 'done') {
-        break
-      }
-      // Error event
-      else if (outer.type === 'error') {
-        yield { type: 'error', error: (outer.text as string) ?? 'Poe error' }
-        return
-      }
-    }
-
-    yield { type: 'message_complete', stopReason: 'stop' }
-  },
+  complete: (options) =>
+    openAICompatibleComplete('https://api.poe.com/v1', options.settings.provider.apiKey ?? '', options),
 }
 
 // ─── Provider Registry ────────────────────────────────────────────────────────

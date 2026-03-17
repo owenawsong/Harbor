@@ -137,6 +137,10 @@ export interface AgentEventThinking {
   text: string
 }
 
+export interface AgentEventAgentComplete {
+  type: 'agent_complete'
+}
+
 export type AgentEvent =
   | AgentEventTextDelta
   | AgentEventToolCallStart
@@ -145,6 +149,7 @@ export type AgentEvent =
   | AgentEventMessageComplete
   | AgentEventError
   | AgentEventThinking
+  | AgentEventAgentComplete
 
 // ─── Port Message Types ───────────────────────────────────────────────────────
 

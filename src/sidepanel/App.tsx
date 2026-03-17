@@ -12,6 +12,8 @@ export default function App() {
   const [theme, setTheme]                     = useState<'light' | 'dark' | 'system'>('system')
   const [sessions, setSessions]               = useState<StoredSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  // Incremented each time a truly new conversation is started, forcing Chat to remount
+  const [chatKey, setChatKey] = useState(0)
 
   // ── Load settings + theme on mount ─────────────────────────────────────────
   useEffect(() => {
@@ -67,13 +69,15 @@ export default function App() {
     setView('history')
   }
 
-  const handleSelectSession = (id: string) => {
-    setCurrentSessionId(id)
+  const handleNewConversation = () => {
+    setCurrentSessionId(null)
+    setChatKey((k) => k + 1) // force Chat to remount with a fresh session
     setView('chat')
   }
 
-  const handleNewConversation = () => {
-    setCurrentSessionId(null)
+  const handleSelectSession = (id: string) => {
+    setCurrentSessionId(id)
+    setChatKey((k) => k + 1) // remount so useChat picks up the new session
     setView('chat')
   }
 
@@ -105,6 +109,7 @@ export default function App() {
     <div className="flex flex-col h-full bg-[rgb(var(--harbor-bg))] text-[rgb(var(--harbor-text))]">
       {view === 'chat' && (
         <Chat
+          key={chatKey}
           settings={settings}
           currentSessionId={currentSessionId}
           onOpenSettings={() => setView('settings')}

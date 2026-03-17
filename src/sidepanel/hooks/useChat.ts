@@ -35,18 +35,34 @@ function uid(): string {
   return Math.random().toString(36).slice(2, 11)
 }
 
-// Extract <think>...</think> or <thinking>...</thinking> blocks from text.
-// Returns cleaned text + extracted thinking blocks.
+// Extract inline thinking blocks from text and return cleaned text + blocks (all collapsed).
+// Handles: <think>...</think>, <thinking>...</thinking>, and Poe's *Thinking...*\n> format.
 function extractThinkingBlocks(
   text: string,
   existing: UIThinkingBlock[],
 ): { text: string; thinkingBlocks: UIThinkingBlock[] } {
   const blocks: UIThinkingBlock[] = [...existing]
-  const cleaned = text.replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, (_, inner) => {
-    blocks.push({ id: uid(), text: inner.trim(), isOpen: false })
+  let cleaned = text
+
+  // <think>...</think> or <thinking>...</thinking>
+  cleaned = cleaned.replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, (_, inner) => {
+    if (inner.trim()) blocks.push({ id: uid(), text: inner.trim(), isOpen: false })
     return ''
-  }).trim()
-  return { text: cleaned, thinkingBlocks: blocks }
+  })
+
+  // Poe format: *Thinking...*\n\n> line1\n> line2\n\n
+  cleaned = cleaned.replace(/\*Thinking\.\.\.\*\n+((?:>[^\n]*(?:\n|$))+)/gi, (_, blockquote) => {
+    const thinkText = blockquote
+      .split('\n')
+      .filter((l: string) => l.startsWith('>'))
+      .map((l: string) => l.replace(/^>\s?/, ''))
+      .join('\n')
+      .trim()
+    if (thinkText) blocks.push({ id: uid(), text: thinkText, isOpen: false })
+    return ''
+  })
+
+  return { text: cleaned.trim(), thinkingBlocks: blocks }
 }
 
 function convertStoredMessages(messages: ChatMessage[]): UIMessage[] {
@@ -210,19 +226,39 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           break
         }
 
-        // ── Message complete ────────────────────────────────────────────────
+        // ── Message complete (one provider turn done, agent may still be running) ──
         case 'message_complete': {
           const { messageId } = event
           setMessages((prev) =>
             prev.map((m) => {
               if (m.id !== messageId) return m
-              // Extract inline <think>...</think> blocks from text
+              // Extract inline thinking blocks, collapse all thinking after streaming stops
               const { text, thinkingBlocks } = extractThinkingBlocks(m.text, m.thinkingBlocks)
-              return { ...m, text, thinkingBlocks, isStreaming: false }
+              return {
+                ...m,
+                text,
+                thinkingBlocks: thinkingBlocks.map((b) => ({ ...b, isOpen: false })),
+                isStreaming: false,
+              }
             }),
           )
+          // Do NOT set isRunning: false here — agent may still be executing tool calls.
+          // Wait for agent_complete.
+          currentMsgId.current = null
+          break
+        }
+
+        // ── Agent complete (entire loop done) ───────────────────────────────
+        case 'agent_complete': {
           setIsRunning(false)
           currentMsgId.current = null
+          // Ensure all thinking blocks are collapsed
+          setMessages((prev) =>
+            prev.map((m) => ({
+              ...m,
+              thinkingBlocks: m.thinkingBlocks.map((b) => ({ ...b, isOpen: false })),
+            })),
+          )
           break
         }
 
