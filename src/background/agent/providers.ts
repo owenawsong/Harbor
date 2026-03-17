@@ -617,7 +617,8 @@ const HARBOR_FREE_KEY = 'FRBYc_WFolgpYEQFdTh0YCdlscP_ig3PBR6vpOgjrsw'
 const HARBOR_FREE_NVIDIA_URL = 'https://integrate.api.nvidia.com/v1'
 const HARBOR_FREE_NVIDIA_MODEL = 'minimaxai/minimax-m2.5'
 const HARBOR_FREE_POE_URL = 'https://api.poe.com/v1'
-const HARBOR_FREE_POE_MODEL = 'minimax-m2.5'
+// GPT-4o is vision-capable on Poe; minimax-m2.5 is text-only
+const HARBOR_FREE_POE_VISION_MODEL = 'GPT-4o'
 
 function hasImageContent(messages: NormalizedMessage[]): boolean {
   return messages.some((msg) =>
@@ -642,7 +643,7 @@ export const harborFreeProvider: ProviderAdapter = {
         ...options,
         settings: {
           ...options.settings,
-          provider: { ...options.settings.provider, model: HARBOR_FREE_POE_MODEL },
+          provider: { ...options.settings.provider, model: HARBOR_FREE_POE_VISION_MODEL },
         },
       }
       return openAICompatibleComplete(HARBOR_FREE_POE_URL, HARBOR_FREE_KEY, poeOptions, undefined, true)

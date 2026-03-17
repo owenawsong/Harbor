@@ -311,9 +311,15 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
       setError(null)
       setIsRunning(true)
 
-      // Always show the user's message immediately
+      // Strip base64 blobs from the displayed bubble — show just "📎 filename" pills.
+      // The full text (with base64) is still sent to the agent for the API call.
+      const displayText = text.replace(
+        /\n\n\[Attached file: ([^\]]+)\]\ndata:[^\s]+/g,
+        '\n\n📎 $1',
+      )
+
       const userMsg: UIMessage = {
-        id: uid(), role: 'user', text, toolCalls: [],
+        id: uid(), role: 'user', text: displayText, toolCalls: [],
         thinkingBlocks: [], isStreaming: false, timestamp: Date.now(),
       }
       setMessages((prev) => [...prev, userMsg])
