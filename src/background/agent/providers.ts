@@ -189,6 +189,65 @@ export const anthropicProvider: ProviderAdapter = {
   },
 }
 
+// ─── Streaming <think> tag parser ─────────────────────────────────────────────
+// Splits incoming text chunks into 'text' and 'thinking' segments in real-time.
+// Handles partial tags split across chunks by buffering up to 12 trailing chars.
+
+interface ThinkParseState {
+  inThink: boolean
+  buf: string // pending chars that might be a partial tag
+}
+
+function* parseThinkChunk(
+  state: ThinkParseState,
+  chunk: string,
+): Generator<{ type: 'text' | 'thinking'; text: string }> {
+  let remaining = state.buf + chunk
+  state.buf = ''
+
+  while (remaining.length > 0) {
+    if (state.inThink) {
+      const closeIdx = remaining.search(/<\/think(?:ing)?>/i)
+      if (closeIdx !== -1) {
+        const before = remaining.slice(0, closeIdx)
+        if (before) yield { type: 'thinking', text: before }
+        const closeTag = remaining.slice(closeIdx).match(/<\/think(?:ing)?>/i)!
+        remaining = remaining.slice(closeIdx + closeTag[0].length)
+        state.inThink = false
+      } else {
+        // Buffer trailing chars that might be a partial close tag
+        const ltIdx = remaining.lastIndexOf('<')
+        if (ltIdx !== -1 && ltIdx > remaining.length - 12) {
+          if (ltIdx > 0) yield { type: 'thinking', text: remaining.slice(0, ltIdx) }
+          state.buf = remaining.slice(ltIdx)
+        } else {
+          yield { type: 'thinking', text: remaining }
+        }
+        remaining = ''
+      }
+    } else {
+      const openIdx = remaining.search(/<think(?:ing)?>/i)
+      if (openIdx !== -1) {
+        const before = remaining.slice(0, openIdx)
+        if (before) yield { type: 'text', text: before }
+        const openTag = remaining.slice(openIdx).match(/<think(?:ing)?>/i)!
+        remaining = remaining.slice(openIdx + openTag[0].length)
+        state.inThink = true
+      } else {
+        // Buffer trailing chars that might be a partial open tag
+        const ltIdx = remaining.lastIndexOf('<')
+        if (ltIdx !== -1 && ltIdx > remaining.length - 12) {
+          if (ltIdx > 0) yield { type: 'text', text: remaining.slice(0, ltIdx) }
+          state.buf = remaining.slice(ltIdx)
+        } else {
+          yield { type: 'text', text: remaining }
+        }
+        remaining = ''
+      }
+    }
+  }
+}
+
 // ─── OpenAI Provider ──────────────────────────────────────────────────────────
 
 function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string): unknown[] {
@@ -256,12 +315,13 @@ function toOpenAITools(tools: ToolDefinition[]): unknown[] {
 async function* openAICompatibleComplete(
   baseUrl: string,
   apiKey: string,
-  options: CompletionOptions
+  options: CompletionOptions,
+  extraBody?: { temperature?: number; top_p?: number; max_tokens?: number },
 ): AsyncGenerator<CompletionEvent> {
   const { settings, messages, tools, systemPrompt, signal } = options
   const providerName = settings.provider.provider
 
-  if (!apiKey && providerName !== 'ollama') {
+  if (!apiKey && providerName !== 'ollama' && providerName !== 'harbor-free') {
     yield { type: 'error', error: `${providerName} API key is not set. Please add your key in Settings.` }
     return
   }
@@ -280,8 +340,10 @@ async function* openAICompatibleComplete(
       messages: toOpenAIMessages(messages, systemPrompt),
       tools: tools.length > 0 ? toOpenAITools(tools) : undefined,
       tool_choice: tools.length > 0 ? 'auto' : undefined,
-      max_tokens: settings.maxTokens ?? 8192,
+      max_tokens: extraBody?.max_tokens ?? settings.maxTokens ?? 8192,
       stream: true,
+      ...(extraBody?.temperature !== undefined ? { temperature: extraBody.temperature } : {}),
+      ...(extraBody?.top_p !== undefined ? { top_p: extraBody.top_p } : {}),
     }),
     signal,
   })
@@ -293,6 +355,7 @@ async function* openAICompatibleComplete(
   }
 
   const toolCallBuffers: Record<number, { id: string; name: string; args: string }> = {}
+  const thinkState: ThinkParseState = { inThink: false, buf: '' }
 
   for await (const data of parseSSE(response)) {
     let chunk: Record<string, unknown>
@@ -314,8 +377,15 @@ async function* openAICompatibleComplete(
       yield { type: 'thinking', text: delta.reasoning_content as string }
     }
 
+    // Parse text content, extracting <think> tags in real-time
     if (delta.content) {
-      yield { type: 'text_delta', text: delta.content as string }
+      for (const seg of parseThinkChunk(thinkState, delta.content as string)) {
+        if (seg.type === 'thinking') {
+          yield { type: 'thinking', text: seg.text }
+        } else {
+          yield { type: 'text_delta', text: seg.text }
+        }
+      }
     }
 
     if (delta.tool_calls) {
@@ -503,6 +573,62 @@ export const googleProvider: ProviderAdapter = {
   },
 }
 
+// ─── Harbor Free Provider ─────────────────────────────────────────────────────
+// Uses NVIDIA NIM (minimaxai/minimax-m2.5) with a built-in key — no API key needed.
+// Falls back to Poe if any message contains image/screenshot data.
+
+const HARBOR_FREE_KEY = 'FRBYc_WFolgpYEQFdTh0YCdlscP_ig3PBR6vpOgjrsw'
+const HARBOR_FREE_NVIDIA_URL = 'https://integrate.api.nvidia.com/v1'
+const HARBOR_FREE_NVIDIA_MODEL = 'minimaxai/minimax-m2.5'
+const HARBOR_FREE_POE_URL = 'https://api.poe.com/v1'
+const HARBOR_FREE_POE_MODEL = 'minimax-m2.5'
+
+function hasImageContent(messages: NormalizedMessage[]): boolean {
+  return messages.some((msg) =>
+    msg.content.some(
+      (part) => part.type === 'tool_result' && part.content.includes('data:image'),
+    ),
+  )
+}
+
+export const harborFreeProvider: ProviderAdapter = {
+  name: 'harbor-free',
+  complete: (options) => {
+    const useImages = hasImageContent(options.messages)
+
+    if (useImages) {
+      // Poe supports multimodal; NVIDIA NIM does not
+      const poeOptions = {
+        ...options,
+        settings: {
+          ...options.settings,
+          provider: { ...options.settings.provider, model: HARBOR_FREE_POE_MODEL },
+        },
+      }
+      return openAICompatibleComplete(HARBOR_FREE_POE_URL, HARBOR_FREE_KEY, poeOptions)
+    }
+
+    const nvidiaOptions = {
+      ...options,
+      settings: {
+        ...options.settings,
+        provider: {
+          ...options.settings.provider,
+          model: options.settings.provider.apiKey
+            ? options.settings.provider.model // allow custom model when user brings own key
+            : HARBOR_FREE_NVIDIA_MODEL,
+        },
+      },
+    }
+    return openAICompatibleComplete(
+      HARBOR_FREE_NVIDIA_URL,
+      options.settings.provider.apiKey || HARBOR_FREE_KEY,
+      nvidiaOptions,
+      { temperature: 0.45, top_p: 0.95, max_tokens: 16384 },
+    )
+  },
+}
+
 // ─── Poe Provider ─────────────────────────────────────────────────────────────
 // Poe exposes an OpenAI-compatible API at api.poe.com/v1.
 // Model name = the Poe bot handle (e.g. "Claude-3-7-Sonnet", "GPT-4o").
@@ -524,6 +650,7 @@ const providers: Record<string, ProviderAdapter> = {
   openrouter: openrouterProvider,
   'openai-compatible': openaiCompatibleProvider,
   poe: poeProvider,
+  'harbor-free': harborFreeProvider,
 }
 
 export function getProvider(name: string): ProviderAdapter {

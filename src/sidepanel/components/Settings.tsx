@@ -39,9 +39,8 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
   const [status, setStatus]           = useState<'idle' | 'saving' | 'saved'>('idle')
 
   const models = DEFAULT_MODELS[provider] ?? []
-  const needsKey = provider !== 'ollama'
+  const needsKey = provider !== 'ollama' && provider !== 'harbor-free'
   const needsUrl = provider === 'ollama' || provider === 'openai-compatible'
-  // Poe: no custom base URL needed
   const keyLink  = KEY_LINKS[provider]
 
   useEffect(() => {
@@ -181,6 +180,17 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
                   Run Ollama with{' '}
                   <code className="font-mono bg-blue-100 dark:bg-blue-900/50 px-1 rounded">OLLAMA_ORIGINS=*</code>{' '}
                   for browser access.
+                </p>
+              </div>
+            )}
+
+            {/* Harbor Free hint */}
+            {provider === 'harbor-free' && (
+              <div className="flex gap-2 px-3 py-2.5 rounded-lg bg-harbor-50 dark:bg-harbor-950/20 border border-harbor-200 dark:border-harbor-900">
+                <Info size={13} className="text-harbor-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-harbor-700 dark:text-harbor-300 leading-relaxed">
+                  No API key needed — powered by Minimax M2.5 via NVIDIA NIM.
+                  Pages with screenshots auto-switch to Poe for multimodal support.
                 </p>
               </div>
             )}

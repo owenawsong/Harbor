@@ -57,6 +57,7 @@ export const DEFAULT_MODELS: Record<string, string[]> = {
     'o3-mini',
     'Grok-2',
   ],
+  'harbor-free': ['minimaxai/minimax-m2.5'],
 }
 
 export const PROVIDER_LABELS: Record<string, string> = {
@@ -67,6 +68,7 @@ export const PROVIDER_LABELS: Record<string, string> = {
   openrouter: 'OpenRouter',
   'openai-compatible': 'OpenAI-Compatible',
   poe: 'Poe',
+  'harbor-free': 'Harbor Free ✦',
 }
 
 export const API_ENDPOINTS: Record<string, string> = {
