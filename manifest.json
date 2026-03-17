@@ -46,7 +46,8 @@
     "unlimitedStorage",
     "clipboardWrite",
     "clipboardRead",
-    "notifications"
+    "notifications",
+    "contextMenus"
   ],
   "host_permissions": [
     "<all_urls>"

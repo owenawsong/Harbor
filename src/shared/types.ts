@@ -172,11 +172,123 @@ export interface PortMessageClearSession {
 
 export type PortMessage = PortMessageChat | PortMessageStop | PortMessageClearSession
 
+// ─── Identity / Personality ───────────────────────────────────────────────────
+
+export type ToneStyle = 'professional' | 'friendly' | 'concise' | 'detailed' | 'playful'
+export type VerbosityLevel = 'brief' | 'balanced' | 'thorough'
+
+export interface IdentitySettings {
+  userName?: string
+  useCases: string[]           // e.g. ['work', 'coding', 'research']
+  tone: ToneStyle
+  verbosity: VerbosityLevel
+  useEmoji: boolean
+  language: string             // BCP-47 e.g. 'en', 'zh', 'es'
+  customPersonality?: string   // free text instructions
+}
+
+// ─── Memory System ────────────────────────────────────────────────────────────
+
+export type MemoryCategory =
+  | 'identity'
+  | 'preferences'
+  | 'projects'
+  | 'tools'
+  | 'habits'
+  | 'people'
+  | 'general'
+
+export interface MemoryEntry {
+  id: string
+  category: MemoryCategory
+  content: string
+  tags?: string[]
+  createdAt: number
+  updatedAt: number
+  isPinned?: boolean
+}
+
+// ─── Skills System ────────────────────────────────────────────────────────────
+
+export interface Skill {
+  id: string
+  name: string
+  description: string
+  icon: string              // lucide icon name
+  category: SkillCategory
+  instructions: string      // system prompt / instructions to agent
+  isBuiltIn: boolean
+  isEnabled: boolean
+  createdAt?: number
+  updatedAt?: number
+  usageCount?: number
+}
+
+export type SkillCategory =
+  | 'research'
+  | 'productivity'
+  | 'data'
+  | 'shopping'
+  | 'navigation'
+  | 'content'
+  | 'custom'
+
+// ─── ModelBlend ───────────────────────────────────────────────────────────────
+
+export type TaskType = 'coding' | 'research' | 'writing' | 'analysis' | 'chat' | 'vision' | 'math'
+
+export interface ModelBlendRoute {
+  taskType: TaskType
+  provider: string
+  model: string
+}
+
+export interface ModelBlendConfig {
+  enabled: boolean
+  routes: ModelBlendRoute[]
+  classifierModel?: string    // model to classify task type
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export type NotificationLevel = 'info' | 'success' | 'warning' | 'error'
+
+export interface HarborNotification {
+  id: string
+  level: NotificationLevel
+  title: string
+  body?: string
+  timestamp: number
+  isRead: boolean
+  actionLabel?: string
+  actionUrl?: string
+}
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+
+export interface OnboardingData {
+  completed: boolean
+  userName?: string
+  useCases: string[]
+  tone: ToneStyle
+  theme: 'light' | 'dark' | 'system'
+  language: string
+  completedAt?: number
+}
+
 // ─── Storage Types ────────────────────────────────────────────────────────────
 
 export interface StoredSettings {
   agentSettings: AgentSettings
   theme: 'light' | 'dark' | 'system'
+  identity?: IdentitySettings
+  modelBlend?: ModelBlendConfig
+  notifications?: {
+    enabled: boolean
+    agentComplete: boolean
+    errors: boolean
+  }
+  keybindings?: Record<string, string>
 }
 
 export interface StoredSession {
@@ -185,6 +297,8 @@ export interface StoredSession {
   createdAt: number
   updatedAt: number
   title?: string
+  isPinned?: boolean
+  tags?: string[]
 }
 
 // ─── Browser Context ──────────────────────────────────────────────────────────

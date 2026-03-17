@@ -1,14 +1,42 @@
 import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check } from 'lucide-react'
-import type { AgentSettings, ProviderName } from '../../shared/types'
+import {
+  ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check,
+  Settings as SettingsIcon, Palette, User, Brain, Cpu, Zap,
+  Bell, Keyboard, Shield, HelpCircle, ChevronRight,
+} from 'lucide-react'
+import type {
+  AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel,
+} from '../../shared/types'
 import { DEFAULT_MODELS, PROVIDER_LABELS } from '../../shared/constants'
 
 interface Props {
   settings: AgentSettings
   theme: 'light' | 'dark' | 'system'
-  onSave: (settings: AgentSettings, theme: 'light' | 'dark' | 'system') => void
+  identity?: IdentitySettings
+  onSave: (settings: AgentSettings, theme: 'light' | 'dark' | 'system', identity?: IdentitySettings) => void
   onBack: () => void
 }
+
+type SettingsSection =
+  | 'general'
+  | 'appearance'
+  | 'identity'
+  | 'models'
+  | 'memory'
+  | 'notifications'
+  | 'privacy'
+  | 'about'
+
+const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
+  { id: 'general',       label: 'General',       icon: SettingsIcon },
+  { id: 'appearance',    label: 'Appearance',     icon: Palette },
+  { id: 'identity',      label: 'Identity',       icon: User },
+  { id: 'models',        label: 'Models',         icon: Cpu },
+  { id: 'memory',        label: 'Memory',         icon: Brain },
+  { id: 'notifications', label: 'Notifications',  icon: Bell },
+  { id: 'privacy',       label: 'Privacy',        icon: Shield },
+  { id: 'about',         label: 'About',          icon: HelpCircle },
+]
 
 const KEY_LINKS: Partial<Record<ProviderName, string>> = {
   anthropic:  'https://console.anthropic.com/settings/keys',
@@ -24,7 +52,37 @@ const THEME_OPTIONS = [
   { value: 'system' as const, label: 'Auto' },
 ]
 
-export default function Settings({ settings, theme, onSave, onBack }: Props) {
+const TONES: { id: ToneStyle; label: string }[] = [
+  { id: 'professional', label: 'Professional' },
+  { id: 'friendly',     label: 'Friendly' },
+  { id: 'concise',      label: 'Concise' },
+  { id: 'detailed',     label: 'Detailed' },
+  { id: 'playful',      label: 'Playful' },
+]
+
+const VERBOSITY: { id: VerbosityLevel; label: string; description: string }[] = [
+  { id: 'brief',    label: 'Brief',    description: 'Short, focused answers' },
+  { id: 'balanced', label: 'Balanced', description: 'Standard level of detail' },
+  { id: 'thorough', label: 'Thorough', description: 'In-depth explanations' },
+]
+
+const LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'zh', label: '中文' },
+  { code: 'es', label: 'Español' },
+  { code: 'fr', label: 'Français' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'ja', label: '日本語' },
+  { code: 'pt', label: 'Português' },
+  { code: 'ko', label: '한국어' },
+]
+
+export default function Settings({ settings, theme, identity, onSave, onBack }: Props) {
+  const [activeSection, setActiveSection] = useState<SettingsSection>('general')
+  const [showSidebar, setShowSidebar] = useState(true)
+  const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  // General / Models
   const [provider, setProvider]       = useState<ProviderName>(settings.provider.provider as ProviderName)
   const initialModels = DEFAULT_MODELS[settings.provider.provider as ProviderName] ?? []
   const isCustomModel = !initialModels.includes(settings.provider.model)
@@ -34,9 +92,23 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
   const [baseUrl, setBaseUrl]         = useState(settings.provider.baseUrl ?? '')
   const [maxTokens, setMaxTokens]     = useState(settings.maxTokens ?? 8192)
   const [enableMemory, setEnableMemory] = useState(settings.enableMemory ?? false)
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'system'>(theme)
   const [showKey, setShowKey]         = useState(false)
-  const [status, setStatus]           = useState<'idle' | 'saving' | 'saved'>('idle')
+
+  // Appearance
+  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'system'>(theme)
+
+  // Identity
+  const [userName, setUserName]         = useState(identity?.userName ?? '')
+  const [tone, setTone]                 = useState<ToneStyle>(identity?.tone ?? 'friendly')
+  const [verbosity, setVerbosity]       = useState<VerbosityLevel>(identity?.verbosity ?? 'balanced')
+  const [language, setLanguage]         = useState(identity?.language ?? 'en')
+  const [useEmoji, setUseEmoji]         = useState(identity?.useEmoji ?? false)
+  const [customPersonality, setCustomPersonality] = useState(identity?.customPersonality ?? '')
+
+  // Notifications
+  const [notifsEnabled, setNotifsEnabled] = useState(true)
+  const [notifAgentComplete, setNotifAgentComplete] = useState(true)
+  const [notifErrors, setNotifErrors] = useState(true)
 
   const models = DEFAULT_MODELS[provider] ?? []
   const needsKey = provider !== 'ollama' && provider !== 'harbor-free'
@@ -64,231 +136,629 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
       enableMemory,
       enableScreenshots: true,
     }
+    const newIdentity: IdentitySettings = {
+      userName: userName.trim() || undefined,
+      useCases: identity?.useCases ?? [],
+      tone,
+      verbosity,
+      language,
+      useEmoji,
+      customPersonality: customPersonality.trim() || undefined,
+    }
     await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme })
-    onSave(newSettings, currentTheme)
+    onSave(newSettings, currentTheme, newIdentity)
     setStatus('saved')
     setTimeout(() => setStatus('idle'), 2000)
+  }
+
+  const renderSection = () => {
+    switch (activeSection) {
+      case 'general':
+        return <SectionGeneral
+          provider={provider} model={model} customModel={customModel}
+          apiKey={apiKey} baseUrl={baseUrl} maxTokens={maxTokens} enableMemory={enableMemory}
+          showKey={showKey} models={models} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
+          onProviderChange={handleProviderChange}
+          onModelChange={setModel} onCustomModelChange={setCustomModel}
+          onApiKeyChange={setApiKey} onBaseUrlChange={setBaseUrl}
+          onMaxTokensChange={setMaxTokens} onEnableMemoryChange={setEnableMemory}
+          onShowKeyToggle={() => setShowKey((v) => !v)}
+        />
+      case 'appearance':
+        return <SectionAppearance currentTheme={currentTheme} onThemeChange={setCurrentTheme} />
+      case 'identity':
+        return <SectionIdentity
+          userName={userName} tone={tone} verbosity={verbosity}
+          language={language} useEmoji={useEmoji} customPersonality={customPersonality}
+          onUserNameChange={setUserName} onToneChange={setTone}
+          onVerbosityChange={setVerbosity} onLanguageChange={setLanguage}
+          onUseEmojiChange={setUseEmoji} onCustomPersonalityChange={setCustomPersonality}
+        />
+      case 'models':
+        return <SectionModels
+          provider={provider} model={model} customModel={customModel}
+          apiKey={apiKey} baseUrl={baseUrl} showKey={showKey}
+          models={models} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
+          onProviderChange={handleProviderChange}
+          onModelChange={setModel} onCustomModelChange={setCustomModel}
+          onApiKeyChange={setApiKey} onBaseUrlChange={setBaseUrl}
+          onShowKeyToggle={() => setShowKey((v) => !v)}
+        />
+      case 'memory':
+        return <SectionMemory enableMemory={enableMemory} onEnableMemoryChange={setEnableMemory} />
+      case 'notifications':
+        return <SectionNotifications
+          enabled={notifsEnabled} agentComplete={notifAgentComplete} errors={notifErrors}
+          onEnabledChange={setNotifsEnabled} onAgentCompleteChange={setNotifAgentComplete} onErrorsChange={setNotifErrors}
+        />
+      case 'privacy':
+        return <SectionPrivacy />
+      case 'about':
+        return <SectionAbout />
+      default:
+        return null
+    }
   }
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center gap-2.5 px-3 py-3 border-b border-[rgb(var(--harbor-border))]">
+      <div
+        className="flex items-center gap-2.5 px-3 py-3 border-b"
+        style={{ borderColor: 'rgb(var(--harbor-border))' }}
+      >
         <button onClick={onBack} className="icon-btn">
           <ArrowLeft size={15} />
         </button>
-        <h2 className="font-semibold text-sm text-[rgb(var(--harbor-text))]">Settings</h2>
+        <h2 className="font-semibold text-sm" style={{ color: 'rgb(var(--harbor-text))' }}>Settings</h2>
       </div>
 
-      {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto harbor-scroll">
-        <div className="flex flex-col divide-y divide-[rgb(var(--harbor-border))]">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Sidebar */}
+        <nav
+          className="w-36 flex-shrink-0 border-r py-2 overflow-y-auto harbor-scroll"
+          style={{ borderColor: 'rgb(var(--harbor-border))' }}
+        >
+          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+            <button
+              key={id}
+              onClick={() => setActiveSection(id)}
+              className={`settings-nav-item ${activeSection === id ? 'active' : ''}`}
+            >
+              <Icon size={13} />
+              {label}
+            </button>
+          ))}
+        </nav>
 
-          {/* ── AI Provider ───────────────────────────────────────────────── */}
-          <section className="px-4 py-4 flex flex-col gap-4">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--harbor-text-faint))]">
-              AI Provider
-            </h3>
-
-            {/* Provider */}
-            <label className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-[rgb(var(--harbor-text-muted))]">Provider</span>
-              <select
-                value={provider}
-                onChange={(e) => handleProviderChange(e.target.value as ProviderName)}
-                className="w-full px-2.5 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] text-sm text-[rgb(var(--harbor-text))] outline-none focus:border-harbor-400"
-              >
-                {Object.entries(PROVIDER_LABELS).map(([id, label]) => (
-                  <option key={id} value={id}>{label}</option>
-                ))}
-              </select>
-            </label>
-
-            {/* Model */}
-            <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium text-[rgb(var(--harbor-text-muted))]">Model</span>
-              {models.length > 0 && (
-                <select
-                  value={model}
-                  onChange={(e) => setModel(e.target.value)}
-                  className="w-full px-2.5 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] text-sm text-[rgb(var(--harbor-text))] outline-none focus:border-harbor-400"
-                >
-                  {models.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              )}
-              <input
-                type="text"
-                value={customModel}
-                onChange={(e) => setCustomModel(e.target.value)}
-                placeholder={models.length ? 'Override with custom model…' : 'Enter model name (e.g. llama3.2)'}
-                className="w-full px-2.5 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] text-sm text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))] outline-none focus:border-harbor-400 font-mono"
-              />
-            </div>
-
-            {/* API Key */}
-            {needsKey && (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-[rgb(var(--harbor-text-muted))]">API Key</span>
-                  {keyLink && (
-                    <a href={keyLink} target="_blank" rel="noopener noreferrer"
-                       className="text-xs text-harbor-500 hover:text-harbor-600 flex items-center gap-1">
-                      Get key <ExternalLink size={10} />
-                    </a>
-                  )}
-                </div>
-                <div className="relative">
-                  <input
-                    type={showKey ? 'text' : 'password'}
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder={`${PROVIDER_LABELS[provider] ?? provider} API key`}
-                    className="w-full px-2.5 py-2 pr-9 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] text-sm text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))] outline-none focus:border-harbor-400 font-mono"
-                  />
-                  <button
-                    onClick={() => setShowKey((v) => !v)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))]"
-                  >
-                    {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-                <p className="text-[11px] text-[rgb(var(--harbor-text-faint))]">
-                  Stored locally, never shared.
-                </p>
-              </div>
-            )}
-
-            {/* Base URL */}
-            {needsUrl && (
-              <label className="flex flex-col gap-1.5">
-                <span className="text-xs font-medium text-[rgb(var(--harbor-text-muted))]">Base URL</span>
-                <input
-                  type="text"
-                  value={baseUrl}
-                  onChange={(e) => setBaseUrl(e.target.value)}
-                  placeholder={provider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:1234/v1'}
-                  className="w-full px-2.5 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] text-sm text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))] outline-none focus:border-harbor-400 font-mono"
-                />
-              </label>
-            )}
-
-            {/* Ollama hint */}
-            {provider === 'ollama' && (
-              <div className="flex gap-2 px-3 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900">
-                <Info size={13} className="text-blue-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-blue-700 dark:text-blue-300 leading-relaxed">
-                  Run Ollama with{' '}
-                  <code className="font-mono bg-blue-100 dark:bg-blue-900/50 px-1 rounded">OLLAMA_ORIGINS=*</code>{' '}
-                  for browser access.
-                </p>
-              </div>
-            )}
-
-            {/* Harbor Free hint */}
-            {provider === 'harbor-free' && (
-              <div className="flex gap-2 px-3 py-2.5 rounded-lg bg-harbor-50 dark:bg-harbor-950/20 border border-harbor-200 dark:border-harbor-900">
-                <Info size={13} className="text-harbor-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-harbor-700 dark:text-harbor-300 leading-relaxed">
-                  No API key needed — powered by Qwen3.5-122B via NVIDIA NIM.
-                  Supports images (png/jpg/webp, up to 5) and video (mp4/mov/webm).
-                </p>
-              </div>
-            )}
-          </section>
-
-          {/* ── Advanced ──────────────────────────────────────────────────── */}
-          <section className="px-4 py-4 flex flex-col gap-4">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--harbor-text-faint))]">
-              Advanced
-            </h3>
-
-            {/* Max tokens */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-medium text-[rgb(var(--harbor-text-muted))]">Max Tokens</span>
-                <span className="text-xs font-mono text-[rgb(var(--harbor-text-muted))]">{maxTokens.toLocaleString()}</span>
-              </div>
-              <input
-                type="range"
-                min={1024} max={32768} step={1024}
-                value={maxTokens}
-                onChange={(e) => setMaxTokens(Number(e.target.value))}
-                className="w-full accent-harbor-600"
-              />
-              <div className="flex justify-between text-[11px] text-[rgb(var(--harbor-text-faint))]">
-                <span>1K</span>
-                <span>32K</span>
-              </div>
-            </div>
-
-            {/* Memory toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs font-medium text-[rgb(var(--harbor-text))]">Memory</p>
-                <p className="text-[11px] text-[rgb(var(--harbor-text-faint))]">Remember context across sessions</p>
-              </div>
-              <button
-                onClick={() => setEnableMemory((v) => !v)}
-                className={`relative w-9 h-5 rounded-full transition-colors ${enableMemory ? 'bg-harbor-600' : 'bg-[rgb(var(--harbor-border-2))]'}`}
-              >
-                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${enableMemory ? 'translate-x-4' : 'translate-x-0.5'}`} />
-              </button>
-            </div>
-          </section>
-
-          {/* ── Appearance ────────────────────────────────────────────────── */}
-          <section className="px-4 py-4 flex flex-col gap-3">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--harbor-text-faint))]">
-              Appearance
-            </h3>
-            <div className="grid grid-cols-3 gap-2">
-              {THEME_OPTIONS.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setCurrentTheme(value)}
-                  className={`py-2 px-3 rounded-lg border text-xs font-medium flex items-center justify-center gap-1.5 ${
-                    currentTheme === value
-                      ? 'border-harbor-500 bg-harbor-500/10 text-harbor-600 dark:text-harbor-400'
-                      : 'border-[rgb(var(--harbor-border))] text-[rgb(var(--harbor-text-muted))] hover:border-harbor-400'
-                  }`}
-                >
-                  {currentTheme === value && <Check size={11} />}
-                  {label}
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* ── About ─────────────────────────────────────────────────────── */}
-          <section className="px-4 py-4">
-            <h3 className="text-[11px] font-semibold uppercase tracking-wider text-[rgb(var(--harbor-text-faint))] mb-2">
-              About
-            </h3>
-            <div className="text-xs text-[rgb(var(--harbor-text-faint))] space-y-1">
-              <p>Harbor v1.0.0 — AI Browser Agent</p>
-              <p>Inspired by BrowserOS · AGPL-3.0</p>
-            </div>
-          </section>
+        {/* Section content */}
+        <div className="flex-1 overflow-y-auto harbor-scroll">
+          {renderSection()}
         </div>
       </div>
 
       {/* Save button */}
-      <div className="px-3 py-3 border-t border-[rgb(var(--harbor-border))]">
+      <div className="px-3 py-3 border-t" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
         <button
           onClick={handleSave}
           disabled={status === 'saving'}
-          className={`w-full py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-colors ${
+          className={`w-full py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 text-white transition-all ${
             status === 'saved'
-              ? 'bg-emerald-600 text-white'
+              ? 'bg-emerald-600'
               : status === 'saving'
-                ? 'bg-harbor-500/70 text-white cursor-not-allowed'
-                : 'bg-harbor-600 hover:bg-harbor-700 text-white'
+                ? 'opacity-70 cursor-not-allowed'
+                : ''
           }`}
+          style={{
+            background: status === 'saved' ? '#059669' : status === 'saving' ? 'rgb(var(--harbor-accent) / 0.7)' : 'rgb(var(--harbor-accent))',
+          }}
         >
           {status === 'saved' && <Check size={15} />}
-          {status === 'saved' ? 'Saved' : status === 'saving' ? 'Saving…' : 'Save settings'}
+          {status === 'saved' ? 'Saved!' : status === 'saving' ? 'Saving…' : 'Save settings'}
         </button>
       </div>
+    </div>
+  )
+}
+
+// ─── Section: General ─────────────────────────────────────────────────────────
+
+function SectionGeneral({
+  provider, model, customModel, apiKey, baseUrl, maxTokens, enableMemory, showKey,
+  models, needsKey, needsUrl, keyLink,
+  onProviderChange, onModelChange, onCustomModelChange, onApiKeyChange, onBaseUrlChange,
+  onMaxTokensChange, onEnableMemoryChange, onShowKeyToggle,
+}: any) {
+  return (
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <SectionHeader title="General" />
+
+      {/* Provider */}
+      <FormField label="Provider">
+        <select
+          value={provider}
+          onChange={(e) => onProviderChange(e.target.value as ProviderName)}
+          className="harbor-input text-xs"
+        >
+          {Object.entries(PROVIDER_LABELS).map(([id, label]) => (
+            <option key={id} value={id}>{label}</option>
+          ))}
+        </select>
+      </FormField>
+
+      {/* Model */}
+      <FormField label="Model">
+        {models.length > 0 && (
+          <select
+            value={model}
+            onChange={(e) => onModelChange(e.target.value)}
+            className="harbor-input text-xs mb-1.5"
+          >
+            {models.map((m: string) => <option key={m} value={m}>{m}</option>)}
+          </select>
+        )}
+        <input
+          type="text"
+          value={customModel}
+          onChange={(e) => onCustomModelChange(e.target.value)}
+          placeholder={models.length ? 'Override with custom model…' : 'Enter model name…'}
+          className="harbor-input text-xs font-mono"
+        />
+      </FormField>
+
+      {/* API Key */}
+      {needsKey && (
+        <FormField
+          label="API Key"
+          rightSlot={keyLink && (
+            <a href={keyLink} target="_blank" rel="noopener noreferrer"
+               className="text-[11px] flex items-center gap-1"
+               style={{ color: 'rgb(var(--harbor-accent))' }}>
+              Get key <ExternalLink size={9} />
+            </a>
+          )}
+        >
+          <div className="relative">
+            <input
+              type={showKey ? 'text' : 'password'}
+              value={apiKey}
+              onChange={(e) => onApiKeyChange(e.target.value)}
+              placeholder={`${PROVIDER_LABELS[provider] ?? provider} API key`}
+              className="harbor-input text-xs font-mono pr-9"
+            />
+            <button
+              onClick={onShowKeyToggle}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2"
+              style={{ color: 'rgb(var(--harbor-text-faint))' }}
+            >
+              {showKey ? <EyeOff size={13} /> : <Eye size={13} />}
+            </button>
+          </div>
+          <p className="text-[10px] mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+            Stored locally, never shared.
+          </p>
+        </FormField>
+      )}
+
+      {/* Base URL */}
+      {needsUrl && (
+        <FormField label="Base URL">
+          <input
+            type="text"
+            value={baseUrl}
+            onChange={(e) => onBaseUrlChange(e.target.value)}
+            placeholder={provider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:1234/v1'}
+            className="harbor-input text-xs font-mono"
+          />
+        </FormField>
+      )}
+
+      {/* Ollama / Harbor Free hints */}
+      {provider === 'ollama' && (
+        <InfoBox>
+          Run Ollama with{' '}
+          <code className="font-mono text-[10px] px-1 rounded" style={{ background: 'rgb(var(--harbor-surface-3))' }}>
+            OLLAMA_ORIGINS=*
+          </code>{' '}
+          for browser access.
+        </InfoBox>
+      )}
+      {provider === 'harbor-free' && (
+        <InfoBox>
+          No API key needed — powered by Qwen3.5-122B via NVIDIA NIM.
+          Supports images (png/jpg/webp, up to 5) and video.
+        </InfoBox>
+      )}
+
+      {/* Max Tokens */}
+      <FormField label={<>Max Tokens <span className="font-mono">{maxTokens.toLocaleString()}</span></>}>
+        <input
+          type="range" min={1024} max={32768} step={1024}
+          value={maxTokens}
+          onChange={(e) => onMaxTokensChange(Number(e.target.value))}
+          className="w-full"
+          style={{ accentColor: 'rgb(var(--harbor-accent))' }}
+        />
+        <div className="flex justify-between text-[10px] mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+          <span>1K</span><span>32K</span>
+        </div>
+      </FormField>
+
+      {/* Memory toggle */}
+      <ToggleRow
+        label="Enable Memory"
+        description="Persist context across conversations"
+        value={enableMemory}
+        onChange={onEnableMemoryChange}
+      />
+    </div>
+  )
+}
+
+// ─── Section: Appearance ──────────────────────────────────────────────────────
+
+function SectionAppearance({ currentTheme, onThemeChange }: {
+  currentTheme: 'light' | 'dark' | 'system'
+  onThemeChange: (t: 'light' | 'dark' | 'system') => void
+}) {
+  return (
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <SectionHeader title="Appearance" />
+      <FormField label="Theme">
+        <div className="grid grid-cols-3 gap-2">
+          {THEME_OPTIONS.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => onThemeChange(value)}
+              className="py-2 px-2 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all"
+              style={{
+                borderColor: currentTheme === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+                background: currentTheme === value ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
+                color: currentTheme === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
+              }}
+            >
+              {currentTheme === value && <Check size={10} />}
+              {label}
+            </button>
+          ))}
+        </div>
+      </FormField>
+    </div>
+  )
+}
+
+// ─── Section: Identity ────────────────────────────────────────────────────────
+
+function SectionIdentity({ userName, tone, verbosity, language, useEmoji, customPersonality,
+  onUserNameChange, onToneChange, onVerbosityChange, onLanguageChange, onUseEmojiChange, onCustomPersonalityChange }: any) {
+  return (
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <SectionHeader title="Identity" description="Customize how Harbor speaks to you." />
+
+      <FormField label="Your Name">
+        <input
+          type="text"
+          value={userName}
+          onChange={(e) => onUserNameChange(e.target.value)}
+          placeholder="Optional — for personalized greetings"
+          className="harbor-input text-xs"
+          maxLength={40}
+        />
+      </FormField>
+
+      <FormField label="Communication Tone">
+        <div className="flex flex-col gap-1.5">
+          {TONES.map((t) => (
+            <button
+              key={t.id}
+              onClick={() => onToneChange(t.id)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-all"
+              style={{
+                borderColor: tone === t.id ? 'rgb(var(--harbor-accent) / 0.5)' : 'rgb(var(--harbor-border))',
+                background: tone === t.id ? 'rgb(var(--harbor-accent-light))' : 'transparent',
+              }}
+            >
+              <div
+                className="w-3 h-3 rounded-full border-2 flex-shrink-0"
+                style={{
+                  borderColor: tone === t.id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
+                  background: tone === t.id ? 'rgb(var(--harbor-accent))' : 'transparent',
+                }}
+              />
+              <span className="text-xs" style={{ color: 'rgb(var(--harbor-text))' }}>{t.label}</span>
+            </button>
+          ))}
+        </div>
+      </FormField>
+
+      <FormField label="Response Length">
+        <div className="flex flex-col gap-1.5">
+          {VERBOSITY.map((v) => (
+            <button
+              key={v.id}
+              onClick={() => onVerbosityChange(v.id)}
+              className="flex items-start gap-2.5 px-3 py-2 rounded-lg border text-left transition-all"
+              style={{
+                borderColor: verbosity === v.id ? 'rgb(var(--harbor-accent) / 0.5)' : 'rgb(var(--harbor-border))',
+                background: verbosity === v.id ? 'rgb(var(--harbor-accent-light))' : 'transparent',
+              }}
+            >
+              <div
+                className="w-3 h-3 rounded-full border-2 flex-shrink-0 mt-0.5"
+                style={{
+                  borderColor: verbosity === v.id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
+                  background: verbosity === v.id ? 'rgb(var(--harbor-accent))' : 'transparent',
+                }}
+              />
+              <div>
+                <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{v.label}</p>
+                <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{v.description}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      </FormField>
+
+      <FormField label="Language">
+        <select
+          value={language}
+          onChange={(e) => onLanguageChange(e.target.value)}
+          className="harbor-input text-xs"
+        >
+          {LANGUAGES.map((l) => (
+            <option key={l.code} value={l.code}>{l.label}</option>
+          ))}
+        </select>
+      </FormField>
+
+      <ToggleRow
+        label="Use Emoji"
+        description="Include emoji in responses"
+        value={useEmoji}
+        onChange={onUseEmojiChange}
+      />
+
+      <FormField label="Custom Personality">
+        <textarea
+          value={customPersonality}
+          onChange={(e) => onCustomPersonalityChange(e.target.value)}
+          placeholder="Add extra instructions for Harbor (optional)…"
+          className="harbor-input text-xs resize-none min-h-[80px]"
+          maxLength={500}
+        />
+        <p className="text-[10px] mt-1 text-right" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+          {customPersonality.length}/500
+        </p>
+      </FormField>
+    </div>
+  )
+}
+
+// ─── Section: Models (advanced) ───────────────────────────────────────────────
+
+function SectionModels({ provider, model, customModel, apiKey, baseUrl, showKey,
+  models, needsKey, needsUrl, keyLink,
+  onProviderChange, onModelChange, onCustomModelChange, onApiKeyChange, onBaseUrlChange, onShowKeyToggle }: any) {
+  return (
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <SectionHeader title="Models" description="Configure AI provider and model settings." />
+      <SectionGeneral
+        provider={provider} model={model} customModel={customModel}
+        apiKey={apiKey} baseUrl={baseUrl} maxTokens={8192} enableMemory={false} showKey={showKey}
+        models={models} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
+        onProviderChange={onProviderChange}
+        onModelChange={onModelChange} onCustomModelChange={onCustomModelChange}
+        onApiKeyChange={onApiKeyChange} onBaseUrlChange={onBaseUrlChange}
+        onMaxTokensChange={() => {}} onEnableMemoryChange={() => {}}
+        onShowKeyToggle={onShowKeyToggle}
+      />
+    </div>
+  )
+}
+
+// ─── Section: Memory ──────────────────────────────────────────────────────────
+
+function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: boolean; onEnableMemoryChange: (v: boolean) => void }) {
+  const [memoryCount, setMemoryCount] = useState(0)
+
+  useEffect(() => {
+    chrome.storage.local.get('harbor_memory_entries', (data) => {
+      setMemoryCount((data.harbor_memory_entries as unknown[])?.length ?? 0)
+    })
+  }, [])
+
+  const clearMemory = () => {
+    if (confirm('Clear all memory entries? This cannot be undone.')) {
+      chrome.storage.local.remove('harbor_memory_entries', () => setMemoryCount(0))
+    }
+  }
+
+  return (
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <SectionHeader title="Memory" description="Control how Harbor remembers things." />
+
+      <ToggleRow
+        label="Enable Memory"
+        description="Remember context across conversations"
+        value={enableMemory}
+        onChange={onEnableMemoryChange}
+      />
+
+      <div
+        className="flex items-center justify-between px-3 py-3 rounded-xl border"
+        style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
+      >
+        <div>
+          <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>Stored memories</p>
+          <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+            {memoryCount} entr{memoryCount === 1 ? 'y' : 'ies'}
+          </p>
+        </div>
+        {memoryCount > 0 && (
+          <button
+            onClick={clearMemory}
+            className="text-xs px-2.5 py-1 rounded-lg"
+            style={{ color: '#ef4444', border: '1px solid rgb(239 68 68 / 0.3)' }}
+          >
+            Clear all
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ─── Section: Notifications ───────────────────────────────────────────────────
+
+function SectionNotifications({ enabled, agentComplete, errors, onEnabledChange, onAgentCompleteChange, onErrorsChange }: any) {
+  return (
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <SectionHeader title="Notifications" />
+      <ToggleRow label="Enable Notifications" description="Show in-app alerts" value={enabled} onChange={onEnabledChange} />
+      {enabled && (
+        <>
+          <ToggleRow label="Task Complete" description="When an agent task finishes" value={agentComplete} onChange={onAgentCompleteChange} />
+          <ToggleRow label="Errors" description="When something goes wrong" value={errors} onChange={onErrorsChange} />
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Section: Privacy ─────────────────────────────────────────────────────────
+
+function SectionPrivacy() {
+  const clearAll = () => {
+    if (confirm('Reset all Harbor data? This clears settings, memory, and conversations. Cannot be undone.')) {
+      chrome.storage.local.clear(() => window.location.reload())
+    }
+  }
+  return (
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <SectionHeader title="Privacy" />
+      <InfoBox>
+        Harbor processes everything locally or via the AI API you configure.
+        No data is sent to Harbor's servers. Your conversations and memories stay in your browser.
+      </InfoBox>
+      <div className="flex flex-col gap-2">
+        <button
+          onClick={clearAll}
+          className="text-xs px-3 py-2.5 rounded-xl border font-medium"
+          style={{ color: '#ef4444', borderColor: 'rgb(239 68 68 / 0.3)', background: 'rgb(239 68 68 / 0.05)' }}
+        >
+          Reset all data
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Section: About ───────────────────────────────────────────────────────────
+
+function SectionAbout() {
+  return (
+    <div className="px-4 py-4 flex flex-col gap-4">
+      <SectionHeader title="About" />
+      <div className="flex flex-col gap-2">
+        <div
+          className="flex items-center gap-3 p-3 rounded-xl border"
+          style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
+        >
+          <img src="/icons/logo.png" alt="Harbor" className="w-10 h-10 rounded-xl" />
+          <div>
+            <p className="text-sm font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>Harbor</p>
+            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.0.0 — AI Browser Agent</p>
+          </div>
+        </div>
+        <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+          Inspired by BrowserOS. Licensed under AGPL-3.0.
+        </p>
+        <a
+          href="https://github.com/owenawsong/Harbor-Extension"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-xs"
+          style={{ color: 'rgb(var(--harbor-accent))' }}
+        >
+          <ExternalLink size={11} /> View on GitHub
+        </a>
+      </div>
+    </div>
+  )
+}
+
+// ─── Shared Helpers ───────────────────────────────────────────────────────────
+
+function SectionHeader({ title, description }: { title: string; description?: string }) {
+  return (
+    <div>
+      <h3 className="text-sm font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>{title}</h3>
+      {description && (
+        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{description}</p>
+      )}
+    </div>
+  )
+}
+
+function FormField({ label, children, rightSlot }: {
+  label: React.ReactNode
+  children: React.ReactNode
+  rightSlot?: React.ReactNode
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex items-center justify-between">
+        <label className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+          {label}
+        </label>
+        {rightSlot}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+function ToggleRow({ label, description, value, onChange }: {
+  label: string
+  description?: string
+  value: boolean
+  onChange: (v: boolean) => void
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div>
+        <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{label}</p>
+        {description && (
+          <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{description}</p>
+        )}
+      </div>
+      <button
+        onClick={() => onChange(!value)}
+        className="harbor-toggle flex-shrink-0"
+        style={{ background: value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))' }}
+      >
+        <div
+          className="harbor-toggle-thumb"
+          style={{ transform: value ? 'translateX(16px)' : 'translateX(2px)' }}
+        />
+      </button>
+    </div>
+  )
+}
+
+function InfoBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div
+      className="flex gap-2 px-3 py-2.5 rounded-xl border"
+      style={{
+        background: 'rgb(var(--harbor-accent-light))',
+        borderColor: 'rgb(var(--harbor-accent) / 0.25)',
+      }}
+    >
+      <Info size={12} style={{ color: 'rgb(var(--harbor-accent))', flexShrink: 0, marginTop: 1 }} />
+      <p className="text-[11px] leading-relaxed" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+        {children}
+      </p>
     </div>
   )
 }

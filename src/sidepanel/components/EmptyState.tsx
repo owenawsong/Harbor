@@ -1,53 +1,99 @@
-import React from 'react'
-import { Search, FileText, ShoppingCart, Mail, Bookmark, BarChart3 } from 'lucide-react'
+import React, { useState, useEffect } from 'react'
+import {
+  Globe, Search, ShoppingCart, Table, Shuffle,
+  Layers, BookOpen, Camera,
+} from 'lucide-react'
+import { getGreeting } from '../../shared/greetings'
+
+const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  Globe, Search, ShoppingCart, Table, Shuffle, Layers, BookOpen, Camera,
+}
 
 const SUGGESTIONS = [
-  { Icon: Search,       text: 'Search Google for the latest AI news' },
-  { Icon: FileText,     text: 'Summarize this page for me' },
-  { Icon: ShoppingCart, text: 'Find the best price for this product' },
-  { Icon: Mail,         text: 'Draft a reply to this email' },
-  { Icon: Bookmark,     text: 'Bookmark all my open tabs into a folder' },
-  { Icon: BarChart3,    text: 'Extract data from this table into CSV' },
+  { icon: 'Globe',        text: 'Summarize this page' },
+  { icon: 'Search',       text: 'Research a topic for me' },
+  { icon: 'ShoppingCart', text: 'Compare prices for this product' },
+  { icon: 'Table',        text: 'Extract data from this page' },
+  { icon: 'Shuffle',      text: 'Find alternatives to this' },
+  { icon: 'Layers',       text: 'Organize my open tabs' },
 ]
 
 interface Props {
   onSuggestionClick: (text: string) => void
+  userName?: string
 }
 
-export default function EmptyState({ onSuggestionClick }: Props) {
+export default function EmptyState({ onSuggestionClick, userName }: Props) {
+  const [greeting] = useState(() => getGreeting(userName))
+
   return (
-    <div className="flex flex-col items-center justify-center h-full px-5 py-6 gap-6 animate-fade-in">
-      {/* Brand */}
-      <div className="flex flex-col items-center gap-3 text-center">
-        <img src="/icons/logo.png" alt="Harbor" className="w-16 h-16 rounded-2xl shadow-sm" />
-        <div>
-          <h1 className="font-semibold text-[rgb(var(--harbor-text))]">Harbor AI Agent</h1>
-          <p className="text-sm text-[rgb(var(--harbor-text-muted))] mt-0.5 leading-relaxed">
-            Control your browser, automate tasks, get things done.
+    <div className="flex flex-col h-full overflow-y-auto harbor-scroll">
+      <div className="flex flex-col gap-5 px-4 py-6 animate-fade-in">
+        {/* Greeting */}
+        <div className="flex flex-col gap-1">
+          <h2
+            className="harbor-serif text-2xl font-light leading-snug"
+            style={{ color: 'rgb(var(--harbor-text))' }}
+          >
+            {greeting}
+          </h2>
+          <p
+            className="text-xs leading-relaxed"
+            style={{ color: 'rgb(var(--harbor-text-faint))' }}
+          >
+            Ask anything, automate tasks, browse smarter.
           </p>
         </div>
-      </div>
 
-      {/* Suggestions */}
-      <div className="w-full flex flex-col gap-1.5">
-        {SUGGESTIONS.map(({ Icon, text }) => (
-          <button
-            key={text}
-            onClick={() => onSuggestionClick(text)}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] hover:border-harbor-400 hover:bg-[rgb(var(--harbor-surface-2))] text-left group"
-          >
-            <Icon
-              size={15}
-              className="flex-shrink-0 text-[rgb(var(--harbor-text-muted))] group-hover:text-harbor-600 dark:group-hover:text-harbor-400"
-            />
-            <span className="text-sm text-[rgb(var(--harbor-text))]">{text}</span>
-          </button>
-        ))}
-      </div>
+        {/* Suggestion chips */}
+        <div className="flex flex-col gap-1.5">
+          <p className="harbor-section-label mb-1">Try asking</p>
+          {SUGGESTIONS.map(({ icon, text }) => {
+            const Icon = ICON_MAP[icon]
+            return (
+              <button
+                key={text}
+                onClick={() => onSuggestionClick(text)}
+                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left group transition-all duration-150"
+                style={{
+                  background: 'rgb(var(--harbor-surface))',
+                  borderColor: 'rgb(var(--harbor-border))',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = 'rgb(var(--harbor-accent) / 0.4)'
+                  e.currentTarget.style.background = 'rgb(var(--harbor-surface-2))'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = 'rgb(var(--harbor-border))'
+                  e.currentTarget.style.background = 'rgb(var(--harbor-surface))'
+                }}
+              >
+                {Icon && (
+                  <Icon
+                    size={14}
+                    className="flex-shrink-0"
+                    style={{ color: 'rgb(var(--harbor-accent))' }}
+                  />
+                )}
+                <span
+                  className="text-xs"
+                  style={{ color: 'rgb(var(--harbor-text))' }}
+                >
+                  {text}
+                </span>
+              </button>
+            )
+          })}
+        </div>
 
-      <p className="text-xs text-[rgb(var(--harbor-text-faint))]">
-        Supports Claude, GPT, Gemini, Ollama &amp; more
-      </p>
+        {/* Footer hint */}
+        <p
+          className="text-[10px] text-center pt-1"
+          style={{ color: 'rgb(var(--harbor-text-faint))' }}
+        >
+          Claude · GPT · Gemini · Ollama · OpenRouter · more
+        </p>
+      </div>
     </div>
   )
 }

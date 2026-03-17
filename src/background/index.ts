@@ -214,4 +214,84 @@ chrome.runtime.onInstalled.addListener((details) => {
       if (tabs[0]?.windowId) chrome.sidePanel.open({ windowId: tabs[0].windowId })
     })
   }
+  // Set up context menus
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: 'harbor-root',
+      title: 'Harbor AI',
+      contexts: ['all'],
+    })
+    chrome.contextMenus.create({
+      id: 'harbor-ask-selection',
+      parentId: 'harbor-root',
+      title: 'Ask Harbor about "%s"',
+      contexts: ['selection'],
+    })
+    chrome.contextMenus.create({
+      id: 'harbor-summarize',
+      parentId: 'harbor-root',
+      title: 'Summarize this page',
+      contexts: ['page', 'frame'],
+    })
+    chrome.contextMenus.create({
+      id: 'harbor-extract',
+      parentId: 'harbor-root',
+      title: 'Extract data from this page',
+      contexts: ['page', 'frame'],
+    })
+    chrome.contextMenus.create({
+      id: 'harbor-save-link',
+      parentId: 'harbor-root',
+      title: 'Save this link for later',
+      contexts: ['link'],
+    })
+    chrome.contextMenus.create({
+      id: 'harbor-translate',
+      parentId: 'harbor-root',
+      title: 'Translate selection',
+      contexts: ['selection'],
+    })
+    chrome.contextMenus.create({
+      id: 'harbor-explain',
+      parentId: 'harbor-root',
+      title: 'Explain "%s"',
+      contexts: ['selection'],
+    })
+  })
+})
+
+// ─── Context Menu Handler ─────────────────────────────────────────────────────
+
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (!tab?.windowId) return
+
+  // Open side panel first
+  chrome.sidePanel.open({ windowId: tab.windowId })
+
+  let message = ''
+  switch (info.menuItemId) {
+    case 'harbor-ask-selection':
+      message = `Tell me about this: "${info.selectionText}"`
+      break
+    case 'harbor-summarize':
+      message = 'Summarize this page for me'
+      break
+    case 'harbor-extract':
+      message = 'Extract all the data from this page into a structured format'
+      break
+    case 'harbor-save-link':
+      message = `Save this link for later reading: ${info.linkUrl}`
+      break
+    case 'harbor-translate':
+      message = `Translate this to English: "${info.selectionText}"`
+      break
+    case 'harbor-explain':
+      message = `Explain this in simple terms: "${info.selectionText}"`
+      break
+    default:
+      return
+  }
+
+  // Store the pending context menu message — sidepanel will pick it up on load
+  await chrome.storage.local.set({ harbor_context_message: message })
 })
