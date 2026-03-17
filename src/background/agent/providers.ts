@@ -120,6 +120,8 @@ export const anthropicProvider: ProviderAdapter = {
     const toolNames: Record<string, string> = {}
     // Maps content block index → tool ID (fixes index mismatch when text/thinking blocks precede tool blocks)
     const toolIdByIndex: Record<number, string> = {}
+    // Thinking block buffers: index → accumulated thinking text
+    const thinkingBuffers: Record<number, string> = {}
 
     for await (const data of parseSSE(response)) {
       let event: Record<string, unknown>
@@ -133,19 +135,25 @@ export const anthropicProvider: ProviderAdapter = {
 
       if (eventType === 'content_block_start') {
         const block = event.content_block as Record<string, unknown>
+        const blockIndex = event.index as number
         if (block.type === 'tool_use') {
           const id = block.id as string
           const name = block.name as string
-          const blockIndex = event.index as number
           toolInputBuffers[id] = ''
           toolNames[id] = name
           toolIdByIndex[blockIndex] = id
           yield { type: 'tool_call_start', id, name }
+        } else if (block.type === 'thinking') {
+          thinkingBuffers[blockIndex] = ''
         }
       } else if (eventType === 'content_block_delta') {
         const delta = event.delta as Record<string, unknown>
         if (delta.type === 'text_delta') {
           yield { type: 'text_delta', text: delta.text as string }
+        } else if (delta.type === 'thinking_delta') {
+          const idx = event.index as number
+          thinkingBuffers[idx] = (thinkingBuffers[idx] ?? '') + (delta.thinking as string)
+          yield { type: 'thinking', text: delta.thinking as string }
         } else if (delta.type === 'input_json_delta') {
           const toolId = toolIdByIndex[event.index as number]
           if (toolId) {
@@ -490,6 +498,107 @@ export const googleProvider: ProviderAdapter = {
   },
 }
 
+// ─── Poe Provider ─────────────────────────────────────────────────────────────
+
+function toPoeMessages(messages: NormalizedMessage[]): unknown[] {
+  const result: unknown[] = []
+  for (const msg of messages) {
+    const textPart = msg.content.find((p) => p.type === 'text')
+    if (textPart && textPart.type === 'text' && textPart.text) {
+      result.push({
+        role: msg.role === 'assistant' ? 'bot' : 'user',
+        content: textPart.text,
+        content_type: 'text/markdown',
+        timestamp: 0,
+        attachments: [],
+      })
+    }
+  }
+  return result
+}
+
+export const poeProvider: ProviderAdapter = {
+  name: 'poe',
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    const { settings, messages, systemPrompt, signal } = options
+    const { provider } = settings
+
+    if (!provider.apiKey) {
+      yield { type: 'error', error: 'Poe API key is not set. Please add your key in Settings.' }
+      return
+    }
+
+    const botName = provider.model
+
+    // Include system prompt as a first user/bot exchange if present
+    const poeMessages = toPoeMessages(messages)
+    if (systemPrompt && poeMessages.length === 0) {
+      poeMessages.unshift({ role: 'user', content: systemPrompt, content_type: 'text/markdown', timestamp: 0, attachments: [] })
+    }
+
+    const response = await fetch(`https://api.poe.com/bot/${botName}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${provider.apiKey}`,
+        'Accept': 'text/event-stream',
+      },
+      body: JSON.stringify({
+        version: '1',
+        type: 'query',
+        query: poeMessages,
+        skip_system_prompt: false,
+      }),
+      signal,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      yield { type: 'error', error: `Poe API error ${response.status}: ${errorText}` }
+      return
+    }
+
+    // Poe SSE format: each data chunk is JSON.
+    // Native format: {"text": "...", "index": 0}
+    // Or wrapped:    {"type": "text", "text": "{\"text\": \"...\", \"index\": 0}"}
+    for await (const data of parseSSE(response)) {
+      let outer: Record<string, unknown>
+      try {
+        outer = JSON.parse(data)
+      } catch {
+        continue
+      }
+
+      // Wrapped format: {"type": "text", "text": "{...}"}
+      if (outer.type === 'text' && typeof outer.text === 'string') {
+        let textContent = ''
+        try {
+          const inner = JSON.parse(outer.text as string) as { text?: string }
+          textContent = inner.text ?? ''
+        } catch {
+          textContent = outer.text as string
+        }
+        if (textContent) yield { type: 'text_delta', text: textContent }
+      }
+      // Native format: {"text": "...", "index": 0}
+      else if (typeof outer.text === 'string' && outer.text) {
+        yield { type: 'text_delta', text: outer.text as string }
+      }
+      // Done event
+      else if (outer.type === 'done') {
+        break
+      }
+      // Error event
+      else if (outer.type === 'error') {
+        yield { type: 'error', error: (outer.text as string) ?? 'Poe error' }
+        return
+      }
+    }
+
+    yield { type: 'message_complete', stopReason: 'stop' }
+  },
+}
+
 // ─── Provider Registry ────────────────────────────────────────────────────────
 
 const providers: Record<string, ProviderAdapter> = {
@@ -499,6 +608,7 @@ const providers: Record<string, ProviderAdapter> = {
   ollama: ollamaProvider,
   openrouter: openrouterProvider,
   'openai-compatible': openaiCompatibleProvider,
+  poe: poeProvider,
 }
 
 export function getProvider(name: string): ProviderAdapter {

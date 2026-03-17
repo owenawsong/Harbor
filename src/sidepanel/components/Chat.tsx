@@ -1,5 +1,5 @@
 import React from 'react'
-import { Settings as SettingsIcon, Clock } from 'lucide-react'
+import { Settings as SettingsIcon, Clock, SquarePen } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
 import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
@@ -11,22 +11,15 @@ interface Props {
   currentSessionId?: string | null
   onOpenSettings: () => void
   onViewHistory: () => void
+  onNewConversation: () => void
 }
 
-export default function Chat({ settings, currentSessionId, onOpenSettings, onViewHistory }: Props) {
+export default function Chat({ settings, currentSessionId, onOpenSettings, onViewHistory, onNewConversation }: Props) {
   const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock } =
     useChat(settings, currentSessionId)
 
   const hasApiKey =
     Boolean(settings.provider.apiKey) || settings.provider.provider === 'ollama'
-
-  // Show just the short model name without version hash
-  const modelLabel = (() => {
-    const m = settings.provider.model
-    const parts = m.split('/')
-    const name = parts[parts.length - 1]
-    return name.split('-').slice(0, 3).join('-')
-  })()
 
   return (
     <div className="flex flex-col h-full">
@@ -35,12 +28,12 @@ export default function Chat({ settings, currentSessionId, onOpenSettings, onVie
         <div className="flex items-center gap-2 min-w-0">
           <img src="/icons/logo.png" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0" />
           <span className="font-semibold text-sm text-[rgb(var(--harbor-text))]">Harbor</span>
-          <span className="text-[11px] text-[rgb(var(--harbor-text-faint))] border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] px-1.5 py-0.5 rounded-md font-mono truncate max-w-[130px]">
-            {modelLabel}
-          </span>
         </div>
 
         <div className="flex items-center gap-0.5">
+          <button onClick={onNewConversation} className="icon-btn" title="New conversation">
+            <SquarePen size={15} />
+          </button>
           <button onClick={onViewHistory} className="icon-btn" title="History">
             <Clock size={15} />
           </button>

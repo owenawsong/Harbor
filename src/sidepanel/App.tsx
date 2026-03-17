@@ -109,6 +109,7 @@ export default function App() {
           currentSessionId={currentSessionId}
           onOpenSettings={() => setView('settings')}
           onViewHistory={handleViewHistory}
+          onNewConversation={handleNewConversation}
         />
       )}
       {view === 'settings' && (

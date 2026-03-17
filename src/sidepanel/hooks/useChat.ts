@@ -35,6 +35,20 @@ function uid(): string {
   return Math.random().toString(36).slice(2, 11)
 }
 
+// Extract <think>...</think> or <thinking>...</thinking> blocks from text.
+// Returns cleaned text + extracted thinking blocks.
+function extractThinkingBlocks(
+  text: string,
+  existing: UIThinkingBlock[],
+): { text: string; thinkingBlocks: UIThinkingBlock[] } {
+  const blocks: UIThinkingBlock[] = [...existing]
+  const cleaned = text.replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, (_, inner) => {
+    blocks.push({ id: uid(), text: inner.trim(), isOpen: false })
+    return ''
+  }).trim()
+  return { text: cleaned, thinkingBlocks: blocks }
+}
+
 function convertStoredMessages(messages: ChatMessage[]): UIMessage[] {
   const result: UIMessage[] = []
 
@@ -200,7 +214,12 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
         case 'message_complete': {
           const { messageId } = event
           setMessages((prev) =>
-            prev.map((m) => (m.id === messageId ? { ...m, isStreaming: false } : m)),
+            prev.map((m) => {
+              if (m.id !== messageId) return m
+              // Extract inline <think>...</think> blocks from text
+              const { text, thinkingBlocks } = extractThinkingBlocks(m.text, m.thinkingBlocks)
+              return { ...m, text, thinkingBlocks, isStreaming: false }
+            }),
           )
           setIsRunning(false)
           currentMsgId.current = null

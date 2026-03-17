@@ -46,6 +46,17 @@ export const DEFAULT_MODELS: Record<string, string[]> = {
     'mistralai/mistral-large',
   ],
   'openai-compatible': [],
+  poe: [
+    'Claude-3-7-Sonnet',
+    'GPT-4o',
+    'Gemini-1.5-Pro',
+    'Claude-3-5-Sonnet',
+    'Llama-3.1-405B-T',
+    'Gemini-2.0-Flash-Thinking',
+    'DeepSeek-R1',
+    'o3-mini',
+    'Grok-2',
+  ],
 }
 
 export const PROVIDER_LABELS: Record<string, string> = {
@@ -55,6 +66,7 @@ export const PROVIDER_LABELS: Record<string, string> = {
   ollama: 'Ollama (Local)',
   openrouter: 'OpenRouter',
   'openai-compatible': 'OpenAI-Compatible',
+  poe: 'Poe',
 }
 
 export const API_ENDPOINTS: Record<string, string> = {

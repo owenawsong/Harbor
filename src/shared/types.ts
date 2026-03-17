@@ -38,7 +38,7 @@ export interface ChatMessage {
 
 // ─── Provider Types ───────────────────────────────────────────────────────────
 
-export type ProviderName = 'anthropic' | 'openai' | 'google' | 'ollama' | 'openrouter' | 'openai-compatible'
+export type ProviderName = 'anthropic' | 'openai' | 'google' | 'ollama' | 'openrouter' | 'openai-compatible' | 'poe'
 
 export interface ProviderConfig {
   provider: ProviderName

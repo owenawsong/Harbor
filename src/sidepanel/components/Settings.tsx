@@ -15,6 +15,7 @@ const KEY_LINKS: Partial<Record<ProviderName, string>> = {
   openai:     'https://platform.openai.com/api-keys',
   google:     'https://aistudio.google.com/app/apikey',
   openrouter: 'https://openrouter.ai/settings/keys',
+  poe:        'https://poe.com/api_key',
 }
 
 const THEME_OPTIONS = [
@@ -40,6 +41,7 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
   const models = DEFAULT_MODELS[provider] ?? []
   const needsKey = provider !== 'ollama'
   const needsUrl = provider === 'ollama' || provider === 'openai-compatible'
+  // Poe: no custom base URL needed
   const keyLink  = KEY_LINKS[provider]
 
   useEffect(() => {

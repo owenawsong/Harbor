@@ -128,6 +128,10 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
             onEvent({ type: 'text_delta', text: event.text, messageId })
             break
 
+          case 'thinking':
+            onEvent({ type: 'thinking', text: event.text })
+            break
+
           case 'tool_call_start':
             pendingToolCalls.set(event.id, { name: event.name, input: '' })
             onEvent({
