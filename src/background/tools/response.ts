@@ -86,7 +86,12 @@ export async function sendToContentScript(tabId: number, message: unknown): Prom
     return { success: false, error: 'Content script unavailable on this page. Try refreshing the tab or navigating to a regular webpage.' }
   }
   try {
-    const result = await chrome.tabs.sendMessage(tabId, message)
+    const result = await Promise.race([
+      chrome.tabs.sendMessage(tabId, message) as Promise<{ success: boolean; data?: unknown; error?: string }>,
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Content script did not respond in time (10s)')), 10_000),
+      ),
+    ])
     return result
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : String(err) }

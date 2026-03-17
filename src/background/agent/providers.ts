@@ -250,6 +250,12 @@ function* parseThinkChunk(
 
 // ─── OpenAI Provider ──────────────────────────────────────────────────────────
 
+// Strip base64 image data from tool result content to avoid token blowups.
+// Replaces data:image/...;base64,<data> blobs with a short placeholder.
+function stripBase64Images(content: string): string {
+  return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[screenshot]')
+}
+
 function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string): unknown[] {
   const result: unknown[] = [{ role: 'system', content: systemPrompt }]
 
@@ -270,7 +276,7 @@ function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string): 
           result.push({
             role: 'tool',
             tool_call_id: tr.toolCallId,
-            content: tr.content,
+            content: stripBase64Images(tr.content),
           })
         }
       }
@@ -585,9 +591,11 @@ const HARBOR_FREE_POE_MODEL = 'minimax-m2.5'
 
 function hasImageContent(messages: NormalizedMessage[]): boolean {
   return messages.some((msg) =>
-    msg.content.some(
-      (part) => part.type === 'tool_result' && part.content.includes('data:image'),
-    ),
+    msg.content.some((part) => {
+      if (part.type !== 'tool_result') return false
+      // Screenshots are stored as base64 in JSON-serialised tool output
+      return part.content.includes('data:image') || part.content.includes('"screenshot"')
+    }),
   )
 }
 
@@ -624,7 +632,9 @@ export const harborFreeProvider: ProviderAdapter = {
       HARBOR_FREE_NVIDIA_URL,
       options.settings.provider.apiKey || HARBOR_FREE_KEY,
       nvidiaOptions,
-      { temperature: 0.45, top_p: 0.95, max_tokens: 16384 },
+      // max_tokens capped at 8192 — NVIDIA NIM Minimax has 196608 total context;
+      // large output budgets leave insufficient room for conversation history.
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 8192, 8192) },
     )
   },
 }

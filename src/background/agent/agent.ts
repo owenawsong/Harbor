@@ -220,7 +220,12 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
       let toolResult: import('../../shared/types').ToolResult
       try {
-        toolResult = await handler.execute(tc.input, browserContext)
+        toolResult = await Promise.race([
+          handler.execute(tc.input, browserContext),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
+          ),
+        ])
       } catch (err) {
         toolResult = { success: false, error: err instanceof Error ? err.message : String(err) }
       }
