@@ -309,6 +309,11 @@ async function* openAICompatibleComplete(
     const delta = choice.delta as Record<string, unknown>
     if (!delta) continue
 
+    // reasoning_content: used by DeepSeek R1, Poe reasoning models, and others
+    if (delta.reasoning_content) {
+      yield { type: 'thinking', text: delta.reasoning_content as string }
+    }
+
     if (delta.content) {
       yield { type: 'text_delta', text: delta.content as string }
     }

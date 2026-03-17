@@ -139,6 +139,11 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             if (last?.id === messageId && last.role === 'assistant') {
               return [...prev.slice(0, -1), { ...last, text: last.text + text, isStreaming: true }]
             }
+            // If the last message is a streaming assistant msg with thinking blocks,
+            // reasoning_content arrived before text — merge into that message instead
+            if (last?.role === 'assistant' && last.isStreaming && last.thinkingBlocks.length > 0 && !last.text) {
+              return [...prev.slice(0, -1), { ...last, id: messageId, text, isStreaming: true }]
+            }
             return [...prev, {
               id: messageId, role: 'assistant', text, toolCalls: [],
               thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
