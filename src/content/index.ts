@@ -2,10 +2,14 @@
  * Harbor Content Script
  * Injected into all pages. Handles DOM interaction on behalf of the agent.
  * Communicates with the background service worker via chrome.runtime messages.
+ *
+ * NOTE: This file must NOT import from any shared modules. Content scripts
+ * cannot be ES modules (no dynamic imports), so all dependencies must be
+ * defined inline here.
  */
 
-import type { SnapshotElement, PageSnapshot } from '../shared/types'
-import { HARBOR_ELEMENT_ATTR } from '../shared/constants'
+// Inlined from shared/constants.ts — do NOT import; content scripts are classic scripts
+const HARBOR_ELEMENT_ATTR = 'data-harbor-id'
 
 // ─── Element ID Registry ──────────────────────────────────────────────────────
 
@@ -337,6 +341,11 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
   ;(async () => {
     try {
       switch (message.type) {
+        case 'harbor_ping': {
+          sendResponse({ success: true, pong: true })
+          break
+        }
+
         case 'harbor_snapshot': {
           const snapshot = takeSnapshot()
           sendResponse({ success: true, data: snapshot })
