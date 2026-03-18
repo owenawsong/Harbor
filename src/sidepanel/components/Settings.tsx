@@ -713,7 +713,7 @@ function SectionAbout() {
           <img src="/icons/logo.png" alt="Harbor" className="w-10 h-10 rounded-xl" />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>Harbor</p>
-            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.0.0 — AI Browser Agent</p>
+            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.21 — AI Browser Agent</p>
           </div>
         </div>
         <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
