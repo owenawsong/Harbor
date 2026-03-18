@@ -120,14 +120,20 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const needsUrl = provider === 'ollama' || provider === 'openai-compatible'
   const keyLink  = KEY_LINKS[provider]
 
-  // CRITICAL: Sync props to state when they change (e.g., when loaded from storage)
+  // Sync props to state ONLY on mount (not on every prop change)
   useEffect(() => {
-    console.log('⚡ Settings: Props changed, syncing to local state', { provider: settings.provider.provider, apiKey: settings.provider.apiKey ? '***' : 'empty' })
+    console.log('⚡ Settings mounted, syncing props:', { provider: settings.provider.provider, apiKey: settings.provider.apiKey ? '***' : 'empty' })
     setProvider(settings.provider.provider as ProviderName)
     setApiKey(settings.provider.apiKey ?? '')
     setBaseUrl(settings.provider.baseUrl ?? '')
     setEnableMemory(settings.enableMemory ?? true)
-
+    setCurrentTheme(theme)
+    setUserName(identity?.userName ?? '')
+    setTone(identity?.tone ?? 'friendly')
+    setVerbosity(identity?.verbosity ?? 'balanced')
+    setLanguage(identity?.language ?? 'en')
+    setUseEmoji(identity?.useEmoji ?? false)
+    setCustomPersonality(identity?.customPersonality ?? '')
     setModelsByProvider({
       anthropic: settings.provider.provider === 'anthropic' ? settings.provider.model : '',
       openai: settings.provider.provider === 'openai' ? settings.provider.model : '',
@@ -138,24 +144,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
       poe: settings.provider.provider === 'poe' ? settings.provider.model : '',
       'harbor-free': settings.provider.provider === 'harbor-free' ? settings.provider.model : '',
     })
-  }, [settings])
-
-  // CRITICAL: Sync identity props to state when they change
-  useEffect(() => {
-    console.log('⚡ Settings: Identity props changed, syncing to local state', identity)
-    setUserName(identity?.userName ?? '')
-    setTone(identity?.tone ?? 'friendly')
-    setVerbosity(identity?.verbosity ?? 'balanced')
-    setLanguage(identity?.language ?? 'en')
-    setUseEmoji(identity?.useEmoji ?? false)
-    setCustomPersonality(identity?.customPersonality ?? '')
-  }, [identity])
-
-  // CRITICAL: Sync theme prop to state when it changes
-  useEffect(() => {
-    console.log('⚡ Settings: Theme prop changed, syncing to local state', theme)
-    setCurrentTheme(theme)
-  }, [theme])
+  }, [])
 
   useEffect(() => {
     if (provider === 'ollama' && !baseUrl)             setBaseUrl('http://localhost:11434')
@@ -166,12 +155,10 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     setProvider(p)
   }
 
-  // Auto-save: debounced 800ms after any change
+  // Auto-save: debounced 500ms after any change
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const isFirstRender = useRef(true)
-  useEffect(() => {
-    if (isFirstRender.current) { isFirstRender.current = false; return }
+  const triggerSave = useCallback(() => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
 
     saveTimerRef.current = setTimeout(async () => {
@@ -190,20 +177,23 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           useEmoji,
           customPersonality: customPersonality.trim() || undefined,
         }
-        console.log('🔄 Saving settings...', { provider, model, apiKey: apiKey ? '***' : 'empty' })
+        console.log('💾 Saving to background...', { provider, apiKey: apiKey ? '***' : 'empty' })
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
-        console.log('✅ Settings saved successfully')
+        console.log('✅ Saved')
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
       } catch (err) {
-        console.error('❌ Failed to save settings:', err)
-        setSavedIndicator(false)
+        console.error('❌ Save failed:', err)
       }
-    }, 800)
+    }, 500)
+  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, identity])
 
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme,
-      userName, tone, verbosity, language, useEmoji, customPersonality, identity])
+  // Trigger save on any change (but not on initial mount)
+  const isFirstRender = useRef(true)
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
+    triggerSave()
+  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, triggerSave])
 
   const renderSection = () => {
     console.log('📭 Settings: About to render section, current state:', { provider, apiKey: apiKey ? '***' : 'EMPTY', userName, tone })
