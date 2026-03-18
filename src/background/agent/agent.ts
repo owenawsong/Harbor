@@ -252,8 +252,10 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       normalizedHistory.push({ role: 'user', content: toolResults })
     }
 
-    // Check stop reason - if it wasn't tool_use, break
-    if (stopReason && stopReason !== 'tool_use' && stopReason !== 'tool_calls' && stopReason !== 'TOOL_USE') {
+    // Check stop reason - if it wasn't tool_use/tool_calls, break
+    // Support various formats: 'tool_use', 'tool_calls', 'TOOL_USE', 'function_calls', etc.
+    const isToolUseReason = stopReason && /tool|function/i.test(stopReason)
+    if (stopReason && !isToolUseReason) {
       break
     }
   }

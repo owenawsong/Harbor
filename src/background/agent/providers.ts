@@ -663,7 +663,7 @@ async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<C
     yield* openAICompatibleComplete(
       HARBOR_FREE_NVIDIA_URL, apiKey,
       { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model } } },
-      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768), chat_template_kwargs: { enable_thinking: true } },
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768) },
       true,
     )
     return
@@ -688,7 +688,7 @@ async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<C
   try {
     for await (const event of openAICompatibleComplete(
       HARBOR_FREE_NVIDIA_URL, apiKey, minimaxOptions,
-      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768), chat_template_kwargs: { enable_thinking: true } },
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768) },
       false,
     )) {
       if (event.type === 'text_delta' || event.type === 'thinking') gotFirstToken = true
@@ -713,7 +713,7 @@ async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<C
     yield* openAICompatibleComplete(
       HARBOR_FREE_NVIDIA_URL, apiKey,
       { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model: HARBOR_FREE_IMAGE_MODEL } } },
-      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768), chat_template_kwargs: { enable_thinking: true } },
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768) },
       true,
     )
   }
