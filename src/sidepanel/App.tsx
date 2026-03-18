@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Chat from './components/Chat'
 import Settings from './components/Settings'
 import ConversationList from './components/ConversationList'
 import type { AgentSettings, StoredSession } from '../shared/types'
+import type { ChatInputHandle } from './components/ChatInput'
 
 type View = 'chat' | 'settings' | 'history'
 
@@ -12,6 +13,7 @@ export default function App() {
   const [theme, setTheme]                     = useState<'light' | 'dark' | 'system'>('system')
   const [sessions, setSessions]               = useState<StoredSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
+  const chatInputRef = useRef<ChatInputHandle>(null)
 
   // ── Load settings + theme on mount ─────────────────────────────────────────
   useEffect(() => {
@@ -45,6 +47,34 @@ export default function App() {
     }
     chrome.storage.local.set({ harbor_theme: theme })
   }, [theme])
+
+  // ── Global keyboard shortcut for command palette (focus input) ─────────────
+  useEffect(() => {
+    const shortcut = settings?.commandPaletteShortcut ?? 'Ctrl+K'
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const parts = shortcut.split('+')
+      const needsCtrl  = parts.includes('Ctrl')
+      const needsAlt   = parts.includes('Alt')
+      const needsShift = parts.includes('Shift')
+      const key = parts[parts.length - 1]
+
+      if (
+        (e.ctrlKey || e.metaKey) === needsCtrl &&
+        e.altKey   === needsAlt &&
+        e.shiftKey === needsShift &&
+        (e.key === key || e.key.toUpperCase() === key)
+      ) {
+        e.preventDefault()
+        if (view !== 'chat') setView('chat')
+        // Defer focus until Chat is rendered
+        setTimeout(() => chatInputRef.current?.focus(), 50)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [settings?.commandPaletteShortcut, view])
 
   // ── Sessions ────────────────────────────────────────────────────────────────
   const loadSessions = useCallback(() => {
@@ -109,6 +139,7 @@ export default function App() {
           currentSessionId={currentSessionId}
           onOpenSettings={() => setView('settings')}
           onViewHistory={handleViewHistory}
+          inputRef={chatInputRef}
         />
       )}
       {view === 'settings' && (

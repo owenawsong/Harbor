@@ -7,6 +7,49 @@
 import type { SnapshotElement, PageSnapshot } from '../shared/types'
 import { HARBOR_ELEMENT_ATTR } from '../shared/constants'
 
+// ─── Agent Running Indicator ──────────────────────────────────────────────────
+
+const INDICATOR_ID = '__harbor_agent_indicator__'
+
+function showAgentIndicator() {
+  if (document.getElementById(INDICATOR_ID)) return
+
+  const bar = document.createElement('div')
+  bar.id = INDICATOR_ID
+  bar.style.cssText = [
+    'position: fixed',
+    'top: 0',
+    'left: 0',
+    'width: 100%',
+    'height: 3px',
+    'z-index: 2147483647',
+    'pointer-events: none',
+    'background: linear-gradient(90deg, #4f5fe8 0%, #8b9ff8 40%, #4f5fe8 100%)',
+    'background-size: 200% 100%',
+    'animation: harbor-shimmer 1.4s ease-in-out infinite',
+  ].join(';')
+
+  // Inject keyframe animation once
+  if (!document.getElementById('__harbor_agent_styles__')) {
+    const style = document.createElement('style')
+    style.id = '__harbor_agent_styles__'
+    style.textContent = `
+      @keyframes harbor-shimmer {
+        0%   { background-position: 200% 0; opacity: 0.9; }
+        50%  { background-position: 0% 0;   opacity: 1; }
+        100% { background-position: -200% 0; opacity: 0.9; }
+      }
+    `
+    document.head.appendChild(style)
+  }
+
+  document.body.appendChild(bar)
+}
+
+function hideAgentIndicator() {
+  document.getElementById(INDICATOR_ID)?.remove()
+}
+
 // ─── Element ID Registry ──────────────────────────────────────────────────────
 
 let elementCounter = 0
@@ -561,6 +604,18 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
             window.confirm = () => false
             window.prompt = () => null
           }
+          sendResponse({ success: true })
+          break
+        }
+
+        case 'harbor_agent_start': {
+          showAgentIndicator()
+          sendResponse({ success: true })
+          break
+        }
+
+        case 'harbor_agent_stop': {
+          hideAgentIndicator()
           sendResponse({ success: true })
           break
         }

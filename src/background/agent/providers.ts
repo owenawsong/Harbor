@@ -489,6 +489,78 @@ export const googleProvider: ProviderAdapter = {
   },
 }
 
+// ─── Harbor Free Provider (MiniMax → Qwen fallback via OpenRouter) ────────────
+
+const HARBOR_FREE_OR_URL = 'https://openrouter.ai/api/v1'
+const HARBOR_FREE_API_KEY = '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'
+const MINIMAX_MODEL = 'minimax/minimax-m2'
+const FALLBACK_MODEL = 'qwen/qwen3.5-72b:free'
+const FIRST_TOKEN_TIMEOUT_MS = 1500
+
+export const harborFreeProvider: ProviderAdapter = {
+  name: 'harbor-free',
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    const { messages, signal } = options
+
+    // Check if any message contains images (use Qwen directly)
+    const hasImages = messages.some((m) =>
+      m.content.some((c) => c.type === 'image'),
+    )
+
+    const primaryModel = hasImages ? FALLBACK_MODEL : MINIMAX_MODEL
+
+    // Try primary model with first-token timeout (only for MiniMax)
+    if (!hasImages) {
+      const controller = new AbortController()
+      const combined = signal
+        ? new AbortController()
+        : controller
+
+      // If caller aborts, propagate
+      signal?.addEventListener('abort', () => controller.abort())
+
+      const timeoutId = setTimeout(() => controller.abort(), FIRST_TOKEN_TIMEOUT_MS)
+      let gotFirstToken = false
+
+      try {
+        const fakeSettings = {
+          ...options.settings,
+          provider: { ...options.settings.provider, model: MINIMAX_MODEL },
+        }
+        const gen = openAICompatibleComplete(HARBOR_FREE_OR_URL, HARBOR_FREE_API_KEY, {
+          ...options,
+          settings: fakeSettings,
+          signal: controller.signal,
+        })
+
+        for await (const event of gen) {
+          if (!gotFirstToken) {
+            clearTimeout(timeoutId)
+            gotFirstToken = true
+          }
+          yield event
+        }
+        return
+      } catch (err) {
+        clearTimeout(timeoutId)
+        // If we timed out (no first token) and caller didn't abort, fall through to Qwen
+        if (gotFirstToken || signal?.aborted) throw err
+        // else: fall through to Qwen silently
+      }
+    }
+
+    // Fallback to Qwen
+    const fallbackSettings = {
+      ...options.settings,
+      provider: { ...options.settings.provider, model: FALLBACK_MODEL },
+    }
+    yield* openAICompatibleComplete(HARBOR_FREE_OR_URL, HARBOR_FREE_API_KEY, {
+      ...options,
+      settings: fallbackSettings,
+    })
+  },
+}
+
 // ─── Provider Registry ────────────────────────────────────────────────────────
 
 const providers: Record<string, ProviderAdapter> = {
@@ -498,6 +570,7 @@ const providers: Record<string, ProviderAdapter> = {
   ollama: ollamaProvider,
   openrouter: openrouterProvider,
   'openai-compatible': openaiCompatibleProvider,
+  'harbor-free': harborFreeProvider,
 }
 
 export function getProvider(name: string): ProviderAdapter {
