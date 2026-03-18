@@ -24,6 +24,14 @@ async function getSettings(): Promise<AgentSettings> {
   return (data[STORAGE_KEYS.SETTINGS] as StoredSettings)?.agentSettings ?? DEFAULT_SETTINGS
 }
 
+async function getStoredSettings(): Promise<StoredSettings> {
+  const data = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS)
+  return (data[STORAGE_KEYS.SETTINGS] as StoredSettings) ?? {
+    agentSettings: DEFAULT_SETTINGS,
+    theme: 'system',
+  }
+}
+
 async function saveSettings(settings: AgentSettings, theme: string, identity?: any): Promise<void> {
   const stored: StoredSettings = {
     agentSettings: settings,
@@ -179,7 +187,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     try {
       switch (message.type) {
         case 'get_settings':
-          sendResponse({ success: true, data: await getSettings() })
+          sendResponse({ success: true, data: await getStoredSettings() })
           break
 
         case 'save_settings': {

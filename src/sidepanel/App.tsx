@@ -32,16 +32,18 @@ export default function App() {
   // ── Load on mount ─────────────────────────────────────────────────────────
 
   useEffect(() => {
-    // Load settings
+    // Load settings, theme, and identity from background service
     chrome.runtime.sendMessage({ type: 'get_settings' }, (res) => {
-      setSettings(res?.success && res.data
-        ? res.data
-        : {
-            provider: { provider: 'harbor-free', model: 'qwen/qwen3.5-122b-a10b', apiKey: '' },
-            maxTokens: 8192,
-            enableMemory: false,
-            enableScreenshots: true,
-          })
+      if (res?.success && res.data) {
+        const stored = res.data
+        setSettings(stored.agentSettings || {
+          provider: { provider: 'harbor-free', model: 'minimax/minimax-m2.5', apiKey: '' },
+          enableMemory: true,
+          enableScreenshots: true,
+        })
+        if (stored.theme) setTheme(stored.theme as 'light' | 'dark' | 'system')
+        if (stored.identity) setIdentity(stored.identity as IdentitySettings)
+      }
     })
 
     // Load keybindings
@@ -51,12 +53,8 @@ export default function App() {
       }
     })
 
-    // Load theme
-    chrome.storage.local.get(['harbor_theme', ONBOARDING_KEY, IDENTITY_KEY], (data) => {
-      if (data.harbor_theme) setTheme(data.harbor_theme as 'light' | 'dark' | 'system')
-      if (data[IDENTITY_KEY]) setIdentity(data[IDENTITY_KEY] as IdentitySettings)
-
-      // Check onboarding
+    // Check onboarding status
+    chrome.storage.local.get(ONBOARDING_KEY, (data) => {
       const onboarding = data[ONBOARDING_KEY] as OnboardingData | undefined
       if (!onboarding?.completed) {
         setView('onboarding')
@@ -194,7 +192,6 @@ export default function App() {
     setTheme(newTheme)
     if (newIdentity) {
       setIdentity(newIdentity)
-      chrome.storage.local.set({ [IDENTITY_KEY]: newIdentity })
     }
     setView('chat')
   }
