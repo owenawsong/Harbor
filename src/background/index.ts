@@ -5,7 +5,9 @@
 import { runAgent } from './agent/agent'
 import type { AgentSettings, StoredSettings, StoredSession, ChatMessage } from '../shared/types'
 import type { PortMessage, AgentEvent } from '../shared/types'
-import { PORT_NAME, STORAGE_KEYS } from '../shared/constants'
+import { PORT_NAME, STORAGE_KEYS, VERSION } from '../shared/constants'
+
+console.log(`🌊 Harbor Extension loaded - Version ${VERSION}`)
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
