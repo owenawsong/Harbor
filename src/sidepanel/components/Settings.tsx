@@ -193,7 +193,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         console.log('🔄 Saving settings...', { provider, model, apiKey: apiKey ? '***' : 'empty' })
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
         console.log('✅ Settings saved successfully')
-        onSave(newSettings, currentTheme, newIdentity)
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
       } catch (err) {
