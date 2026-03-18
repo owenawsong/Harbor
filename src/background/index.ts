@@ -26,10 +26,12 @@ async function getSettings(): Promise<AgentSettings> {
 
 async function getStoredSettings(): Promise<StoredSettings> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS)
-  return (data[STORAGE_KEYS.SETTINGS] as StoredSettings) ?? {
+  const stored = (data[STORAGE_KEYS.SETTINGS] as StoredSettings) ?? {
     agentSettings: DEFAULT_SETTINGS,
     theme: 'system',
   }
+  console.log('📂 Background: getStoredSettings returning:', { provider: stored.agentSettings?.provider?.provider, hasIdentity: !!stored.identity, theme: stored.theme })
+  return stored
 }
 
 async function saveSettings(settings: AgentSettings, theme: string, identity?: any): Promise<void> {
@@ -192,8 +194,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         case 'save_settings': {
           const { settings, theme, identity } = message as { settings: AgentSettings; theme: string; identity?: any }
-          await saveSettings(settings, theme ?? 'system', identity)
-          sendResponse({ success: true })
+          try {
+            console.log('💾 Background: Received save_settings message', { provider: settings.provider.provider, apiKey: settings.provider.apiKey ? '***' : 'empty' })
+            await saveSettings(settings, theme ?? 'system', identity)
+            console.log('✅ Background: Settings saved to chrome.storage.local')
+            sendResponse({ success: true })
+          } catch (err) {
+            console.error('❌ Background: Failed to save settings:', err)
+            sendResponse({ success: false, error: err instanceof Error ? err.message : String(err) })
+          }
           break
         }
 

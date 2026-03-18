@@ -126,35 +126,42 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
   // Auto-save: debounced 800ms after any change
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const doSave = useCallback(async () => {
-    const newSettings: AgentSettings = {
-      provider: { provider, model: provider === 'harbor-free' ? 'minimax/minimax-m2.5' : model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
-      enableMemory,
-      enableScreenshots: true,
-    }
-    const newIdentity: IdentitySettings = {
-      userName: userName.trim() || undefined,
-      useCases: identity?.useCases ?? [],
-      tone,
-      verbosity,
-      language,
-      useEmoji,
-      customPersonality: customPersonality.trim() || undefined,
-    }
-    await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
-    setSavedIndicator(true)
-    setTimeout(() => setSavedIndicator(false), 1500)
-  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme,
-      userName, tone, verbosity, language, useEmoji, customPersonality, identity])
 
   const isFirstRender = useRef(true)
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return }
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
-    saveTimerRef.current = setTimeout(doSave, 800)
+
+    saveTimerRef.current = setTimeout(async () => {
+      try {
+        const newSettings: AgentSettings = {
+          provider: { provider, model: provider === 'harbor-free' ? 'minimax/minimax-m2.5' : model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
+          enableMemory,
+          enableScreenshots: true,
+        }
+        const newIdentity: IdentitySettings = {
+          userName: userName.trim() || undefined,
+          useCases: identity?.useCases ?? [],
+          tone,
+          verbosity,
+          language,
+          useEmoji,
+          customPersonality: customPersonality.trim() || undefined,
+        }
+        console.log('🔄 Saving settings...', { provider, model, apiKey: apiKey ? '***' : 'empty' })
+        await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
+        console.log('✅ Settings saved successfully')
+        setSavedIndicator(true)
+        setTimeout(() => setSavedIndicator(false), 1500)
+      } catch (err) {
+        console.error('❌ Failed to save settings:', err)
+        setSavedIndicator(false)
+      }
+    }, 800)
+
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
   }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme,
-      userName, tone, verbosity, language, useEmoji, customPersonality, doSave])
+      userName, tone, verbosity, language, useEmoji, customPersonality, identity])
 
   const renderSection = () => {
     switch (activeSection) {

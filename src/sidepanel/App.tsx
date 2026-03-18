@@ -34,6 +34,7 @@ export default function App() {
   useEffect(() => {
     // Load settings, theme, and identity from background service
     chrome.runtime.sendMessage({ type: 'get_settings' }, (res) => {
+      console.log('📥 App: Received settings from background:', res?.data)
       if (res?.success && res.data) {
         const stored = res.data
         setSettings(stored.agentSettings || {
@@ -41,8 +42,16 @@ export default function App() {
           enableMemory: true,
           enableScreenshots: true,
         })
-        if (stored.theme) setTheme(stored.theme as 'light' | 'dark' | 'system')
-        if (stored.identity) setIdentity(stored.identity as IdentitySettings)
+        if (stored.theme) {
+          console.log('🎨 App: Setting theme to', stored.theme)
+          setTheme(stored.theme as 'light' | 'dark' | 'system')
+        }
+        if (stored.identity) {
+          console.log('👤 App: Setting identity to', stored.identity)
+          setIdentity(stored.identity as IdentitySettings)
+        }
+      } else {
+        console.warn('⚠️ App: No settings response or error:', res)
       }
     })
 
