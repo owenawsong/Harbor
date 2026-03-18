@@ -13,8 +13,7 @@ console.log(`🌊 Harbor Extension loaded - Version ${VERSION}`)
 
 const DEFAULT_SETTINGS: AgentSettings = {
   provider: { provider: 'anthropic', model: 'claude-opus-4-5-20251101', apiKey: '' },
-  maxTokens: 8192,
-  enableMemory: false,
+  enableMemory: true,
   enableScreenshots: true,
 }
 
@@ -25,10 +24,11 @@ async function getSettings(): Promise<AgentSettings> {
   return (data[STORAGE_KEYS.SETTINGS] as StoredSettings)?.agentSettings ?? DEFAULT_SETTINGS
 }
 
-async function saveSettings(settings: AgentSettings, theme: string): Promise<void> {
+async function saveSettings(settings: AgentSettings, theme: string, identity?: any): Promise<void> {
   const stored: StoredSettings = {
     agentSettings: settings,
     theme: (theme as 'light' | 'dark' | 'system') || 'system',
+    identity,
   }
   await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: stored })
 }
@@ -183,8 +183,8 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           break
 
         case 'save_settings': {
-          const { settings, theme } = message as { settings: AgentSettings; theme: string }
-          await saveSettings(settings, theme ?? 'system')
+          const { settings, theme, identity } = message as { settings: AgentSettings; theme: string; identity?: any }
+          await saveSettings(settings, theme ?? 'system', identity)
           sendResponse({ success: true })
           break
         }

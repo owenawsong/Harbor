@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check,
   Palette, User, Brain, Cpu,
-  Shield, HelpCircle, Keyboard,
+  Shield, HelpCircle, Keyboard, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import type {
   AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel,
@@ -26,7 +26,7 @@ type SettingsSection =
   | 'about'
 
 const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
-  { id: 'provider',   label: 'Provider',    icon: Cpu },
+  { id: 'provider',   label: 'General',    icon: Cpu },
   { id: 'appearance', label: 'Appearance',  icon: Palette },
   { id: 'identity',   label: 'Identity',    icon: User },
   { id: 'memory',     label: 'Memory',      icon: Brain },
@@ -77,14 +77,28 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const [activeSection, setActiveSection] = useState<SettingsSection>('provider')
   const [savedIndicator, setSavedIndicator] = useState(false)
 
-  // Provider / Models
+  // Provider / Models - with per-provider model storage
   const [provider, setProvider]       = useState<ProviderName>(settings.provider.provider as ProviderName)
-  const [model, setModel]             = useState(settings.provider.model)
+  const [modelsByProvider, setModelsByProvider] = useState<Record<ProviderName, string>>({
+    anthropic: settings.provider.provider === 'anthropic' ? settings.provider.model : '',
+    openai: settings.provider.provider === 'openai' ? settings.provider.model : '',
+    google: settings.provider.provider === 'google' ? settings.provider.model : '',
+    ollama: settings.provider.provider === 'ollama' ? settings.provider.model : '',
+    openrouter: settings.provider.provider === 'openrouter' ? settings.provider.model : '',
+    'openai-compatible': settings.provider.provider === 'openai-compatible' ? settings.provider.model : '',
+    poe: settings.provider.provider === 'poe' ? settings.provider.model : '',
+    'harbor-free': settings.provider.provider === 'harbor-free' ? settings.provider.model : '',
+  })
   const [apiKey, setApiKey]           = useState(settings.provider.apiKey ?? '')
   const [baseUrl, setBaseUrl]         = useState(settings.provider.baseUrl ?? '')
-  const [maxTokens, setMaxTokens]     = useState(settings.maxTokens ?? 8192)
-  const [enableMemory, setEnableMemory] = useState(settings.enableMemory ?? false)
+  const [enableMemory, setEnableMemory] = useState(settings.enableMemory ?? true)
   const [showKey, setShowKey]         = useState(false)
+
+  // Get model for current provider
+  const model = modelsByProvider[provider]
+  const handleModelChange = (newModel: string) => {
+    setModelsByProvider(prev => ({ ...prev, [provider]: newModel }))
+  }
 
   // Appearance
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'system'>(theme)
@@ -114,8 +128,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const doSave = useCallback(async () => {
     const newSettings: AgentSettings = {
-      provider: { provider, model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
-      maxTokens,
+      provider: { provider, model: provider === 'harbor-free' ? 'minimax/minimax-m2.5' : model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
       enableMemory,
       enableScreenshots: true,
     }
@@ -128,10 +141,10 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
       useEmoji,
       customPersonality: customPersonality.trim() || undefined,
     }
-    await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme })
+    await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
     setSavedIndicator(true)
     setTimeout(() => setSavedIndicator(false), 1500)
-  }, [provider, model, apiKey, baseUrl, maxTokens, enableMemory, currentTheme,
+  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme,
       userName, tone, verbosity, language, useEmoji, customPersonality, identity])
 
   const isFirstRender = useRef(true)
@@ -140,7 +153,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(doSave, 800)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [provider, model, apiKey, baseUrl, maxTokens, enableMemory, currentTheme,
+  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme,
       userName, tone, verbosity, language, useEmoji, customPersonality, doSave])
 
   const renderSection = () => {
@@ -148,12 +161,12 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
       case 'provider':
         return <SectionGeneral
           provider={provider} model={model}
-          apiKey={apiKey} baseUrl={baseUrl} maxTokens={maxTokens} enableMemory={enableMemory}
+          apiKey={apiKey} baseUrl={baseUrl} enableMemory={enableMemory}
           showKey={showKey} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
           onProviderChange={handleProviderChange}
-          onModelChange={setModel}
+          onModelChange={handleModelChange}
           onApiKeyChange={setApiKey} onBaseUrlChange={setBaseUrl}
-          onMaxTokensChange={setMaxTokens} onEnableMemoryChange={setEnableMemory}
+          onEnableMemoryChange={setEnableMemory}
           onShowKeyToggle={() => setShowKey((v) => !v)}
         />
       case 'appearance':
@@ -195,15 +208,70 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         )}
       </div>
 
-      {/* Horizontal tab bar */}
+      {/* Horizontal tab bar with small-screen scroll navigation */}
+      <SettingsTabBar activeSection={activeSection} onSectionChange={setActiveSection} />
+
+      {/* Section content */}
+      <div className="flex-1 overflow-y-auto harbor-scroll">
+        {renderSection()}
+      </div>
+    </div>
+  )
+}
+
+// ─── Settings Tab Bar with Small Screen Navigation ────────────────────────────
+
+function SettingsTabBar({ activeSection, onSectionChange }: {
+  activeSection: SettingsSection
+  onSectionChange: (section: SettingsSection) => void
+}) {
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const checkScroll = useCallback(() => {
+    if (tabsRef.current) {
+      setCanScrollLeft(tabsRef.current.scrollLeft > 0)
+      setCanScrollRight(
+        tabsRef.current.scrollLeft < tabsRef.current.scrollWidth - tabsRef.current.clientWidth - 5
+      )
+    }
+  }, [])
+
+  useEffect(() => {
+    checkScroll()
+    window.addEventListener('resize', checkScroll)
+    return () => window.removeEventListener('resize', checkScroll)
+  }, [checkScroll])
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (tabsRef.current) {
+      tabsRef.current.scrollBy({ left: direction === 'left' ? -150 : 150, behavior: 'smooth' })
+      setTimeout(checkScroll, 300)
+    }
+  }
+
+  return (
+    <div className="flex border-b flex-shrink-0" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll('left')}
+          className="p-1 flex-shrink-0"
+          style={{ color: 'rgb(var(--harbor-text-muted))' }}
+        >
+          <ChevronLeft size={14} />
+        </button>
+      )}
       <div
-        className="flex border-b overflow-x-auto flex-shrink-0"
-        style={{ borderColor: 'rgb(var(--harbor-border))', scrollbarWidth: 'none' }}
+        ref={tabsRef}
+        className="flex border-b overflow-x-auto flex-1"
+        style={{ scrollbarWidth: 'none' }}
+        onScroll={checkScroll}
       >
         {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
-            onClick={() => setActiveSection(id)}
+            onClick={() => onSectionChange(id)}
             className="flex items-center gap-1.5 px-3 py-2.5 text-xs whitespace-nowrap flex-shrink-0 border-b-2"
             style={{
               borderBottomColor: activeSection === id ? 'rgb(var(--harbor-accent))' : 'transparent',
@@ -217,11 +285,15 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           </button>
         ))}
       </div>
-
-      {/* Section content */}
-      <div className="flex-1 overflow-y-auto harbor-scroll">
-        {renderSection()}
-      </div>
+      {canScrollRight && (
+        <button
+          onClick={() => scroll('right')}
+          className="p-1 flex-shrink-0"
+          style={{ color: 'rgb(var(--harbor-text-muted))' }}
+        >
+          <ChevronRight size={14} />
+        </button>
+      )}
     </div>
   )
 }
@@ -229,10 +301,10 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 // ─── Section: General ─────────────────────────────────────────────────────────
 
 function SectionGeneral({
-  provider, model, apiKey, baseUrl, maxTokens, enableMemory, showKey,
+  provider, model, apiKey, baseUrl, enableMemory, showKey,
   needsKey, needsUrl, keyLink,
   onProviderChange, onModelChange, onApiKeyChange, onBaseUrlChange,
-  onMaxTokensChange, onEnableMemoryChange, onShowKeyToggle,
+  onEnableMemoryChange, onShowKeyToggle,
 }: any) {
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
@@ -251,16 +323,18 @@ function SectionGeneral({
         </select>
       </FormField>
 
-      {/* Model */}
-      <FormField label="Model">
-        <input
-          type="text"
-          value={model}
-          onChange={(e) => onModelChange(e.target.value)}
-          placeholder="Enter model ID (e.g., gpt-4o, claude-opus-4-5)"
-          className="harbor-input text-xs font-mono"
-        />
-      </FormField>
+      {/* Model - hidden in Harbor Free */}
+      {provider !== 'harbor-free' && (
+        <FormField label="Model">
+          <input
+            type="text"
+            value={model}
+            onChange={(e) => onModelChange(e.target.value)}
+            placeholder="Enter model ID (e.g., gpt-4o, claude-opus-4-5)"
+            className="harbor-input text-xs font-mono"
+          />
+        </FormField>
+      )}
 
       {/* API Key */}
       {needsKey && (
@@ -324,20 +398,6 @@ function SectionGeneral({
           No API key needed. Uses MiniMax-m2.5 for text and auto-switches to Qwen3.5-122B when images or video are attached.
         </InfoBox>
       )}
-
-      {/* Max Tokens */}
-      <FormField label={<>Max Tokens <span className="font-mono">{maxTokens.toLocaleString()}</span></>}>
-        <input
-          type="range" min={1024} max={32768} step={1024}
-          value={maxTokens}
-          onChange={(e) => onMaxTokensChange(Number(e.target.value))}
-          className="w-full"
-          style={{ accentColor: 'rgb(var(--harbor-accent))' }}
-        />
-        <div className="flex justify-between text-[10px] mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-          <span>1K</span><span>32K</span>
-        </div>
-      </FormField>
 
       {/* Memory toggle */}
       <ToggleRow
@@ -713,7 +773,7 @@ function SectionAbout() {
           <img src="/icons/logo.png" alt="Harbor" className="w-10 h-10 rounded-xl" />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>Harbor</p>
-            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.21 — AI Browser Agent</p>
+            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.22.0 — AI Browser Agent</p>
           </div>
         </div>
         <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
