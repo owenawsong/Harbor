@@ -115,6 +115,43 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const needsUrl = provider === 'ollama' || provider === 'openai-compatible'
   const keyLink  = KEY_LINKS[provider]
 
+  // CRITICAL: Sync props to state when they change (e.g., when loaded from storage)
+  useEffect(() => {
+    console.log('⚡ Settings: Props changed, syncing to local state', { provider: settings.provider.provider, apiKey: settings.provider.apiKey ? '***' : 'empty' })
+    setProvider(settings.provider.provider as ProviderName)
+    setApiKey(settings.provider.apiKey ?? '')
+    setBaseUrl(settings.provider.baseUrl ?? '')
+    setEnableMemory(settings.enableMemory ?? true)
+
+    setModelsByProvider({
+      anthropic: settings.provider.provider === 'anthropic' ? settings.provider.model : '',
+      openai: settings.provider.provider === 'openai' ? settings.provider.model : '',
+      google: settings.provider.provider === 'google' ? settings.provider.model : '',
+      ollama: settings.provider.provider === 'ollama' ? settings.provider.model : '',
+      openrouter: settings.provider.provider === 'openrouter' ? settings.provider.model : '',
+      'openai-compatible': settings.provider.provider === 'openai-compatible' ? settings.provider.model : '',
+      poe: settings.provider.provider === 'poe' ? settings.provider.model : '',
+      'harbor-free': settings.provider.provider === 'harbor-free' ? settings.provider.model : '',
+    })
+  }, [settings])
+
+  // CRITICAL: Sync identity props to state when they change
+  useEffect(() => {
+    console.log('⚡ Settings: Identity props changed, syncing to local state', identity)
+    setUserName(identity?.userName ?? '')
+    setTone(identity?.tone ?? 'friendly')
+    setVerbosity(identity?.verbosity ?? 'balanced')
+    setLanguage(identity?.language ?? 'en')
+    setUseEmoji(identity?.useEmoji ?? false)
+    setCustomPersonality(identity?.customPersonality ?? '')
+  }, [identity])
+
+  // CRITICAL: Sync theme prop to state when it changes
+  useEffect(() => {
+    console.log('⚡ Settings: Theme prop changed, syncing to local state', theme)
+    setCurrentTheme(theme)
+  }, [theme])
+
   useEffect(() => {
     if (provider === 'ollama' && !baseUrl)             setBaseUrl('http://localhost:11434')
     else if (provider === 'openai-compatible' && !baseUrl) setBaseUrl('http://localhost:1234/v1')

@@ -1,5 +1,5 @@
 export const EXTENSION_NAME = 'Harbor'
-export const VERSION = '1.23'
+export const VERSION = '1.24'
 export const PORT_NAME = 'harbor-agent'
 export const STORAGE_KEYS = {
   SETTINGS: 'harbor_settings',
