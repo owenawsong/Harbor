@@ -180,6 +180,8 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         console.log('💾 Saving to background...', { provider, apiKey: apiKey ? '***' : 'empty' })
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
         console.log('✅ Saved')
+        // Update App's state so next time Settings opens, it has the new data
+        onSave(newSettings, currentTheme, newIdentity)
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
       } catch (err) {

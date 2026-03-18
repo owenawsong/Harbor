@@ -206,12 +206,13 @@ export default function App() {
     newTheme: 'light' | 'dark' | 'system',
     newIdentity?: IdentitySettings,
   ) => {
+    console.log('💾 App: Received save from Settings, updating state')
     setSettings(newSettings)
     setTheme(newTheme)
     if (newIdentity) {
       setIdentity(newIdentity)
     }
-    setView('chat')
+    // Do NOT call setView('chat') - let user stay in Settings
   }
 
   const handleViewHistory = () => {
