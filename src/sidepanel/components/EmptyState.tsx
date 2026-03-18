@@ -49,24 +49,17 @@ export default function EmptyState({ onSuggestionClick, userName }: Props) {
         <div>
           <p className="harbor-section-label mb-2 text-xs text-center">Try asking</p>
           <div className="grid grid-cols-2 gap-1.5 suggestions-grid">
-            {SUGGESTIONS.map(({ icon, text }) => {
+            {SUGGESTIONS.map(({ icon, text }, i) => {
               const Icon = ICON_MAP[icon]
               return (
                 <button
                   key={text}
                   onClick={() => onSuggestionClick(text)}
-                  className="flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left transition-all duration-150"
+                  className="suggestion-chip flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left animate-fade-up"
                   style={{
                     background: 'rgb(var(--harbor-surface))',
                     borderColor: 'rgb(var(--harbor-border))',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = 'rgb(var(--harbor-accent) / 0.4)'
-                    e.currentTarget.style.background = 'rgb(var(--harbor-surface-2))'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = 'rgb(var(--harbor-border))'
-                    e.currentTarget.style.background = 'rgb(var(--harbor-surface))'
+                    animationDelay: `${i * 50}ms`,
                   }}
                 >
                   {Icon && (

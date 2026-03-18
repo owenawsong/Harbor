@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check,
   Palette, User, Brain, Cpu,
-  Shield, HelpCircle,
+  Shield, HelpCircle, Keyboard,
 } from 'lucide-react'
 import type {
   AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel,
@@ -213,11 +213,12 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           <button
             key={id}
             onClick={() => setActiveSection(id)}
-            className="flex items-center gap-1.5 px-3 py-2.5 text-xs whitespace-nowrap flex-shrink-0 transition-colors border-b-2"
+            className="flex items-center gap-1.5 px-3 py-2.5 text-xs whitespace-nowrap flex-shrink-0 border-b-2"
             style={{
               borderBottomColor: activeSection === id ? 'rgb(var(--harbor-accent))' : 'transparent',
               color: activeSection === id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
               background: 'transparent',
+              transition: 'color 150ms ease, border-color 150ms ease',
             }}
           >
             <Icon size={12} />
@@ -369,10 +370,94 @@ function SectionGeneral({
 
 // ─── Section: Appearance ──────────────────────────────────────────────────────
 
+function ShortcutRecorder({ value, onChange }: { value: string; onChange: (s: string) => void }) {
+  const [recording, setRecording] = useState(false)
+  const divRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (recording) divRef.current?.focus()
+  }, [recording])
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (e.key === 'Escape') { setRecording(false); return }
+
+    const modifiers = []
+    if (e.ctrlKey) modifiers.push('Ctrl')
+    if (e.metaKey) modifiers.push('Cmd')
+    if (e.shiftKey) modifiers.push('Shift')
+    if (e.altKey) modifiers.push('Alt')
+
+    const mainKey = e.key
+    const isModifierOnly = ['Control', 'Shift', 'Alt', 'Meta'].includes(mainKey)
+    if (isModifierOnly || modifiers.length === 0) return
+
+    const shortcut = [...modifiers, mainKey.toUpperCase()].join('+')
+    onChange(shortcut)
+    setRecording(false)
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        ref={divRef}
+        tabIndex={recording ? 0 : -1}
+        onKeyDown={recording ? handleKeyDown : undefined}
+        onBlur={() => setRecording(false)}
+        className="flex-1 harbor-input text-xs font-mono flex items-center gap-1.5 cursor-default select-none"
+        style={{
+          borderColor: recording ? 'rgb(var(--harbor-accent))' : undefined,
+          boxShadow: recording ? '0 0 0 3px rgb(var(--harbor-accent) / 0.12)' : undefined,
+          color: recording ? 'rgb(var(--harbor-text-faint))' : 'rgb(var(--harbor-text))',
+        }}
+      >
+        {recording ? (
+          <>
+            <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+            Press shortcut…
+          </>
+        ) : (
+          <>
+            <Keyboard size={11} style={{ color: 'rgb(var(--harbor-text-faint))', flexShrink: 0 }} />
+            {value || 'None'}
+          </>
+        )}
+      </div>
+      <button
+        onClick={() => setRecording((v) => !v)}
+        className="text-xs px-2.5 py-1.5 rounded-lg border font-medium transition-colors"
+        style={{
+          borderColor: recording ? 'rgb(var(--harbor-accent) / 0.4)' : 'rgb(var(--harbor-border))',
+          color: recording ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
+          background: recording ? 'rgb(var(--harbor-accent-light))' : 'transparent',
+        }}
+      >
+        {recording ? 'Cancel' : 'Set'}
+      </button>
+    </div>
+  )
+}
+
 function SectionAppearance({ currentTheme, onThemeChange }: {
   currentTheme: 'light' | 'dark' | 'system'
   onThemeChange: (t: 'light' | 'dark' | 'system') => void
 }) {
+  const [shortcut, setShortcut] = useState('Ctrl+Shift+K')
+
+  useEffect(() => {
+    chrome.storage.local.get('harbor_keybindings', (data) => {
+      if (data.harbor_keybindings?.commandPalette) {
+        setShortcut(data.harbor_keybindings.commandPalette as string)
+      }
+    })
+  }, [])
+
+  const handleShortcutChange = (s: string) => {
+    setShortcut(s)
+    chrome.storage.local.set({ harbor_keybindings: { commandPalette: s } })
+  }
+
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
       <SectionHeader title="Appearance" />
@@ -394,6 +479,13 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
             </button>
           ))}
         </div>
+      </FormField>
+
+      <FormField label="Command Palette Shortcut">
+        <ShortcutRecorder value={shortcut} onChange={handleShortcutChange} />
+        <p className="text-[10px] mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+          Opens the command palette from anywhere in the panel.
+        </p>
       </FormField>
     </div>
   )

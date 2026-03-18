@@ -532,6 +532,22 @@
   box-shadow: 0 4px 20px rgb(var(--harbor-accent) / 0.2);
 }
 
+/* ─── Suggestion chips ───────────────────────────────────────────────────────── */
+
+.suggestion-chip {
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms ease;
+}
+.suggestion-chip:hover {
+  border-color: rgb(var(--harbor-accent) / 0.45) !important;
+  background: rgb(var(--harbor-surface-2)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgb(var(--harbor-accent) / 0.1);
+}
+.suggestion-chip:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
 /* ─── Responsive layout — adapts to panel/viewport width ────────────────────── */
 
 /* Very narrow panels (< 300px) */

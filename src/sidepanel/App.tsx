@@ -25,6 +25,7 @@ export default function App() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [chatKey, setChatKey]                   = useState(0)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [cmdShortcut, setCmdShortcut] = useState('Ctrl+Shift+K')
   // Pending message to send when switching to chat
   const [pendingMessage, setPendingMessage]     = useState<string | null>(null)
 
@@ -41,6 +42,13 @@ export default function App() {
             enableMemory: false,
             enableScreenshots: true,
           })
+    })
+
+    // Load keybindings
+    chrome.storage.local.get('harbor_keybindings', (data) => {
+      if (data.harbor_keybindings?.commandPalette) {
+        setCmdShortcut(data.harbor_keybindings.commandPalette as string)
+      }
     })
 
     // Load theme
@@ -80,15 +88,46 @@ export default function App() {
   // ── Command palette keyboard shortcut ─────────────────────────────────────
 
   useEffect(() => {
+    // Keep shortcut in sync when changed from Settings while panel is open
+    const storageListener = (changes: Record<string, chrome.storage.StorageChange>) => {
+      if (changes.harbor_keybindings?.newValue?.commandPalette) {
+        setCmdShortcut(changes.harbor_keybindings.newValue.commandPalette as string)
+      }
+    }
+    chrome.storage.onChanged.addListener(storageListener)
+    return () => chrome.storage.onChanged.removeListener(storageListener)
+  }, [])
+
+  useEffect(() => {
+    const parseShortcut = (s: string) => {
+      const parts = s.split('+')
+      const key = parts[parts.length - 1]
+      return {
+        key: key.toLowerCase(),
+        ctrl: parts.includes('Ctrl'),
+        meta: parts.includes('Cmd'),
+        shift: parts.includes('Shift'),
+        alt: parts.includes('Alt'),
+      }
+    }
+
     const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'K') {
+      const { key, ctrl, meta, shift, alt } = parseShortcut(cmdShortcut)
+      const ctrlOrMeta = ctrl || meta
+      const matches =
+        e.key.toUpperCase() === key.toUpperCase() &&
+        (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
+        e.shiftKey === shift &&
+        e.altKey === alt
+
+      if (matches) {
         e.preventDefault()
         setCommandPaletteOpen((v) => !v)
       }
     }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [])
+  }, [cmdShortcut])
 
   // ── Context menu message pickup ────────────────────────────────────────────
 

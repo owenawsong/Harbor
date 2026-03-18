@@ -114,10 +114,12 @@ export default function Chat({
                   onClick={() => setShowMenu(false)}
                 />
                 <div
-                  className="absolute right-0 mt-1 w-36 rounded-lg border shadow-lg z-40 overflow-hidden animate-fade-in"
+                  className="absolute right-0 mt-1 w-36 rounded-lg border shadow-lg z-40 overflow-hidden animate-scale-in"
                   style={{
                     background: 'rgb(var(--harbor-surface))',
                     borderColor: 'rgb(var(--harbor-border))',
+                    transformOrigin: 'top right',
+                    boxShadow: '0 8px 24px rgb(0 0 0 / 0.12)',
                   }}
                 >
                   <button

@@ -348,6 +348,18 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
   ;(async () => {
     try {
       switch (message.type) {
+        case 'harbor_agent_running': {
+          showAgentIndicator()
+          sendResponse({ success: true })
+          break
+        }
+
+        case 'harbor_agent_stopped': {
+          hideAgentIndicator()
+          sendResponse({ success: true })
+          break
+        }
+
         case 'harbor_ping': {
           sendResponse({ success: true, pong: true })
           break
@@ -643,6 +655,56 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
 
   return true // Keep message channel open for async response
 })
+
+// ─── Agent Running Indicator ──────────────────────────────────────────────────
+
+let harborAgentBar: HTMLDivElement | null = null
+
+function showAgentIndicator(): void {
+  if (harborAgentBar) return
+
+  // Inject keyframe styles once
+  if (!document.getElementById('harbor-agent-styles')) {
+    const style = document.createElement('style')
+    style.id = 'harbor-agent-styles'
+    style.textContent =
+      '@keyframes harbor-scan{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}'
+    document.head.appendChild(style)
+  }
+
+  const bar = document.createElement('div')
+  bar.id = 'harbor-agent-indicator'
+  bar.style.cssText = [
+    'position:fixed', 'top:0', 'left:0', 'right:0',
+    'height:3px', 'z-index:2147483647', 'pointer-events:none',
+    'overflow:hidden', 'background:rgba(78,142,168,0.88)',
+    'opacity:0', 'transition:opacity 350ms ease',
+  ].join(';')
+
+  const shimmer = document.createElement('div')
+  shimmer.style.cssText = [
+    'position:absolute', 'top:0', 'bottom:0', 'width:35%',
+    'background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent)',
+    'animation:harbor-scan 1.4s ease-in-out infinite',
+  ].join(';')
+
+  bar.appendChild(shimmer)
+  document.documentElement.appendChild(bar)
+  harborAgentBar = bar
+
+  // Trigger fade-in on next frame
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (harborAgentBar) harborAgentBar.style.opacity = '1'
+  }))
+}
+
+function hideAgentIndicator(): void {
+  if (!harborAgentBar) return
+  const bar = harborAgentBar
+  harborAgentBar = null
+  bar.style.opacity = '0'
+  setTimeout(() => bar.remove(), 400)
+}
 
 // Let the service worker know the content script is ready
 chrome.runtime.sendMessage({ type: 'harbor_content_ready', url: document.location.href }).catch(() => {

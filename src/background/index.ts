@@ -90,6 +90,16 @@ chrome.runtime.onConnect.addListener((port) => {
           const settings = await getSettings()
           const session = await getSession(sessionId)
 
+          // Show running indicator on the active tab
+          let indicatorTabId: number | undefined
+          try {
+            const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+            indicatorTabId = activeTab?.id
+            if (indicatorTabId !== undefined) {
+              chrome.tabs.sendMessage(indicatorTabId, { type: 'harbor_agent_running' }).catch(() => {})
+            }
+          } catch { /* tab may not have content script */ }
+
           const userChatMsg: ChatMessage = {
             id: crypto.randomUUID(),
             role: 'user',
@@ -123,6 +133,10 @@ chrome.runtime.onConnect.addListener((port) => {
             send({ type: 'error', error: err instanceof Error ? err.message : String(err) })
           } finally {
             activeControllers.delete(sessionId)
+            // Hide the tab indicator
+            if (indicatorTabId !== undefined) {
+              chrome.tabs.sendMessage(indicatorTabId, { type: 'harbor_agent_stopped' }).catch(() => {})
+            }
           }
 
           if (assistantText) {

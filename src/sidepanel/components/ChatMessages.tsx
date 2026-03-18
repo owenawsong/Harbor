@@ -27,7 +27,7 @@ export default function ChatMessages({ messages, isRunning, onToggleThinking }: 
 
         {showTyping && (
           <div className="flex items-start gap-2.5 animate-fade-up">
-            <img src="/icons/harbor-logo.svg" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0" />
+            <img src="/icons/logo.png" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0 mt-0.5" />
             <div className="flex items-center gap-1 pt-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-harbor-500 typing-dot" />
               <div className="w-1.5 h-1.5 rounded-full bg-harbor-500 typing-dot" />
