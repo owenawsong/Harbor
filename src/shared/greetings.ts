@@ -1,5 +1,5 @@
-// Time-aware, personalized greeting messages for Harbor's empty state.
-// Greetings are selected based on time of day, day of week, and optionally user name.
+// Diverse, personalized greeting messages for Harbor's empty state.
+// Mix of time-based, weather-like, motivational, and casual greetings.
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night'
 
@@ -20,77 +20,100 @@ export function getDayContext(): string {
   return 'weekday'
 }
 
+// Greetings that don't reference time — just vibes, curiosity, motivation
+const TIMELESS_GREETINGS = [
+  "Ready when you are.",
+  "What's on your mind?",
+  "Let's figure something out.",
+  "What are we exploring today?",
+  "Ask me anything.",
+  "I've been waiting for a good question.",
+  "What do you need?",
+  "Curiosity is a great place to start.",
+  "Something on your mind?",
+  "Let's get into it.",
+  "Big ideas welcome here.",
+  "I work best when I'm busy.",
+  "What shall we discover?",
+  "No task too big, no question too small.",
+  "Where would you like to begin?",
+  "The best questions start right here.",
+  "Your browser. Your agent. Your move.",
+  "Let's make something happen.",
+]
+
+// Greetings that feel like weather/environment/atmosphere
+const ATMOSPHERE_GREETINGS = [
+  "Clear skies and a clear head — what's first?",
+  "It's a good day for research.",
+  "Storm of ideas? I'll help sort them out.",
+  "Perfect conditions for getting things done.",
+  "The forecast says: productive.",
+  "Fresh air, fresh start. What do you need?",
+  "Conditions look ideal. Let's work.",
+  "A calm moment. A perfect time to think.",
+]
+
+// Motivational / momentum
+const MOMENTUM_GREETINGS = [
+  "Momentum starts here.",
+  "Small actions, big results. What's first?",
+  "Let's cross something off your list.",
+  "One question at a time.",
+  "Progress starts with a question.",
+  "Every great project starts with curiosity.",
+  "You're closer to the answer than you think.",
+]
+
 const GREETINGS: Record<TimeOfDay, string[]> = {
   morning: [
     "Good morning. What shall we tackle today?",
-    "Morning! Ready to make today count?",
-    "Rise and research — what's on your mind?",
-    "A fresh morning, a fresh start. What do you need?",
-    "Morning has arrived. I'm here and ready.",
+    "Morning — ready to make today count?",
+    "Rise and research. What's on your mind?",
     "Good morning. The day is full of possibility.",
-    "Hello, early bird. What are we building today?",
-    "Morning! Coffee brewing, Harbor ready — let's go.",
-    "The morning is yours. What would you like to explore?",
-    "Good morning. Where would you like to begin?",
-    "Rise and shine — I've been waiting to help.",
     "Morning clarity: what's the first thing on your mind?",
-    "Good morning. Every great day starts with a question.",
-    "The dawn crew has arrived. What's the mission?",
+    "Every great day starts with a good question.",
+    "Good morning. Where would you like to begin?",
+    "The morning is yours. What would you like to explore?",
+    "Morning has arrived. I'm here and ready.",
+    "Good morning. I've been quietly waiting.",
   ],
   afternoon: [
     "Good afternoon. What can I help you with?",
     "Afternoon — keeping the momentum going?",
-    "Mid-day check-in: what do you need right now?",
-    "Good afternoon. Deep focus mode — what's the task?",
-    "Afternoon! Still plenty of day left to accomplish things.",
-    "Hello again. What shall we dig into?",
-    "Good afternoon. I'm here whenever you're ready.",
-    "The afternoon is prime time. What are we working on?",
+    "Good afternoon. Deep focus time — what's the task?",
     "Afternoon greetings. What question can I answer?",
-    "Good afternoon — let's make the most of it.",
-    "Peak productivity hours. What's the goal today?",
-    "Afternoon! Whether it's research or tasks, I'm ready.",
-    "The afternoon shift is in full swing. How can I help?",
-    "Good afternoon. No task too big or small.",
+    "Good afternoon. No task too big or too small.",
+    "Peak hours. What's the goal?",
+    "Afternoon! Still plenty of day left.",
+    "The afternoon is prime time. What are we working on?",
   ],
   evening: [
-    "Good evening. Winding down or still going strong?",
-    "Evening mode: slower pace, deeper thoughts?",
     "Good evening. What's on your mind tonight?",
-    "Evening! Whether you're finishing up or just starting — I'm here.",
+    "Evening — winding down or still going strong?",
     "The evening brings good questions. What's yours?",
-    "Good evening. The day isn't done yet — what do you need?",
-    "Hello, night owl in training. What can we explore?",
-    "Evening's here. What would you like to accomplish before tomorrow?",
-    "Good evening. I work just as well after sunset.",
-    "Evening check-in: what's still on the list?",
-    "The evening hours are perfect for deep research. Shall we?",
-    "Good evening — I've been quietly waiting all day.",
-    "Evening! Big ideas often arrive at this hour.",
     "Good evening. The quiet hours are great for focus.",
+    "Evening's here. What would you like to accomplish?",
+    "Good evening. I work just as well after sunset.",
+    "Evening! Big ideas often arrive at this hour.",
   ],
   night: [
     "Still at it? I admire the dedication.",
-    "The late hours belong to the most curious minds.",
-    "Night owl energy. What's keeping you up?",
+    "The late hours belong to curious minds.",
+    "Night owl energy. What's keeping you going?",
     "Late night session — what's the mission?",
-    "Good evening (or morning?). What do you need?",
     "The world is quiet. Good time for deep work.",
-    "Night shift: I'm fully operational.",
-    "Can't sleep? Or won't sleep? Either way, I'm here.",
-    "The late night hours are underrated for thinking clearly.",
-    "Hello, midnight explorer. What shall we discover?",
-    "Late night question — I love those. What is it?",
+    "Can't sleep? Or won't? Either way, I'm here.",
     "The stars are out. What's on your mind?",
-    "Even at this hour, I'm ready and waiting.",
-    "Night mode engaged. What do you need?",
+    "Late night question — I love those. What is it?",
+    "Night mode: engaged.",
   ],
 }
 
 const MONDAY_GREETINGS = [
-  "Happy Monday! Let's start the week strong.",
   "New week, new possibilities. What's first?",
-  "Monday — a clean slate. What are we building this week?",
+  "Monday — a clean slate. What are we building?",
+  "Let's start the week strong.",
 ]
 
 const FRIDAY_GREETINGS = [
@@ -101,30 +124,30 @@ const FRIDAY_GREETINGS = [
 
 const WEEKEND_GREETINGS = [
   "Weekend mode — working on something personal?",
-  "A weekend question? You're dedicated. How can I help?",
-  "Even on weekends, curious minds keep exploring.",
+  "Even on weekends, curious minds keep going.",
+  "A weekend question? You're dedicated.",
   "Taking a break from the break to get something done?",
 ]
 
 const NAMED_GREETINGS: Record<TimeOfDay, string[]> = {
   morning: [
-    "Good morning, {name}! Ready to take on the day?",
+    "Good morning, {name}!",
     "Morning, {name}. What's on the agenda?",
-    "Hey {name} — good morning! Let's start something great.",
+    "Hey {name} — ready to start something great?",
     "Good morning, {name}. Where shall we begin?",
   ],
   afternoon: [
-    "Good afternoon, {name}. How's the day treating you?",
-    "Hey {name}! Afternoon. What do you need?",
+    "Good afternoon, {name}.",
+    "Hey {name}! What do you need?",
     "Good afternoon, {name} — still crushing it?",
   ],
   evening: [
-    "Good evening, {name}. Busy day?",
+    "Good evening, {name}.",
     "Evening, {name}! What's left on the list?",
-    "Hey {name} — good evening. What's on your mind?",
+    "Hey {name} — what's on your mind?",
   ],
   night: [
-    "Still up, {name}? What's keeping you going?",
+    "Still up, {name}?",
     "Late night, {name}? What do you need?",
     "Hey {name} — burning the midnight oil?",
   ],
@@ -133,6 +156,18 @@ const NAMED_GREETINGS: Record<TimeOfDay, string[]> = {
 export function getGreeting(userName?: string): string {
   const timeOfDay = getTimeOfDay()
   const dayContext = getDayContext()
+
+  // 25% chance of timeless/atmosphere/momentum greeting regardless of time
+  const rng = Math.random()
+  if (rng < 0.15) {
+    return TIMELESS_GREETINGS[Math.floor(Math.random() * TIMELESS_GREETINGS.length)]
+  }
+  if (rng < 0.25) {
+    return ATMOSPHERE_GREETINGS[Math.floor(Math.random() * ATMOSPHERE_GREETINGS.length)]
+  }
+  if (rng < 0.32) {
+    return MOMENTUM_GREETINGS[Math.floor(Math.random() * MOMENTUM_GREETINGS.length)]
+  }
 
   // Day-specific overrides (morning only for Monday/Friday)
   if (timeOfDay === 'morning') {

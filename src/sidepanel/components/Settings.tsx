@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check,
-  Settings as SettingsIcon, Palette, User, Brain, Cpu, Zap,
-  Bell, Keyboard, Shield, HelpCircle, ChevronRight,
+  Palette, User, Brain, Cpu,
+  Shield, HelpCircle,
 } from 'lucide-react'
 import type {
   AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel,
@@ -18,24 +18,20 @@ interface Props {
 }
 
 type SettingsSection =
-  | 'general'
+  | 'provider'
   | 'appearance'
   | 'identity'
-  | 'models'
   | 'memory'
-  | 'notifications'
   | 'privacy'
   | 'about'
 
 const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
-  { id: 'general',       label: 'General',       icon: SettingsIcon },
-  { id: 'appearance',    label: 'Appearance',     icon: Palette },
-  { id: 'identity',      label: 'Identity',       icon: User },
-  { id: 'models',        label: 'Models',         icon: Cpu },
-  { id: 'memory',        label: 'Memory',         icon: Brain },
-  { id: 'notifications', label: 'Notifications',  icon: Bell },
-  { id: 'privacy',       label: 'Privacy',        icon: Shield },
-  { id: 'about',         label: 'About',          icon: HelpCircle },
+  { id: 'provider',   label: 'Provider',    icon: Cpu },
+  { id: 'appearance', label: 'Appearance',  icon: Palette },
+  { id: 'identity',   label: 'Identity',    icon: User },
+  { id: 'memory',     label: 'Memory',      icon: Brain },
+  { id: 'privacy',    label: 'Privacy',     icon: Shield },
+  { id: 'about',      label: 'About',       icon: HelpCircle },
 ]
 
 const KEY_LINKS: Partial<Record<ProviderName, string>> = {
@@ -78,11 +74,10 @@ const LANGUAGES = [
 ]
 
 export default function Settings({ settings, theme, identity, onSave, onBack }: Props) {
-  const [activeSection, setActiveSection] = useState<SettingsSection>('general')
-  const [showSidebar, setShowSidebar] = useState(true)
-  const [status, setStatus] = useState<'idle' | 'saving' | 'saved'>('idle')
+  const [activeSection, setActiveSection] = useState<SettingsSection>('provider')
+  const [savedIndicator, setSavedIndicator] = useState(false)
 
-  // General / Models
+  // Provider / Models
   const [provider, setProvider]       = useState<ProviderName>(settings.provider.provider as ProviderName)
   const initialModels = DEFAULT_MODELS[settings.provider.provider as ProviderName] ?? []
   const isCustomModel = !initialModels.includes(settings.provider.model)
@@ -105,11 +100,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const [useEmoji, setUseEmoji]         = useState(identity?.useEmoji ?? false)
   const [customPersonality, setCustomPersonality] = useState(identity?.customPersonality ?? '')
 
-  // Notifications
-  const [notifsEnabled, setNotifsEnabled] = useState(true)
-  const [notifAgentComplete, setNotifAgentComplete] = useState(true)
-  const [notifErrors, setNotifErrors] = useState(true)
-
   const models = DEFAULT_MODELS[provider] ?? []
   const needsKey = provider !== 'ollama' && provider !== 'harbor-free'
   const needsUrl = provider === 'ollama' || provider === 'openai-compatible'
@@ -127,8 +117,9 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     setCustomModel('')
   }
 
-  const handleSave = async () => {
-    setStatus('saving')
+  // Auto-save: debounced 800ms after any change
+  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const doSave = useCallback(async () => {
     const effectiveModel = customModel.trim() || model
     const newSettings: AgentSettings = {
       provider: { provider, model: effectiveModel, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
@@ -147,13 +138,23 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     }
     await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme })
     onSave(newSettings, currentTheme, newIdentity)
-    setStatus('saved')
-    setTimeout(() => setStatus('idle'), 2000)
-  }
+    setSavedIndicator(true)
+    setTimeout(() => setSavedIndicator(false), 1500)
+  }, [provider, model, customModel, apiKey, baseUrl, maxTokens, enableMemory, currentTheme,
+      userName, tone, verbosity, language, useEmoji, customPersonality, identity, onSave])
+
+  const isFirstRender = useRef(true)
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(doSave, 800)
+    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
+  }, [provider, model, customModel, apiKey, baseUrl, maxTokens, enableMemory, currentTheme,
+      userName, tone, verbosity, language, useEmoji, customPersonality])
 
   const renderSection = () => {
     switch (activeSection) {
-      case 'general':
+      case 'provider':
         return <SectionGeneral
           provider={provider} model={model} customModel={customModel}
           apiKey={apiKey} baseUrl={baseUrl} maxTokens={maxTokens} enableMemory={enableMemory}
@@ -174,23 +175,8 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           onVerbosityChange={setVerbosity} onLanguageChange={setLanguage}
           onUseEmojiChange={setUseEmoji} onCustomPersonalityChange={setCustomPersonality}
         />
-      case 'models':
-        return <SectionModels
-          provider={provider} model={model} customModel={customModel}
-          apiKey={apiKey} baseUrl={baseUrl} showKey={showKey}
-          models={models} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
-          onProviderChange={handleProviderChange}
-          onModelChange={setModel} onCustomModelChange={setCustomModel}
-          onApiKeyChange={setApiKey} onBaseUrlChange={setBaseUrl}
-          onShowKeyToggle={() => setShowKey((v) => !v)}
-        />
       case 'memory':
         return <SectionMemory enableMemory={enableMemory} onEnableMemoryChange={setEnableMemory} />
-      case 'notifications':
-        return <SectionNotifications
-          enabled={notifsEnabled} agentComplete={notifAgentComplete} errors={notifErrors}
-          onEnabledChange={setNotifsEnabled} onAgentCompleteChange={setNotifAgentComplete} onErrorsChange={setNotifErrors}
-        />
       case 'privacy':
         return <SectionPrivacy />
       case 'about':
@@ -204,58 +190,45 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     <div className="flex flex-col h-full">
       {/* Header */}
       <div
-        className="flex items-center gap-2.5 px-3 py-3 border-b"
+        className="flex items-center gap-2.5 px-3 py-2.5 border-b flex-shrink-0"
         style={{ borderColor: 'rgb(var(--harbor-border))' }}
       >
-        <button onClick={onBack} className="icon-btn">
+        <button onClick={onBack} className="icon-btn flex-shrink-0">
           <ArrowLeft size={15} />
         </button>
-        <h2 className="font-semibold text-sm" style={{ color: 'rgb(var(--harbor-text))' }}>Settings</h2>
+        <h2 className="font-semibold text-sm flex-1" style={{ color: 'rgb(var(--harbor-text))' }}>Settings</h2>
+        {savedIndicator && (
+          <span className="flex items-center gap-1 text-[11px] text-emerald-500 animate-fade-in">
+            <Check size={11} /> Saved
+          </span>
+        )}
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <nav
-          className="w-36 flex-shrink-0 border-r py-2 overflow-y-auto harbor-scroll"
-          style={{ borderColor: 'rgb(var(--harbor-border))' }}
-        >
-          {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              onClick={() => setActiveSection(id)}
-              className={`settings-nav-item ${activeSection === id ? 'active' : ''}`}
-            >
-              <Icon size={13} />
-              {label}
-            </button>
-          ))}
-        </nav>
-
-        {/* Section content */}
-        <div className="flex-1 overflow-y-auto harbor-scroll">
-          {renderSection()}
-        </div>
+      {/* Horizontal tab bar */}
+      <div
+        className="flex border-b overflow-x-auto flex-shrink-0"
+        style={{ borderColor: 'rgb(var(--harbor-border))', scrollbarWidth: 'none' }}
+      >
+        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            onClick={() => setActiveSection(id)}
+            className="flex items-center gap-1.5 px-3 py-2.5 text-xs whitespace-nowrap flex-shrink-0 transition-colors border-b-2"
+            style={{
+              borderBottomColor: activeSection === id ? 'rgb(var(--harbor-accent))' : 'transparent',
+              color: activeSection === id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
+              background: 'transparent',
+            }}
+          >
+            <Icon size={12} />
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Save button */}
-      <div className="px-3 py-3 border-t" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
-        <button
-          onClick={handleSave}
-          disabled={status === 'saving'}
-          className={`w-full py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 text-white transition-all ${
-            status === 'saved'
-              ? 'bg-emerald-600'
-              : status === 'saving'
-                ? 'opacity-70 cursor-not-allowed'
-                : ''
-          }`}
-          style={{
-            background: status === 'saved' ? '#059669' : status === 'saving' ? 'rgb(var(--harbor-accent) / 0.7)' : 'rgb(var(--harbor-accent))',
-          }}
-        >
-          {status === 'saved' && <Check size={15} />}
-          {status === 'saved' ? 'Saved!' : status === 'saving' ? 'Saving…' : 'Save settings'}
-        </button>
+      {/* Section content */}
+      <div className="flex-1 overflow-y-auto harbor-scroll">
+        {renderSection()}
       </div>
     </div>
   )
@@ -365,8 +338,7 @@ function SectionGeneral({
       )}
       {provider === 'harbor-free' && (
         <InfoBox>
-          No API key needed — powered by Qwen3.5-122B via NVIDIA NIM.
-          Supports images (png/jpg/webp, up to 5) and video.
+          No API key needed. Uses MiniMax-m2.5 for text and auto-switches to Qwen3.5-122B when images or video are attached.
         </InfoBox>
       )}
 

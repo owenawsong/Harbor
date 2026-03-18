@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
-  Settings as SettingsIcon, Clock, SquarePen, LayoutDashboard,
+  Settings as SettingsIcon, Clock, SquarePen,
   Brain, Zap, Search, MoreVertical,
 } from 'lucide-react'
 import type { AgentSettings, IdentitySettings } from '../../shared/types'
@@ -8,7 +8,7 @@ import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
 import ChatInput from './ChatInput'
 import EmptyState from './EmptyState'
-import { NotificationBell, NotificationCenter } from './NotificationCenter'
+
 
 interface Props {
   settings: AgentSettings
@@ -78,14 +78,14 @@ export default function Chat({
             className="w-6 h-6 rounded-lg flex-shrink-0"
           />
           <span
-            className="harbor-serif text-base font-medium"
+            className="harbor-serif text-base font-medium header-logo-text"
             style={{ color: 'rgb(var(--harbor-text))' }}
           >
             Harbor
           </span>
         </button>
 
-        {/* Actions: New, History, Search + Menu */}
+        {/* Actions: New, History, Settings + overflow menu */}
         <div className="flex items-center gap-0.5">
           <button onClick={onNewConversation} className="icon-btn" title="New conversation">
             <SquarePen size={14} />
@@ -93,16 +93,16 @@ export default function Chat({
           <button onClick={onViewHistory} className="icon-btn" title="History">
             <Clock size={14} />
           </button>
-          <button onClick={onOpenCommandPalette} className="icon-btn" title="Search (Ctrl+Shift+K)">
-            <Search size={14} />
+          <button onClick={onOpenSettings} className="icon-btn" title="Settings">
+            <SettingsIcon size={14} />
           </button>
 
-          {/* Menu Button */}
+          {/* Overflow menu: Memory, Skills, Search */}
           <div className="relative">
             <button
               onClick={() => setShowMenu((v) => !v)}
               className="icon-btn"
-              title="More options"
+              title="More"
             >
               <MoreVertical size={14} />
             </button>
@@ -114,48 +114,36 @@ export default function Chat({
                   onClick={() => setShowMenu(false)}
                 />
                 <div
-                  className="absolute right-0 mt-1 w-32 rounded-lg border shadow-lg z-40 overflow-hidden"
+                  className="absolute right-0 mt-1 w-36 rounded-lg border shadow-lg z-40 overflow-hidden animate-fade-in"
                   style={{
                     background: 'rgb(var(--harbor-surface))',
                     borderColor: 'rgb(var(--harbor-border))',
                   }}
                 >
                   <button
-                    onClick={() => {
-                      onOpenMemory?.()
-                      setShowMenu(false)
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-opacity-60 transition-colors flex items-center gap-2"
+                    onClick={() => { onOpenCommandPalette?.(); setShowMenu(false) }}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-[rgb(var(--harbor-surface-2))] transition-colors flex items-center gap-2"
+                    style={{ color: 'rgb(var(--harbor-text))' }}
+                  >
+                    <Search size={12} />
+                    Search
+                  </button>
+                  <div className="h-px" style={{ background: 'rgb(var(--harbor-border))' }} />
+                  <button
+                    onClick={() => { onOpenMemory?.(); setShowMenu(false) }}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-[rgb(var(--harbor-surface-2))] transition-colors flex items-center gap-2"
                     style={{ color: 'rgb(var(--harbor-text))' }}
                   >
                     <Brain size={12} />
                     Memory
                   </button>
                   <button
-                    onClick={() => {
-                      onOpenSkills?.()
-                      setShowMenu(false)
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-opacity-60 transition-colors flex items-center gap-2"
+                    onClick={() => { onOpenSkills?.(); setShowMenu(false) }}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-[rgb(var(--harbor-surface-2))] transition-colors flex items-center gap-2"
                     style={{ color: 'rgb(var(--harbor-text))' }}
                   >
                     <Zap size={12} />
                     Skills
-                  </button>
-                  <div
-                    className="h-px"
-                    style={{ background: 'rgb(var(--harbor-border))' }}
-                  />
-                  <button
-                    onClick={() => {
-                      onOpenSettings()
-                      setShowMenu(false)
-                    }}
-                    className="w-full text-left px-3 py-2 text-xs hover:bg-opacity-60 transition-colors flex items-center gap-2"
-                    style={{ color: 'rgb(var(--harbor-text))' }}
-                  >
-                    <SettingsIcon size={12} />
-                    Settings
                   </button>
                 </div>
               </>

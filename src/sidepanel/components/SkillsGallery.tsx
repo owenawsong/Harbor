@@ -128,7 +128,7 @@ export default function SkillsGallery({ onBack, onRunSkill }: Props) {
 
       {/* Category filter */}
       <div
-        className="flex gap-1.5 px-3 py-2 overflow-x-auto border-b"
+        className="flex gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar border-b"
         style={{ borderColor: 'rgb(var(--harbor-border))' }}
       >
         <button

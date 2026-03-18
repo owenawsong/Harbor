@@ -9,26 +9,34 @@ import type { ToolDefinition } from '../../shared/types'
 
 // ─── SSE Parser ───────────────────────────────────────────────────────────────
 
-async function* parseSSE(response: Response): AsyncGenerator<string> {
+async function* parseSSE(response: Response, signal?: AbortSignal): AsyncGenerator<string> {
   const reader = response.body!.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
+  // Cancel reader when signal aborts
+  signal?.addEventListener('abort', () => { reader.cancel() }, { once: true })
 
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() ?? ''
+  try {
+    while (true) {
+      if (signal?.aborted) break
+      const { done, value } = await reader.read()
+      if (done) break
 
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6).trim()
-        if (data === '[DONE]') return
-        if (data) yield data
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6).trim()
+          if (data === '[DONE]') return
+          if (data) yield data
+        }
       }
     }
+  } finally {
+    reader.cancel().catch(() => {})
   }
 }
 
@@ -123,7 +131,7 @@ export const anthropicProvider: ProviderAdapter = {
     // Thinking block buffers: index → accumulated thinking text
     const thinkingBuffers: Record<number, string> = {}
 
-    for await (const data of parseSSE(response)) {
+    for await (const data of parseSSE(response, signal)) {
       let event: Record<string, unknown>
       try {
         event = JSON.parse(data)
@@ -403,7 +411,7 @@ async function* openAICompatibleComplete(
   const toolCallBuffers: Record<number, { id: string; name: string; args: string }> = {}
   const thinkState: ThinkParseState = { inThink: false, buf: '' }
 
-  for await (const data of parseSSE(response)) {
+  for await (const data of parseSSE(response, signal)) {
     let chunk: Record<string, unknown>
     try {
       chunk = JSON.parse(data)
@@ -583,7 +591,7 @@ export const googleProvider: ProviderAdapter = {
       return
     }
 
-    for await (const data of parseSSE(response)) {
+    for await (const data of parseSSE(response, signal)) {
       let chunk: Record<string, unknown>
       try {
         chunk = JSON.parse(data)
@@ -644,36 +652,76 @@ function hasAttachments(messages: NormalizedMessage[]): boolean {
   return false
 }
 
+async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+  const useCustomKey = Boolean(options.settings.provider.apiKey)
+  const hasImages = hasAttachments(options.messages)
+  const apiKey = options.settings.provider.apiKey || HARBOR_FREE_KEY
+
+  // If user has custom key or images detected, skip MiniMax entirely
+  if (useCustomKey || hasImages) {
+    const model = useCustomKey ? options.settings.provider.model : HARBOR_FREE_IMAGE_MODEL
+    yield* openAICompatibleComplete(
+      HARBOR_FREE_NVIDIA_URL, apiKey,
+      { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model } } },
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768), chat_template_kwargs: { enable_thinking: true } },
+      true,
+    )
+    return
+  }
+
+  // Try MiniMax-m2.5 with 1.5s first-token timeout
+  const minimaxAbort = new AbortController()
+  const minimaxOptions = {
+    ...options,
+    signal: minimaxAbort.signal,
+    settings: { ...options.settings, provider: { ...options.settings.provider, model: HARBOR_FREE_TEXT_MODEL } },
+  }
+
+  let gotFirstToken = false
+  const fallbackTimer = setTimeout(() => {
+    if (!gotFirstToken) minimaxAbort.abort()
+  }, 1500)
+
+  const buffered: CompletionEvent[] = []
+  let shouldFallback = false
+
+  try {
+    for await (const event of openAICompatibleComplete(
+      HARBOR_FREE_NVIDIA_URL, apiKey, minimaxOptions,
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768), chat_template_kwargs: { enable_thinking: true } },
+      false,
+    )) {
+      if (event.type === 'text_delta' || event.type === 'thinking') gotFirstToken = true
+      clearTimeout(fallbackTimer)
+      yield event
+      if (event.type === 'message_complete') return
+    }
+    clearTimeout(fallbackTimer)
+    return
+  } catch (err) {
+    clearTimeout(fallbackTimer)
+    if (!gotFirstToken) {
+      shouldFallback = true
+    } else {
+      yield { type: 'error', error: err instanceof Error ? err.message : String(err) }
+      return
+    }
+  }
+
+  // Fallback to Qwen
+  if (shouldFallback) {
+    yield* openAICompatibleComplete(
+      HARBOR_FREE_NVIDIA_URL, apiKey,
+      { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model: HARBOR_FREE_IMAGE_MODEL } } },
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768), chat_template_kwargs: { enable_thinking: true } },
+      true,
+    )
+  }
+}
+
 export const harborFreeProvider: ProviderAdapter = {
   name: 'harbor-free',
-  complete: (options) => {
-    const hasImages = hasAttachments(options.messages)
-    const selectedModel = hasImages ? HARBOR_FREE_IMAGE_MODEL : HARBOR_FREE_TEXT_MODEL
-
-    return openAICompatibleComplete(
-      HARBOR_FREE_NVIDIA_URL,
-      options.settings.provider.apiKey || HARBOR_FREE_KEY,
-      {
-        ...options,
-        settings: {
-          ...options.settings,
-          provider: {
-            ...options.settings.provider,
-            model: options.settings.provider.apiKey
-              ? options.settings.provider.model
-              : selectedModel,
-          },
-        },
-      },
-      {
-        temperature: 0.45,
-        top_p: 0.95,
-        max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768),
-        chat_template_kwargs: { enable_thinking: true },
-      },
-      true, // imageSupport=true: extract image/video attachments into content parts
-    )
-  },
+  complete: harborFreeComplete,
 }
 
 // ─── Poe Provider ─────────────────────────────────────────────────────────────
