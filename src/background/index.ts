@@ -40,7 +40,16 @@ async function saveSettings(settings: AgentSettings, theme: string, identity?: a
     theme: (theme as 'light' | 'dark' | 'system') || 'system',
     identity,
   }
+  console.log('💾 Saving to storage with key:', STORAGE_KEYS.SETTINGS, 'Data:', stored)
   await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: stored })
+
+  // VERIFY the data was actually written
+  const verification = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS)
+  console.log('🔍 VERIFICATION - Data in storage after save:', verification[STORAGE_KEYS.SETTINGS])
+
+  if (!verification[STORAGE_KEYS.SETTINGS]) {
+    throw new Error('CRITICAL: Data was not written to chrome.storage.local!')
+  }
 }
 
 async function getSession(sessionId: string): Promise<StoredSession | null> {
