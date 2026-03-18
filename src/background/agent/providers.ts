@@ -633,7 +633,7 @@ export const googleProvider: ProviderAdapter = {
 // - Qwen3.5-122B: Supports text, images (png/jpg/jpeg/webp, up to 5), and video (mp4/mov/webm, 1)
 // Automatically switches to Qwen if message contains image/video attachments.
 
-const HARBOR_FREE_KEY = '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'
+const HARBOR_FREE_KEY = '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'
 const HARBOR_FREE_NVIDIA_URL = 'https://integrate.api.nvidia.com/v1'
 const HARBOR_FREE_TEXT_MODEL = 'minimax/minimax-m2.5'
 const HARBOR_FREE_IMAGE_MODEL = 'qwen/qwen3.5-122b-a10b'
