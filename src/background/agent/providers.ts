@@ -635,7 +635,7 @@ export const googleProvider: ProviderAdapter = {
 
 const HARBOR_FREE_KEY = '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'
 const HARBOR_FREE_NVIDIA_URL = 'https://integrate.api.nvidia.com/v1'
-const HARBOR_FREE_TEXT_MODEL = 'minimax/minimax-m2.5'
+const HARBOR_FREE_TEXT_MODEL = 'minimaxai/minimax-m2.5'
 const HARBOR_FREE_IMAGE_MODEL = 'qwen/qwen3.5-122b-a10b'
 
 function hasAttachments(messages: NormalizedMessage[]): boolean {
