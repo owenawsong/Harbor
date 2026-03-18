@@ -74,11 +74,14 @@ const LANGUAGES = [
 ]
 
 export default function Settings({ settings, theme, identity, onSave, onBack }: Props) {
+  console.log('📭 Settings: Received props:', { provider: settings?.provider?.provider, apiKey: settings?.provider?.apiKey ? '***' : 'EMPTY', theme, identity })
+
   const [activeSection, setActiveSection] = useState<SettingsSection>('provider')
   const [savedIndicator, setSavedIndicator] = useState(false)
 
   // Provider / Models - with per-provider model storage
   const [provider, setProvider]       = useState<ProviderName>(settings.provider.provider as ProviderName)
+  console.log('📭 Settings: Initialized provider state:', provider)
   const [modelsByProvider, setModelsByProvider] = useState<Record<ProviderName, string>>({
     anthropic: settings.provider.provider === 'anthropic' ? settings.provider.model : '',
     openai: settings.provider.provider === 'openai' ? settings.provider.model : '',
@@ -93,6 +96,8 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const [baseUrl, setBaseUrl]         = useState(settings.provider.baseUrl ?? '')
   const [enableMemory, setEnableMemory] = useState(settings.enableMemory ?? true)
   const [showKey, setShowKey]         = useState(false)
+
+  console.log('📭 Settings: Initial state after useState:', { provider, apiKey: apiKey ? '***' : 'EMPTY', baseUrl, enableMemory })
 
   // Get model for current provider
   const model = modelsByProvider[provider]
@@ -188,6 +193,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         console.log('🔄 Saving settings...', { provider, model, apiKey: apiKey ? '***' : 'empty' })
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
         console.log('✅ Settings saved successfully')
+        onSave(newSettings, currentTheme, newIdentity)
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
       } catch (err) {
@@ -201,6 +207,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
       userName, tone, verbosity, language, useEmoji, customPersonality, identity])
 
   const renderSection = () => {
+    console.log('📭 Settings: About to render section, current state:', { provider, apiKey: apiKey ? '***' : 'EMPTY', userName, tone })
     switch (activeSection) {
       case 'provider':
         return <SectionGeneral

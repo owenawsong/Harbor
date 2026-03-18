@@ -302,13 +302,16 @@ export default function App() {
 
       {/* Settings */}
       {view === 'settings' && (
-        <Settings
-          settings={settings}
-          theme={theme}
-          identity={identity}
-          onSave={handleSaveSettings}
-          onBack={() => setView('chat')}
-        />
+        <>
+          {console.log('📤 App: Rendering Settings with:', { provider: settings?.provider?.provider, apiKey: settings?.provider?.apiKey ? '***' : 'none', theme, identity })}
+          <Settings
+            settings={settings}
+            theme={theme}
+            identity={identity}
+            onSave={handleSaveSettings}
+            onBack={() => setView('chat')}
+          />
+        </>
       )}
 
       {/* History */}
