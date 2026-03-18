@@ -33,15 +33,24 @@ export default function App() {
 
   useEffect(() => {
     // Load settings, theme, and identity from background service
+    console.log('📞 App: Requesting get_settings from background...')
     chrome.runtime.sendMessage({ type: 'get_settings' }, (res) => {
-      console.log('📥 App: Received settings from background:', res?.data)
+      console.log('📥 App: Raw response from background:', res)
+      console.log('📥 App: res.success?', res?.success)
+      console.log('📥 App: res.data?', res?.data)
+
       if (res?.success && res.data) {
         const stored = res.data
-        setSettings(stored.agentSettings || {
+        console.log('📥 App: Received agentSettings:', stored.agentSettings)
+
+        const settingsToUse = stored.agentSettings || {
           provider: { provider: 'harbor-free', model: 'minimax/minimax-m2.5', apiKey: '' },
           enableMemory: true,
           enableScreenshots: true,
-        })
+        }
+        console.log('📥 App: Setting agentSettings state to:', settingsToUse)
+        setSettings(settingsToUse)
+
         if (stored.theme) {
           console.log('🎨 App: Setting theme to', stored.theme)
           setTheme(stored.theme as 'light' | 'dark' | 'system')

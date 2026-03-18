@@ -26,11 +26,21 @@ async function getSettings(): Promise<AgentSettings> {
 
 async function getStoredSettings(): Promise<StoredSettings> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS)
+  console.log('🔍 Background: getStoredSettings - raw data from chrome.storage:', data)
+  console.log('🔍 Background: STORAGE_KEYS.SETTINGS =', STORAGE_KEYS.SETTINGS)
+
   const stored = (data[STORAGE_KEYS.SETTINGS] as StoredSettings) ?? {
     agentSettings: DEFAULT_SETTINGS,
     theme: 'system',
   }
-  console.log('📂 Background: getStoredSettings returning:', { provider: stored.agentSettings?.provider?.provider, hasIdentity: !!stored.identity, theme: stored.theme })
+
+  console.log('📂 Background: getStoredSettings returning:', {
+    provider: stored.agentSettings?.provider?.provider,
+    apiKey: stored.agentSettings?.provider?.apiKey ? '***' : 'empty',
+    hasIdentity: !!stored.identity,
+    theme: stored.theme
+  })
+  console.log('📂 Background: FULL stored object:', stored)
   return stored
 }
 
@@ -40,16 +50,29 @@ async function saveSettings(settings: AgentSettings, theme: string, identity?: a
     theme: (theme as 'light' | 'dark' | 'system') || 'system',
     identity,
   }
-  console.log('💾 Saving to storage with key:', STORAGE_KEYS.SETTINGS, 'Data:', stored)
+  console.log('💾 SAVING - key:', STORAGE_KEYS.SETTINGS)
+  console.log('💾 SAVING - provider:', settings.provider.provider)
+  console.log('💾 SAVING - apiKey:', settings.provider.apiKey ? '***' : 'empty')
+  console.log('💾 SAVING - full object:', stored)
+
   await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: stored })
+  console.log('⏳ Write command queued, waiting for verification...')
 
   // VERIFY the data was actually written
   const verification = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS)
-  console.log('🔍 VERIFICATION - Data in storage after save:', verification[STORAGE_KEYS.SETTINGS])
+  console.log('🔍 VERIFICATION - raw response:', verification)
+  console.log('🔍 VERIFICATION - data[key]:', verification[STORAGE_KEYS.SETTINGS])
 
-  if (!verification[STORAGE_KEYS.SETTINGS]) {
+  const verified = verification[STORAGE_KEYS.SETTINGS]
+  if (!verified) {
     throw new Error('CRITICAL: Data was not written to chrome.storage.local!')
   }
+
+  console.log('✅ VERIFIED - Data persisted with:', {
+    provider: verified.agentSettings?.provider?.provider,
+    apiKey: verified.agentSettings?.provider?.apiKey ? '***' : 'empty',
+    theme: verified.theme,
+  })
 }
 
 async function getSession(sessionId: string): Promise<StoredSession | null> {
