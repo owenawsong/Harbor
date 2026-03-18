@@ -193,69 +193,77 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       normalizedHistory.push({ role: 'assistant', content: assistantParts })
     }
 
-    // If no tool calls, we're done
-    if (completedToolCalls.length === 0) break
+    // Execute any tool calls that were made
+    if (completedToolCalls.length > 0) {
+      const toolResults: Array<ToolResultPart> = []
 
-    // Execute tool calls
-    const toolResults: Array<ToolResultPart> = []
+      for (const tc of completedToolCalls) {
+        const handler = getToolByName(tc.name)
+        if (!handler) {
+          const result = { success: false, error: `Unknown tool: ${tc.name}` }
+          onEvent({
+            type: 'tool_call_result',
+            toolCallId: tc.id,
+            toolName: tc.name,
+            result,
+          })
+          toolResults.push({
+            type: 'tool_result',
+            toolCallId: tc.id,
+            content: JSON.stringify(result),
+            isError: true,
+          })
+          continue
+        }
 
-    for (const tc of completedToolCalls) {
-      const handler = getToolByName(tc.name)
-      if (!handler) {
-        const result = { success: false, error: `Unknown tool: ${tc.name}` }
+        let toolResult: import('../../shared/types').ToolResult
+        try {
+          toolResult = await Promise.race([
+            handler.execute(tc.input, browserContext),
+            new Promise<never>((_, reject) =>
+              setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
+            ),
+          ])
+        } catch (err) {
+          toolResult = { success: false, error: err instanceof Error ? err.message : String(err) }
+        }
+
         onEvent({
           type: 'tool_call_result',
           toolCallId: tc.id,
           toolName: tc.name,
-          result,
+          result: toolResult,
         })
+
         toolResults.push({
           type: 'tool_result',
           toolCallId: tc.id,
-          content: JSON.stringify(result),
-          isError: true,
+          content: toolResult.success
+            ? JSON.stringify(toolResult.output)
+            : `Error: ${toolResult.error}`,
+          isError: !toolResult.success,
         })
-        continue
       }
 
-      let toolResult: import('../../shared/types').ToolResult
-      try {
-        toolResult = await Promise.race([
-          handler.execute(tc.input, browserContext),
-          new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
-          ),
-        ])
-      } catch (err) {
-        toolResult = { success: false, error: err instanceof Error ? err.message : String(err) }
+      // Add tool results to history so agent can see them in next iteration
+      if (toolResults.length > 0) {
+        normalizedHistory.push({ role: 'user', content: toolResults })
       }
 
-      onEvent({
-        type: 'tool_call_result',
-        toolCallId: tc.id,
-        toolName: tc.name,
-        result: toolResult,
-      })
-
-      toolResults.push({
-        type: 'tool_result',
-        toolCallId: tc.id,
-        content: toolResult.success
-          ? JSON.stringify(toolResult.output)
-          : `Error: ${toolResult.error}`,
-        isError: !toolResult.success,
-      })
+      // Continue loop to send results back to agent (don't check stop reason if tools were called)
+      continue
     }
 
-    // Add tool results to history
-    if (toolResults.length > 0) {
-      normalizedHistory.push({ role: 'user', content: toolResults })
-    }
-
-    // Check stop reason - if it wasn't tool_use/tool_calls, break
+    // No tool calls were made - check stop reason to determine if task is complete
     // Support various formats: 'tool_use', 'tool_calls', 'TOOL_USE', 'function_calls', etc.
     const isToolUseReason = stopReason && /tool|function/i.test(stopReason)
     if (stopReason && !isToolUseReason) {
+      // Model finished naturally without requesting more tools
+      break
+    }
+
+    // If no tools were called AND stop reason is unknown/empty, assume we're done
+    if (!stopReason) {
       break
     }
   }
