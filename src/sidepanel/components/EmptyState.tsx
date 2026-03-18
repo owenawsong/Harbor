@@ -27,18 +27,18 @@ export default function EmptyState({ onSuggestionClick, userName }: Props) {
   const [greeting] = useState(() => getGreeting(userName))
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto harbor-scroll">
-      <div className="flex flex-col gap-5 px-4 py-6 animate-fade-in">
+    <div className="flex flex-col h-full overflow-y-auto harbor-scroll justify-center items-center">
+      <div className="flex flex-col gap-8 px-6 py-8 animate-fade-in max-w-xs text-center">
         {/* Greeting */}
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-3">
           <h2
-            className="harbor-serif text-2xl font-light leading-snug"
+            className="harbor-serif text-5xl font-light leading-tight"
             style={{ color: 'rgb(var(--harbor-text))' }}
           >
             {greeting}
           </h2>
           <p
-            className="text-xs leading-relaxed"
+            className="text-sm leading-relaxed"
             style={{ color: 'rgb(var(--harbor-text-faint))' }}
           >
             Ask anything, automate tasks, browse smarter.
@@ -46,15 +46,15 @@ export default function EmptyState({ onSuggestionClick, userName }: Props) {
         </div>
 
         {/* Suggestion chips */}
-        <div className="flex flex-col gap-1.5">
-          <p className="harbor-section-label mb-1">Try asking</p>
+        <div className="flex flex-col gap-2">
+          <p className="harbor-section-label mb-2 text-xs">Try asking</p>
           {SUGGESTIONS.map(({ icon, text }) => {
             const Icon = ICON_MAP[icon]
             return (
               <button
                 key={text}
                 onClick={() => onSuggestionClick(text)}
-                className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left group transition-all duration-150"
+                className="flex items-center justify-center gap-2.5 px-3 py-2.5 rounded-xl border text-left group transition-all duration-150"
                 style={{
                   background: 'rgb(var(--harbor-surface))',
                   borderColor: 'rgb(var(--harbor-border))',
@@ -88,7 +88,7 @@ export default function EmptyState({ onSuggestionClick, userName }: Props) {
 
         {/* Footer hint */}
         <p
-          className="text-[10px] text-center pt-1"
+          className="text-[10px] text-center pt-4"
           style={{ color: 'rgb(var(--harbor-text-faint))' }}
         >
           Claude · GPT · Gemini · Ollama · OpenRouter · more

@@ -96,6 +96,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
   normalizedHistory.push(userMessage)
 
   let iterations = 0
+  const messageId = generateId()
 
   while (iterations < MAX_TOOL_ITERATIONS) {
     if (signal?.aborted) {
@@ -104,7 +105,6 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     }
 
     iterations++
-    const messageId = generateId()
 
     // Accumulate the response
     let currentText = ''

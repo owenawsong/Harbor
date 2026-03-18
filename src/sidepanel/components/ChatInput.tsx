@@ -91,13 +91,13 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
         </div>
       )}
 
-      <div className="flex items-end gap-2 rounded-xl border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] px-3 py-2.5 focus-within:border-harbor-400">
+      <div className="flex items-center gap-2 rounded-xl border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] px-3 py-2.5 focus-within:border-harbor-400">
         {/* File upload button */}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || isRunning}
           title="Attach file"
-          className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] disabled:opacity-40 mb-0.5"
+          className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] disabled:opacity-40"
         >
           <Paperclip size={15} />
         </button>

@@ -116,8 +116,12 @@ function takeSnapshot(): PageSnapshot {
   resetElements()
   const elements: SnapshotElement[] = []
   const lines: string[] = []
+  const MAX_ELEMENTS = 500
 
   function processElement(el: Element) {
+    // Stop processing if we've hit the element limit
+    if (elements.length >= MAX_ELEMENTS) return
+
     if (!isVisible(el)) return
 
     const tag = el.tagName.toLowerCase()
@@ -172,9 +176,12 @@ function takeSnapshot(): PageSnapshot {
       lines.push(line)
     }
 
-    // Process children
-    for (const child of el.children) {
-      processElement(child)
+    // Process children (stop if we've hit the limit)
+    if (elements.length < MAX_ELEMENTS) {
+      for (const child of el.children) {
+        if (elements.length >= MAX_ELEMENTS) break
+        processElement(child)
+      }
     }
   }
 

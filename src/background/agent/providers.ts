@@ -620,19 +620,37 @@ export const googleProvider: ProviderAdapter = {
 }
 
 // ─── Harbor Free Provider ─────────────────────────────────────────────────────
-// Uses NVIDIA NIM (minimaxai/minimax-m2.5) with a built-in key — no API key needed.
-// Falls back to Poe if any message contains image/screenshot data.
+// Uses NVIDIA NIM with two models:
+// - MiniMax-m2.5: Fast, text-only model (default)
+// - Qwen3.5-122B: Supports text, images (png/jpg/jpeg/webp, up to 5), and video (mp4/mov/webm, 1)
+// Automatically switches to Qwen if message contains image/video attachments.
 
-const HARBOR_FREE_KEY = 'FRBYc_WFolgpYEQFdTh0YCdlscP_ig3PBR6vpOgjrsw'
+const HARBOR_FREE_KEY = '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'
 const HARBOR_FREE_NVIDIA_URL = 'https://integrate.api.nvidia.com/v1'
-// Qwen3.5-122B supports images (png/jpg/jpeg/webp, up to 5) and video (mp4/mov/webm, 1)
-const HARBOR_FREE_NVIDIA_MODEL = 'qwen/qwen3.5-122b-a10b'
+const HARBOR_FREE_TEXT_MODEL = 'minimax/minimax-m2.5'
+const HARBOR_FREE_IMAGE_MODEL = 'qwen/qwen3.5-122b-a10b'
+
+function hasAttachments(messages: NormalizedMessage[]): boolean {
+  for (const msg of messages) {
+    if (msg.role === 'user') {
+      const textParts = msg.content.filter((p) => p.type === 'text')
+      for (const part of textParts) {
+        if (part.type === 'text' && /\[Attached file:.*\]\n(data:(image|video)\/[^\s]+)/.test(part.text)) {
+          return true
+        }
+      }
+    }
+  }
+  return false
+}
 
 export const harborFreeProvider: ProviderAdapter = {
   name: 'harbor-free',
-  // Qwen3.5 handles text, images, and video natively — no Poe fallback needed.
-  complete: (options) =>
-    openAICompatibleComplete(
+  complete: (options) => {
+    const hasImages = hasAttachments(options.messages)
+    const selectedModel = hasImages ? HARBOR_FREE_IMAGE_MODEL : HARBOR_FREE_TEXT_MODEL
+
+    return openAICompatibleComplete(
       HARBOR_FREE_NVIDIA_URL,
       options.settings.provider.apiKey || HARBOR_FREE_KEY,
       {
@@ -643,7 +661,7 @@ export const harborFreeProvider: ProviderAdapter = {
             ...options.settings.provider,
             model: options.settings.provider.apiKey
               ? options.settings.provider.model
-              : HARBOR_FREE_NVIDIA_MODEL,
+              : selectedModel,
           },
         },
       },
@@ -654,7 +672,8 @@ export const harborFreeProvider: ProviderAdapter = {
         chat_template_kwargs: { enable_thinking: true },
       },
       true, // imageSupport=true: extract image/video attachments into content parts
-    ),
+    )
+  },
 }
 
 // ─── Poe Provider ─────────────────────────────────────────────────────────────

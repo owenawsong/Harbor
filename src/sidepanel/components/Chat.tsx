@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import {
   Settings as SettingsIcon, Clock, SquarePen, LayoutDashboard,
-  Brain, Zap, Search,
+  Brain, Zap, Search, MoreVertical,
 } from 'lucide-react'
 import type { AgentSettings, IdentitySettings } from '../../shared/types'
 import { useChat } from '../hooks/useChat'
@@ -42,7 +42,8 @@ export default function Chat({
   const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock } =
     useChat(settings, currentSessionId)
 
-  const [showNotifications, setShowNotifications] = React.useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
 
   const hasApiKey =
     Boolean(settings.provider.apiKey) ||
@@ -76,66 +77,90 @@ export default function Chat({
             alt="Harbor"
             className="w-6 h-6 rounded-lg flex-shrink-0"
           />
-          <div className="flex items-center gap-1.5">
-            <span
-              className="harbor-serif text-base font-medium"
-              style={{ color: 'rgb(var(--harbor-text))' }}
-            >
-              Harbor
-            </span>
-            {isRunning && (
-              <span
-                className="text-[10px] px-1.5 py-0.5 rounded-full font-medium animate-pulse"
-                style={{
-                  background: 'rgb(var(--harbor-accent-light))',
-                  color: 'rgb(var(--harbor-accent))',
-                  border: '1px solid rgb(var(--harbor-accent) / 0.3)',
-                }}
-              >
-                running
-              </span>
-            )}
-          </div>
+          <span
+            className="harbor-serif text-base font-medium"
+            style={{ color: 'rgb(var(--harbor-text))' }}
+          >
+            Harbor
+          </span>
         </button>
 
-        {/* Actions */}
+        {/* Actions: New, History, Search + Menu */}
         <div className="flex items-center gap-0.5">
-          {onOpenCommandPalette && (
-            <button onClick={onOpenCommandPalette} className="icon-btn" title="Command palette (Ctrl+Shift+K)">
-              <Search size={14} />
-            </button>
-          )}
           <button onClick={onNewConversation} className="icon-btn" title="New conversation">
             <SquarePen size={14} />
           </button>
           <button onClick={onViewHistory} className="icon-btn" title="History">
             <Clock size={14} />
           </button>
-          {onOpenMemory && (
-            <button onClick={onOpenMemory} className="icon-btn" title="Memory">
-              <Brain size={14} />
-            </button>
-          )}
-          {onOpenSkills && (
-            <button onClick={onOpenSkills} className="icon-btn" title="Skills">
-              <Zap size={14} />
-            </button>
-          )}
+          <button onClick={onOpenCommandPalette} className="icon-btn" title="Search (Ctrl+Shift+K)">
+            <Search size={14} />
+          </button>
+
+          {/* Menu Button */}
           <div className="relative">
-            <NotificationBell onClick={() => setShowNotifications((v) => !v)} />
-            {showNotifications && (
+            <button
+              onClick={() => setShowMenu((v) => !v)}
+              className="icon-btn"
+              title="More options"
+            >
+              <MoreVertical size={14} />
+            </button>
+
+            {showMenu && (
               <>
                 <div
                   className="fixed inset-0 z-30"
-                  onClick={() => setShowNotifications(false)}
+                  onClick={() => setShowMenu(false)}
                 />
-                <NotificationCenter onClose={() => setShowNotifications(false)} />
+                <div
+                  className="absolute right-0 mt-1 w-32 rounded-lg border shadow-lg z-40 overflow-hidden"
+                  style={{
+                    background: 'rgb(var(--harbor-surface))',
+                    borderColor: 'rgb(var(--harbor-border))',
+                  }}
+                >
+                  <button
+                    onClick={() => {
+                      onOpenMemory?.()
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-opacity-60 transition-colors flex items-center gap-2"
+                    style={{ color: 'rgb(var(--harbor-text))' }}
+                  >
+                    <Brain size={12} />
+                    Memory
+                  </button>
+                  <button
+                    onClick={() => {
+                      onOpenSkills?.()
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-opacity-60 transition-colors flex items-center gap-2"
+                    style={{ color: 'rgb(var(--harbor-text))' }}
+                  >
+                    <Zap size={12} />
+                    Skills
+                  </button>
+                  <div
+                    className="h-px"
+                    style={{ background: 'rgb(var(--harbor-border))' }}
+                  />
+                  <button
+                    onClick={() => {
+                      onOpenSettings()
+                      setShowMenu(false)
+                    }}
+                    className="w-full text-left px-3 py-2 text-xs hover:bg-opacity-60 transition-colors flex items-center gap-2"
+                    style={{ color: 'rgb(var(--harbor-text))' }}
+                  >
+                    <SettingsIcon size={12} />
+                    Settings
+                  </button>
+                </div>
               </>
             )}
           </div>
-          <button onClick={onOpenSettings} className="icon-btn" title="Settings">
-            <SettingsIcon size={14} />
-          </button>
         </div>
       </div>
 
@@ -188,21 +213,6 @@ export default function Chat({
           />
         )}
       </div>
-
-      {/* ── Agent running pill overlay ─────────────────────────────────────── */}
-      {isRunning && (
-        <div className="flex justify-center px-3 py-1.5">
-          <div className="agent-pill flex items-center gap-2 px-3 py-1.5 rounded-full">
-            <div
-              className="w-1.5 h-1.5 rounded-full animate-pulse"
-              style={{ background: 'rgb(var(--harbor-accent))' }}
-            />
-            <span className="text-[11px] font-medium" style={{ color: 'rgb(var(--harbor-accent))' }}>
-              Harbor is working…
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* ── Input ──────────────────────────────────────────────────────────── */}
       <ChatInput
