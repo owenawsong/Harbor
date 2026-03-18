@@ -154,20 +154,25 @@ export default function Chat({
         </div>
       </div>
 
-      {/* ── API key warning ─────────────────────────────────────────────────── */}
+      {/* ── API key warning with Harbor Free suggestion ─────────────────────── */}
       {!hasApiKey && (
         <div
-          className="mx-3 mt-2.5 px-3 py-2 rounded-xl text-xs border"
+          className="mx-3 mt-2.5 px-3 py-2.5 rounded-xl text-xs border flex flex-col gap-2"
           style={{
             borderColor: 'rgb(245 158 11 / 0.3)',
             background: 'rgb(245 158 11 / 0.08)',
             color: '#b45309',
           }}
         >
-          No API key configured.{' '}
-          <button onClick={onOpenSettings} className="font-semibold underline underline-offset-2 hover:no-underline">
-            Open Settings
-          </button>
+          <div>
+            No API key configured. Add one in{' '}
+            <button onClick={onOpenSettings} className="font-semibold underline underline-offset-2 hover:no-underline">
+              Settings
+            </button>
+            , or use{' '}
+            <span className="font-semibold">Harbor Free ✦</span>
+            {' '}for free access.
+          </div>
         </div>
       )}
 
