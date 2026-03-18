@@ -92,7 +92,7 @@ export default function ToolCallDisplay({ toolCall }: { toolCall: UIToolCall }) 
   const hasDetails = toolCall.input !== undefined || toolCall.result !== undefined
 
   return (
-    <div className="rounded-lg border border-[rgb(var(--harbor-border))] overflow-hidden text-xs">
+    <div className="rounded-lg border border-[rgb(var(--harbor-border))] overflow-hidden text-xs animate-fade-in">
       {/* Header row */}
       <button
         onClick={() => hasDetails && setOpen((v) => !v)}
@@ -130,7 +130,7 @@ export default function ToolCallDisplay({ toolCall }: { toolCall: UIToolCall }) 
 
       {/* Expanded details */}
       {open && hasDetails && (
-        <div className="border-t border-[rgb(var(--harbor-border))] divide-y divide-[rgb(var(--harbor-border))]">
+        <div className="border-t border-[rgb(var(--harbor-border))] divide-y divide-[rgb(var(--harbor-border))] animate-slide-down">
           {/* Screenshot */}
           {toolCall.result?.screenshot && (
             <div className="p-2">

@@ -38,7 +38,7 @@ export interface ChatMessage {
 
 // ─── Provider Types ───────────────────────────────────────────────────────────
 
-export type ProviderName = 'anthropic' | 'openai' | 'google' | 'ollama' | 'openrouter' | 'openai-compatible'
+export type ProviderName = 'anthropic' | 'openai' | 'google' | 'ollama' | 'openrouter' | 'openai-compatible' | 'harbor-free'
 
 export interface ProviderConfig {
   provider: ProviderName
@@ -60,6 +60,7 @@ export interface AgentSettings {
   temperature?: number
   enableMemory?: boolean
   enableScreenshots?: boolean
+  commandPaletteShortcut?: string
 }
 
 // ─── Tool Types ───────────────────────────────────────────────────────────────

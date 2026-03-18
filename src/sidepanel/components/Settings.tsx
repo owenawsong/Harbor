@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check, Keyboard } from 'lucide-react'
 import type { AgentSettings, ProviderName } from '../../shared/types'
 import { DEFAULT_MODELS, PROVIDER_LABELS } from '../../shared/constants'
 
@@ -33,12 +33,16 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
   const [baseUrl, setBaseUrl]         = useState(settings.provider.baseUrl ?? '')
   const [maxTokens, setMaxTokens]     = useState(settings.maxTokens ?? 8192)
   const [enableMemory, setEnableMemory] = useState(settings.enableMemory ?? false)
+  const [shortcut, setShortcut]         = useState(settings.commandPaletteShortcut ?? 'Ctrl+K')
+  const [recordingShortcut, setRecordingShortcut] = useState(false)
   const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'system'>(theme)
   const [showKey, setShowKey]         = useState(false)
   const [status, setStatus]           = useState<'idle' | 'saving' | 'saved'>('idle')
+  const shortcutInputRef = useRef<HTMLInputElement>(null)
 
   const models = DEFAULT_MODELS[provider] ?? []
-  const needsKey = provider !== 'ollama'
+  const isFree   = provider === 'harbor-free'
+  const needsKey = provider !== 'ollama' && !isFree
   const needsUrl = provider === 'ollama' || provider === 'openai-compatible'
   const keyLink  = KEY_LINKS[provider]
 
@@ -54,6 +58,22 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
     setCustomModel('')
   }
 
+  const handleShortcutKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!recordingShortcut) return
+    e.preventDefault()
+    const parts: string[] = []
+    if (e.ctrlKey || e.metaKey) parts.push('Ctrl')
+    if (e.altKey)  parts.push('Alt')
+    if (e.shiftKey) parts.push('Shift')
+    const key = e.key
+    if (!['Control', 'Alt', 'Shift', 'Meta'].includes(key)) {
+      parts.push(key.length === 1 ? key.toUpperCase() : key)
+      setShortcut(parts.join('+'))
+      setRecordingShortcut(false)
+      shortcutInputRef.current?.blur()
+    }
+  }
+
   const handleSave = async () => {
     setStatus('saving')
     const effectiveModel = customModel.trim() || model
@@ -62,6 +82,7 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
       maxTokens,
       enableMemory,
       enableScreenshots: true,
+      commandPaletteShortcut: shortcut || 'Ctrl+K',
     }
     await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme })
     onSave(newSettings, currentTheme)
@@ -171,6 +192,16 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
               </label>
             )}
 
+            {/* Harbor Free info */}
+            {isFree && (
+              <div className="flex gap-2 px-3 py-2.5 rounded-lg bg-harbor-50 dark:bg-harbor-950/20 border border-harbor-200 dark:border-harbor-800">
+                <Info size={13} className="text-harbor-500 flex-shrink-0 mt-0.5" />
+                <p className="text-xs text-harbor-700 dark:text-harbor-300 leading-relaxed">
+                  No API key required. Uses MiniMax M2 (fast) with automatic fallback to Qwen 3.5 72B for reliability.
+                </p>
+              </div>
+            )}
+
             {/* Ollama hint */}
             {provider === 'ollama' && (
               <div className="flex gap-2 px-3 py-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900">
@@ -221,6 +252,37 @@ export default function Settings({ settings, theme, onSave, onBack }: Props) {
               >
                 <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${enableMemory ? 'translate-x-4' : 'translate-x-0.5'}`} />
               </button>
+            </div>
+
+            {/* Keyboard shortcut */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex items-center gap-1.5">
+                <Keyboard size={12} className="text-[rgb(var(--harbor-text-faint))]" />
+                <span className="text-xs font-medium text-[rgb(var(--harbor-text-muted))]">Command Palette Shortcut</span>
+              </div>
+              <div
+                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg border cursor-pointer select-none ${
+                  recordingShortcut
+                    ? 'border-harbor-400 bg-harbor-500/5 ring-1 ring-harbor-400/30'
+                    : 'border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))]'
+                }`}
+                onClick={() => { setRecordingShortcut(true); shortcutInputRef.current?.focus() }}
+              >
+                <input
+                  ref={shortcutInputRef}
+                  readOnly
+                  value={recordingShortcut ? 'Press keys…' : shortcut}
+                  onKeyDown={handleShortcutKeyDown}
+                  onBlur={() => setRecordingShortcut(false)}
+                  className="flex-1 bg-transparent outline-none text-xs font-mono text-[rgb(var(--harbor-text))] cursor-pointer"
+                />
+                {!recordingShortcut && (
+                  <span className="text-[10px] text-[rgb(var(--harbor-text-faint))]">click to change</span>
+                )}
+              </div>
+              <p className="text-[11px] text-[rgb(var(--harbor-text-faint))]">
+                Opens the command palette from any browser tab.
+              </p>
             </div>
           </section>
 

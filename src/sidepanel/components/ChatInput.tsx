@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { ArrowUp, Square, Paperclip, X } from 'lucide-react'
 
 interface Attachment {
@@ -15,11 +15,22 @@ interface Props {
   placeholder?: string
 }
 
-export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder }: Props) {
+export interface ChatInputHandle {
+  focus: () => void
+}
+
+const ChatInput = forwardRef<ChatInputHandle, Props>(function ChatInput(
+  { onSend, onStop, isRunning, disabled, placeholder },
+  ref
+) {
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useImperativeHandle(ref, () => ({
+    focus: () => textareaRef.current?.focus(),
+  }))
 
   const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && !isRunning
 
@@ -148,4 +159,6 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
       </p>
     </div>
   )
-}
+})
+
+export default ChatInput

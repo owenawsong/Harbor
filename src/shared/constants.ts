@@ -46,9 +46,11 @@ export const DEFAULT_MODELS: Record<string, string[]> = {
     'mistralai/mistral-large',
   ],
   'openai-compatible': [],
+  'harbor-free': ['minimax/minimax-m2', 'qwen/qwen3.5-72b:free'],
 }
 
 export const PROVIDER_LABELS: Record<string, string> = {
+  'harbor-free': 'Harbor Free ✦',
   anthropic: 'Anthropic (Claude)',
   openai: 'OpenAI (GPT)',
   google: 'Google (Gemini)',

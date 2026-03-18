@@ -61,6 +61,13 @@ async function getAllSessions(): Promise<StoredSession[]> {
 
 const activeControllers = new Map<string, AbortController>()
 
+async function notifyActiveTab(type: 'harbor_agent_start' | 'harbor_agent_stop') {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+    if (tab?.id) chrome.tabs.sendMessage(tab.id, { type }).catch(() => {})
+  } catch { /* tab may not have content script */ }
+}
+
 // ─── Port Connection ──────────────────────────────────────────────────────────
 
 chrome.runtime.onConnect.addListener((port) => {
@@ -106,6 +113,7 @@ chrome.runtime.onConnect.addListener((port) => {
 
           let assistantText = ''
 
+          notifyActiveTab('harbor_agent_start')
           try {
             await runAgent({
               sessionId,
@@ -123,6 +131,7 @@ chrome.runtime.onConnect.addListener((port) => {
             send({ type: 'error', error: err instanceof Error ? err.message : String(err) })
           } finally {
             activeControllers.delete(sessionId)
+            notifyActiveTab('harbor_agent_stop')
           }
 
           if (assistantText) {

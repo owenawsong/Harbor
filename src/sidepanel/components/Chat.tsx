@@ -1,9 +1,9 @@
-import React from 'react'
+import React, { useRef } from 'react'
 import { Settings as SettingsIcon, Clock } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
 import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
-import ChatInput from './ChatInput'
+import ChatInput, { type ChatInputHandle } from './ChatInput'
 import EmptyState from './EmptyState'
 
 interface Props {
@@ -11,14 +11,17 @@ interface Props {
   currentSessionId?: string | null
   onOpenSettings: () => void
   onViewHistory: () => void
+  inputRef?: React.Ref<ChatInputHandle>
 }
 
-export default function Chat({ settings, currentSessionId, onOpenSettings, onViewHistory }: Props) {
+export default function Chat({ settings, currentSessionId, onOpenSettings, onViewHistory, inputRef }: Props) {
   const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock } =
     useChat(settings, currentSessionId)
 
   const hasApiKey =
-    Boolean(settings.provider.apiKey) || settings.provider.provider === 'ollama'
+    Boolean(settings.provider.apiKey) ||
+    settings.provider.provider === 'ollama' ||
+    settings.provider.provider === 'harbor-free'
 
   // Show just the short model name without version hash
   const modelLabel = (() => {
@@ -87,6 +90,7 @@ export default function Chat({ settings, currentSessionId, onOpenSettings, onVie
 
       {/* ── Input ──────────────────────────────────────────────────────────── */}
       <ChatInput
+        ref={inputRef}
         onSend={(text, attachments) => {
           let fullText = text
           if (attachments && attachments.length > 0) {

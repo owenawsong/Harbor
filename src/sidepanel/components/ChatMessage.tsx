@@ -31,7 +31,7 @@ function ThinkingBlock({
         }
       </button>
       {block.isOpen && (
-        <div className="px-3 py-2 border-t border-[rgb(var(--harbor-border))] max-h-36 overflow-y-auto harbor-scroll">
+        <div className="thinking-content border-t border-[rgb(var(--harbor-border))] max-h-36 overflow-y-auto harbor-scroll px-3 py-2">
           <p className="text-[rgb(var(--harbor-text-muted))] leading-relaxed whitespace-pre-wrap">
             {block.text}
           </p>
