@@ -201,19 +201,22 @@ export default function App() {
     setView('chat')
   }
 
-  const handleSaveSettings = async (
-    newSettings: AgentSettings,
-    newTheme: 'light' | 'dark' | 'system',
-    newIdentity?: IdentitySettings,
-  ) => {
-    console.log('💾 App: Received save from Settings, updating state')
-    setSettings(newSettings)
-    setTheme(newTheme)
-    if (newIdentity) {
-      setIdentity(newIdentity)
-    }
-    // Do NOT call setView('chat') - let user stay in Settings
-  }
+  const handleSaveSettings = useCallback(
+    (
+      newSettings: AgentSettings,
+      newTheme: 'light' | 'dark' | 'system',
+      newIdentity?: IdentitySettings,
+    ) => {
+      console.log('💾 App: Received save from Settings, updating state')
+      setSettings(newSettings)
+      setTheme(newTheme)
+      if (newIdentity) {
+        setIdentity(newIdentity)
+      }
+      // Do NOT call setView('chat') - let user stay in Settings
+    },
+    [],
+  )
 
   const handleViewHistory = () => {
     loadSessions()
