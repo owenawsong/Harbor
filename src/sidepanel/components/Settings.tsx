@@ -79,10 +79,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
   // Provider / Models
   const [provider, setProvider]       = useState<ProviderName>(settings.provider.provider as ProviderName)
-  const initialModels = DEFAULT_MODELS[settings.provider.provider as ProviderName] ?? []
-  const isCustomModel = !initialModels.includes(settings.provider.model)
-  const [model, setModel]             = useState(isCustomModel ? (initialModels[0] ?? '') : settings.provider.model)
-  const [customModel, setCustomModel] = useState(isCustomModel ? settings.provider.model : '')
+  const [model, setModel]             = useState(settings.provider.model)
   const [apiKey, setApiKey]           = useState(settings.provider.apiKey ?? '')
   const [baseUrl, setBaseUrl]         = useState(settings.provider.baseUrl ?? '')
   const [maxTokens, setMaxTokens]     = useState(settings.maxTokens ?? 8192)
@@ -100,7 +97,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const [useEmoji, setUseEmoji]         = useState(identity?.useEmoji ?? false)
   const [customPersonality, setCustomPersonality] = useState(identity?.customPersonality ?? '')
 
-  const models = DEFAULT_MODELS[provider] ?? []
   const needsKey = provider !== 'ollama' && provider !== 'harbor-free'
   const needsUrl = provider === 'ollama' || provider === 'openai-compatible'
   const keyLink  = KEY_LINKS[provider]
@@ -112,17 +108,13 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
   const handleProviderChange = (p: ProviderName) => {
     setProvider(p)
-    const m = DEFAULT_MODELS[p]
-    if (m?.length) setModel(m[0])
-    setCustomModel('')
   }
 
   // Auto-save: debounced 800ms after any change
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const doSave = useCallback(async () => {
-    const effectiveModel = customModel.trim() || model
     const newSettings: AgentSettings = {
-      provider: { provider, model: effectiveModel, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
+      provider: { provider, model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
       maxTokens,
       enableMemory,
       enableScreenshots: true,
@@ -137,11 +129,10 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
       customPersonality: customPersonality.trim() || undefined,
     }
     await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme })
-    onSave(newSettings, currentTheme, newIdentity)
     setSavedIndicator(true)
     setTimeout(() => setSavedIndicator(false), 1500)
-  }, [provider, model, customModel, apiKey, baseUrl, maxTokens, enableMemory, currentTheme,
-      userName, tone, verbosity, language, useEmoji, customPersonality, identity, onSave])
+  }, [provider, model, apiKey, baseUrl, maxTokens, enableMemory, currentTheme,
+      userName, tone, verbosity, language, useEmoji, customPersonality, identity])
 
   const isFirstRender = useRef(true)
   useEffect(() => {
@@ -149,18 +140,18 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(doSave, 800)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
-  }, [provider, model, customModel, apiKey, baseUrl, maxTokens, enableMemory, currentTheme,
-      userName, tone, verbosity, language, useEmoji, customPersonality])
+  }, [provider, model, apiKey, baseUrl, maxTokens, enableMemory, currentTheme,
+      userName, tone, verbosity, language, useEmoji, customPersonality, doSave])
 
   const renderSection = () => {
     switch (activeSection) {
       case 'provider':
         return <SectionGeneral
-          provider={provider} model={model} customModel={customModel}
+          provider={provider} model={model}
           apiKey={apiKey} baseUrl={baseUrl} maxTokens={maxTokens} enableMemory={enableMemory}
-          showKey={showKey} models={models} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
+          showKey={showKey} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
           onProviderChange={handleProviderChange}
-          onModelChange={setModel} onCustomModelChange={setCustomModel}
+          onModelChange={setModel}
           onApiKeyChange={setApiKey} onBaseUrlChange={setBaseUrl}
           onMaxTokensChange={setMaxTokens} onEnableMemoryChange={setEnableMemory}
           onShowKeyToggle={() => setShowKey((v) => !v)}
@@ -238,9 +229,9 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 // ─── Section: General ─────────────────────────────────────────────────────────
 
 function SectionGeneral({
-  provider, model, customModel, apiKey, baseUrl, maxTokens, enableMemory, showKey,
-  models, needsKey, needsUrl, keyLink,
-  onProviderChange, onModelChange, onCustomModelChange, onApiKeyChange, onBaseUrlChange,
+  provider, model, apiKey, baseUrl, maxTokens, enableMemory, showKey,
+  needsKey, needsUrl, keyLink,
+  onProviderChange, onModelChange, onApiKeyChange, onBaseUrlChange,
   onMaxTokensChange, onEnableMemoryChange, onShowKeyToggle,
 }: any) {
   return (
@@ -262,20 +253,11 @@ function SectionGeneral({
 
       {/* Model */}
       <FormField label="Model">
-        {models.length > 0 && (
-          <select
-            value={model}
-            onChange={(e) => onModelChange(e.target.value)}
-            className="harbor-input text-xs mb-1.5"
-          >
-            {models.map((m: string) => <option key={m} value={m}>{m}</option>)}
-          </select>
-        )}
         <input
           type="text"
-          value={customModel}
-          onChange={(e) => onCustomModelChange(e.target.value)}
-          placeholder={models.length ? 'Override with custom model…' : 'Enter model name…'}
+          value={model}
+          onChange={(e) => onModelChange(e.target.value)}
+          placeholder="Enter model ID (e.g., gpt-4o, claude-opus-4-5)"
           className="harbor-input text-xs font-mono"
         />
       </FormField>
