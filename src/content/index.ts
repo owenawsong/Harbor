@@ -1326,16 +1326,22 @@ async function executeOverlayCommand(commandId: string): Promise<void> {
 }
 
 function toggleOverlay(): void {
+  console.log('🎯 ContentScript: toggleOverlay called, isOverlayOpen:', isOverlayOpen)
+
   if (!overlayRoot) {
+    console.log('🎯 ContentScript: Creating overlay DOM...')
     injectOverlayStyles()
     overlayRoot = createOverlayDOM()
     document.documentElement.appendChild(overlayRoot)
+    console.log('🎯 ContentScript: Overlay DOM appended to page')
   }
 
   if (isOverlayOpen) {
+    console.log('🎯 ContentScript: Closing overlay')
     overlayRoot.classList.remove('open')
     isOverlayOpen = false
   } else {
+    console.log('🎯 ContentScript: Opening overlay')
     overlayRoot.classList.add('open')
     isOverlayOpen = true
     selectedCommandIndex = 0

@@ -122,48 +122,15 @@ export default function App() {
     return () => chrome.storage.onChanged.removeListener(storageListener)
   }, [])
 
+  // ── Command Palette Hotkey Listener DISABLED ──────────────────────────
+  // The command palette hotkey is now handled ONLY by the content script
+  // This allows the overlay to work when the sidebar is closed and appear on the webpage
+  // Previously, the sidebar listener would interfere by consuming the keypress event
+  // and opening the palette IN the sidebar instead of on the webpage
   useEffect(() => {
-    const parseShortcut = (s: string) => {
-      const parts = s.split('+')
-      const key = parts[parts.length - 1]
-      return {
-        key: key.toLowerCase(),
-        ctrl: parts.includes('Ctrl'),
-        meta: parts.includes('Cmd'),
-        shift: parts.includes('Shift'),
-        alt: parts.includes('Alt'),
-      }
-    }
-
-    const handler = (e: KeyboardEvent) => {
-      const { key, ctrl, meta, shift, alt } = parseShortcut(cmdShortcut)
-      const ctrlOrMeta = ctrl || meta
-
-      // DEBUG: Log every key press to see if we're receiving events
-      if (e.ctrlKey && e.shiftKey) {
-        console.log('🎯 DEBUG: Ctrl+Shift key detected:', {
-          eventKey: e.key,
-          expectedKey: key,
-          parsedShortcut: { key, ctrl, meta, shift, alt }
-        })
-      }
-
-      const matches =
-        e.key.toUpperCase() === key.toUpperCase() &&
-        (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
-        e.shiftKey === shift &&
-        e.altKey === alt
-
-      if (matches) {
-        console.log('🎯 CommandPalette: Hotkey matched! Opening palette')
-        e.preventDefault()
-        setCommandPaletteOpen((v) => !v)
-      }
-    }
-    window.addEventListener('keydown', handler)
-    console.log('🎯 CommandPalette: Listener registered for shortcut:', cmdShortcut)
-    return () => window.removeEventListener('keydown', handler)
-  }, [cmdShortcut])
+    // Content script handles: Ctrl+Alt+H hotkey -> shows overlay on webpage
+    console.log('🎯 CommandPalette: Hotkey handling delegated to content script')
+  }, [])
 
   // ── Context menu message pickup ────────────────────────────────────────────
 
