@@ -200,7 +200,10 @@ export default function App() {
           sendResponse({ success: true })
           break
         case 'history':
-          loadSessions()
+          // Load sessions and switch to history view
+          chrome.runtime.sendMessage({ type: 'get_sessions' }, (res) => {
+            setSessions(res?.success ? (res.data ?? []) : [])
+          })
           setView('history')
           sendResponse({ success: true })
           break
@@ -223,7 +226,7 @@ export default function App() {
 
     chrome.runtime.onMessage.addListener(handlePaletteCommand)
     return () => chrome.runtime.onMessage.removeListener(handlePaletteCommand)
-  }, [loadSessions])
+  }, [setSessions])
 
   // ── Sessions ──────────────────────────────────────────────────────────────
 
