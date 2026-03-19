@@ -1070,6 +1070,9 @@ function hideAgentIndicator(): void {
 // Simple overlay implementation inline (to avoid module issues with content scripts)
 let overlayRoot: HTMLDivElement | null = null
 let isOverlayOpen = false
+let overlayCommands: Array<{ id: string; label: string; description?: string }> = []
+let filteredCommands: Array<{ id: string; label: string; description?: string }> = []
+let selectedCommandIndex = 0
 
 function injectOverlayStyles(): void {
   if (document.getElementById('harbor-overlay-styles')) return
@@ -1201,6 +1204,110 @@ function createOverlayDOM(): HTMLDivElement {
   return container
 }
 
+async function loadCommandsFromBackground(): Promise<void> {
+  try {
+    const response = await new Promise<{ commands: Array<{ id: string; label: string; description?: string }> }>((resolve, reject) => {
+      chrome.runtime.sendMessage({ type: 'harbor_get_palette_commands' }, (res) => {
+        if (res?.success) {
+          resolve(res.data || { commands: [] })
+        } else {
+          reject(new Error('Failed to load commands'))
+        }
+      })
+    })
+    overlayCommands = response.commands || []
+  } catch (err) {
+    console.warn('Failed to load palette commands:', err)
+    overlayCommands = [
+      { id: 'new-chat', label: 'New conversation', description: 'Start a fresh chat' },
+      { id: 'settings', label: 'Open Settings', description: 'Configure Harbor' },
+      { id: 'history', label: 'View History', description: 'Browse past conversations' },
+    ]
+  }
+}
+
+function renderOverlayList(query: string): void {
+  if (!overlayRoot) return
+
+  // Filter commands by query
+  filteredCommands = overlayCommands.filter((cmd) => {
+    const searchText = `${cmd.label} ${cmd.description || ''}`.toLowerCase()
+    return searchText.includes(query.toLowerCase())
+  })
+
+  // Reset selection when filtering
+  selectedCommandIndex = 0
+
+  const list = overlayRoot.querySelector('#harbor-overlay-list') as HTMLUListElement
+  list.innerHTML = ''
+
+  if (filteredCommands.length === 0) {
+    const emptyItem = document.createElement('li')
+    emptyItem.className = 'harbor-overlay-item'
+    emptyItem.style.padding = '20px'
+    emptyItem.style.textAlign = 'center'
+    emptyItem.style.color = 'rgb(var(--harbor-text-muted, 100, 100, 100))'
+    emptyItem.textContent = 'No commands found'
+    list.appendChild(emptyItem)
+    return
+  }
+
+  filteredCommands.forEach((cmd, idx) => {
+    const item = document.createElement('li')
+    item.className = 'harbor-overlay-item' + (idx === selectedCommandIndex ? ' active' : '')
+    item.dataset.index = String(idx)
+
+    const label = document.createElement('div')
+    label.className = 'harbor-overlay-item-label'
+
+    const title = document.createElement('div')
+    title.className = 'harbor-overlay-item-title'
+    title.textContent = cmd.label
+
+    label.appendChild(title)
+    if (cmd.description) {
+      const desc = document.createElement('div')
+      desc.className = 'harbor-overlay-item-desc'
+      desc.textContent = cmd.description
+      label.appendChild(desc)
+    }
+
+    item.appendChild(label)
+    item.addEventListener('click', () => executeOverlayCommand(cmd.id))
+    item.addEventListener('mouseenter', () => {
+      // Update visual selection on hover
+      document.querySelectorAll('.harbor-overlay-item').forEach((el, i) => {
+        if (i === idx) el.classList.add('active')
+        else el.classList.remove('active')
+      })
+      selectedCommandIndex = idx
+    })
+
+    list.appendChild(item)
+  })
+}
+
+async function executeOverlayCommand(commandId: string): Promise<void> {
+  try {
+    await new Promise<void>((resolve, reject) => {
+      chrome.runtime.sendMessage({ type: 'harbor_execute_palette_command', commandId }, (res) => {
+        if (res?.success) {
+          resolve()
+        } else {
+          reject(new Error(res?.error || 'Command execution failed'))
+        }
+      })
+    })
+    // Close overlay after successful execution
+    if (overlayRoot) {
+      overlayRoot.classList.remove('open')
+      isOverlayOpen = false
+    }
+  } catch (err) {
+    console.error('Failed to execute command:', err)
+  }
+}
+
 function toggleOverlay(): void {
   if (!overlayRoot) {
     injectOverlayStyles()
@@ -1214,9 +1321,11 @@ function toggleOverlay(): void {
   } else {
     overlayRoot.classList.add('open')
     isOverlayOpen = true
+    selectedCommandIndex = 0
     const input = overlayRoot.querySelector('#harbor-overlay-input') as HTMLInputElement
     input.focus()
     input.value = ''
+    loadCommandsFromBackground().then(() => renderOverlayList(''))
   }
 }
 
@@ -1231,11 +1340,44 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
 // Overlay interaction handler
 document.addEventListener('keydown', (e: KeyboardEvent) => {
   if (!overlayRoot?.classList.contains('open')) return
+
   if (e.key === 'Escape') {
     e.preventDefault()
     overlayRoot.classList.remove('open')
     isOverlayOpen = false
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault()
+    if (selectedCommandIndex < filteredCommands.length - 1) {
+      selectedCommandIndex++
+      const input = overlayRoot.querySelector('#harbor-overlay-input') as HTMLInputElement
+      renderOverlayList(input.value)
+      // Scroll into view
+      const active = overlayRoot.querySelector('.harbor-overlay-item.active') as HTMLElement
+      active?.scrollIntoView({ block: 'nearest' })
+    }
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault()
+    if (selectedCommandIndex > 0) {
+      selectedCommandIndex--
+      const input = overlayRoot.querySelector('#harbor-overlay-input') as HTMLInputElement
+      renderOverlayList(input.value)
+      // Scroll into view
+      const active = overlayRoot.querySelector('.harbor-overlay-item.active') as HTMLElement
+      active?.scrollIntoView({ block: 'nearest' })
+    }
+  } else if (e.key === 'Enter') {
+    e.preventDefault()
+    if (filteredCommands[selectedCommandIndex]) {
+      executeOverlayCommand(filteredCommands[selectedCommandIndex].id)
+    }
   }
+}, true)
+
+// Overlay input event handler for search
+document.addEventListener('input', (e: Event) => {
+  const input = e.target as HTMLInputElement
+  if (input.id !== 'harbor-overlay-input' || !overlayRoot?.classList.contains('open')) return
+  renderOverlayList(input.value)
 }, true)
 
 // Let the service worker know the content script is ready

@@ -278,6 +278,38 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           break
         }
 
+        case 'harbor_get_palette_commands': {
+          // Return list of available commands for the command palette overlay
+          const commands = [
+            { id: 'new-chat', label: 'New conversation', description: 'Start a fresh chat' },
+            { id: 'settings', label: 'Open Settings', description: 'Configure Harbor' },
+            { id: 'history', label: 'View History', description: 'Browse past conversations' },
+            { id: 'memory', label: 'View Memory', description: 'Manage learned information' },
+            { id: 'skills', label: 'Browse Skills', description: 'Explore available tools' },
+            { id: 'dashboard', label: 'Open Dashboard', description: 'View usage statistics' },
+          ]
+          sendResponse({ success: true, data: { commands } })
+          break
+        }
+
+        case 'harbor_execute_palette_command': {
+          const { commandId } = message
+          // Send command to the active extension panel
+          try {
+            // Send message to sidepanel to execute the command
+            chrome.runtime.sendMessage({
+              type: 'harbor_palette_command_execute',
+              commandId,
+            }).catch(() => {
+              // Sidepanel might not be open, that's ok
+            })
+            sendResponse({ success: true })
+          } catch (err) {
+            sendResponse({ success: false, error: err instanceof Error ? err.message : String(err) })
+          }
+          break
+        }
+
         default:
           sendResponse({ success: false, error: `Unknown message: ${message.type}` })
       }
