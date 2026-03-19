@@ -164,7 +164,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     saveTimerRef.current = setTimeout(async () => {
       try {
         const newSettings: AgentSettings = {
-          provider: { provider, model: provider === 'harbor-free' ? 'minimax/minimax-m2.5' : model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
+          provider: { provider, model: provider === 'harbor-free' ? 'minimaxai/minimax-m2.5' : model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
           enableMemory,
           enableScreenshots: true,
         }
