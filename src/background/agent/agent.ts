@@ -142,160 +142,106 @@ function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] 
 }
 
 export async function runAgent(options: AgentRunOptions): Promise<void> {
-  try {
-    console.log('🤖 runAgent: Starting agent loop')
-    const { sessionId, message, settings, history, onEvent, signal, attachedTabId } = options
-    console.log('🤖 runAgent: Extracted options:', { sessionId, messageLength: message.length, providerName: settings.provider.provider, historyLength: history.length })
+  const { sessionId, message, settings, history, onEvent, signal, attachedTabId } = options
+  const provider = getProvider(settings.provider.provider)
+  const systemPrompt = buildSystemPrompt({
+    enableMemory: settings.enableMemory,
+  })
+  const tools = getToolDefinitions()
 
-    console.log('🤖 runAgent: Getting provider:', settings.provider.provider)
-    const provider = getProvider(settings.provider.provider)
-    console.log('✅ runAgent: Provider retrieved:', { providerName: provider.name })
-
-    console.log('🤖 runAgent: Building system prompt')
-    const systemPrompt = buildSystemPrompt({
-      enableMemory: settings.enableMemory,
-    })
-    console.log('✅ runAgent: System prompt built')
-
-    console.log('🤖 runAgent: Getting tool definitions')
-    const tools = getToolDefinitions()
-    console.log('✅ runAgent: Tools loaded:', { toolCount: tools.length })
-
-    console.log('🤖 runAgent: Building browser context...')
-    // Build browser context
-    const browserContext: BrowserContext = {
-      async sendToTab(tabId, msg) {
-        return chrome.tabs.sendMessage(tabId, msg)
-      },
-      async getActiveTab() {
+  // Build browser context
+  const browserContext: BrowserContext = {
+    async sendToTab(tabId, msg) {
+      return chrome.tabs.sendMessage(tabId, msg)
+    },
+    async getActiveTab() {
+      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+      return tab
+    },
+    async captureScreenshot(tabId?: number) {
+      let targetTabId = tabId
+      if (!targetTabId) {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
-        return tab
-      },
-      async captureScreenshot(tabId?: number) {
-        let targetTabId = tabId
-        if (!targetTabId) {
-          const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
-          targetTabId = tab?.id
-        }
-        if (!targetTabId) throw new Error('No tab to screenshot')
-
-        const dataUrl = await chrome.tabs.captureVisibleTab(
-          await chrome.tabs.get(targetTabId).then((t) => t.windowId),
-          { format: 'jpeg', quality: 85 }
-        )
-        return dataUrl
-      },
-    }
-
-    console.log('✅ runAgent: Browser context created')
-
-    console.log('🤖 runAgent: Normalizing message history...')
-    // Normalize existing history
-    const normalizedHistory = chatMessagesToNormalized(history)
-    console.log('✅ runAgent: History normalized:', { normalizedCount: normalizedHistory.length })
-
-    console.log('🤖 runAgent: Creating user message object...')
-    // Add the new user message
-    const userMessage: NormalizedMessage = {
-      role: 'user',
-      content: [{ type: 'text', text: message }],
-    }
-    console.log('✅ runAgent: User message created')
-
-    console.log('🤖 runAgent: Pushing user message to history...')
-    normalizedHistory.push(userMessage)
-    console.log('✅ runAgent: User message pushed')
-
-    console.log('🤖 runAgent: Initializing loop variables...')
-    let iterations = 0
-    console.log('✅ runAgent: iterations initialized')
-
-    const messageId = generateId()
-    console.log('✅ runAgent: messageId generated:', { messageId })
-
-    const recentToolCalls: Array<{ name: string; input: Record<string, unknown>; timestamp: number }> = []
-    console.log('✅ runAgent: recentToolCalls array created')
-
-    console.log('🤖 runAgent: Starting main while loop...')
-    while (iterations < MAX_TOOL_ITERATIONS) {
-      console.log('🔄 While loop iteration started:', { iterations })
-
-      console.log('🔄 Checking if signal?.aborted...')
-      if (signal?.aborted) {
-        console.log('⚠️ Signal was aborted')
-        onEvent({ type: 'error', error: 'Agent stopped by user.' })
-        return
+        targetTabId = tab?.id
       }
-      console.log('✅ Signal check passed')
+      if (!targetTabId) throw new Error('No tab to screenshot')
 
-      console.log('🔄 Incrementing iterations...')
-      iterations++
-      console.log('✅ iterations incremented to:', iterations)
+      const dataUrl = await chrome.tabs.captureVisibleTab(
+        await chrome.tabs.get(targetTabId).then((t) => t.windowId),
+        { format: 'jpeg', quality: 85 }
+      )
+      return dataUrl
+    },
+  }
 
-      console.log('🔄 Declaring response accumulation variables...')
-      // Accumulate the response
-      let currentText = ''
-      console.log('✅ currentText declared')
+  // Normalize existing history
+  const normalizedHistory = chatMessagesToNormalized(history)
 
-      const pendingToolCalls: Map<string, { name: string; input: string }> = new Map()
-      console.log('✅ pendingToolCalls Map created')
+  // Add the new user message
+  const userMessage: NormalizedMessage = {
+    role: 'user',
+    content: [{ type: 'text', text: message }],
+  }
+  normalizedHistory.push(userMessage)
 
-      const completedToolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
-      console.log('✅ completedToolCalls array created')
+  let iterations = 0
+  const messageId = generateId()
+  const recentToolCalls: Array<{ name: string; input: Record<string, unknown>; timestamp: number }> = []
 
-      let stopReason = ''
-      console.log('✅ stopReason declared')
+  while (iterations < MAX_TOOL_ITERATIONS) {
+    if (signal?.aborted) {
+      onEvent({ type: 'error', error: 'Agent stopped by user.' })
+      return
+    }
 
-      console.log('🔄 Entering try block, about to call provider.complete()...')
-      console.log('Provider details:', { providerName: provider.name, hasComplete: !!provider.complete })
+    iterations++
 
-      try {
-        console.log('🔄 Starting for await on provider.complete()...')
-        for await (const event of provider.complete({
-          settings,
-          messages: normalizedHistory,
-          tools,
-          systemPrompt,
-          signal,
-        })) {
-          console.log('📡 Received event from provider:', { eventType: event.type })
+    // Accumulate the response
+    let currentText = ''
+    const pendingToolCalls: Map<string, { name: string; input: string }> = new Map()
+    const completedToolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
+    let stopReason = ''
 
-          if (signal?.aborted) {
-            console.log('⚠️ Signal aborted during event processing')
+    try {
+      for await (const event of provider.complete({
+        settings,
+        messages: normalizedHistory,
+        tools,
+        systemPrompt,
+        signal,
+      })) {
+        if (signal?.aborted) break
+
+        switch (event.type) {
+          case 'text_delta':
+            currentText += event.text
+            onEvent({ type: 'text_delta', text: event.text, messageId })
             break
-          }
 
-          console.log('🔄 Processing event in switch statement...')
-          switch (event.type) {
-            case 'text_delta':
-              currentText += event.text
-              onEvent({ type: 'text_delta', text: event.text, messageId })
-              break
+          case 'thinking':
+            onEvent({ type: 'thinking', text: event.text, messageId })
+            break
 
-            case 'thinking':
-              onEvent({ type: 'thinking', text: event.text, messageId })
-              break
+          case 'tool_call_start':
+            pendingToolCalls.set(event.id, { name: event.name, input: '' })
+            onEvent({
+              type: 'tool_call_start',
+              messageId,
+              toolCallId: event.id,
+              toolName: event.name,
+            })
+            break
 
-            case 'tool_call_start':
-              pendingToolCalls.set(event.id, { name: event.name, input: '' })
+          case 'tool_call_input_delta':
+            if (pendingToolCalls.has(event.id)) {
+              pendingToolCalls.get(event.id)!.input += event.delta
               onEvent({
-                type: 'tool_call_start',
-                messageId,
+                type: 'tool_call_input',
                 toolCallId: event.id,
-                toolName: event.name,
+                partialInput: event.delta,
               })
-              break
-
-            case 'tool_call_input_delta':
-              if (pendingToolCalls.has(event.id)) {
-                pendingToolCalls.get(event.id)!.input += event.delta
-                onEvent({
-                  type: 'tool_call_input',
-                  toolCallId: event.id,
-                  partialInput: event.delta,
-                })
-              }
-              break
+            }
+            break
 
           case 'tool_call_complete':
             completedToolCalls.push({
@@ -316,36 +262,36 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
           case 'error':
             onEvent({ type: 'error', error: event.error })
             return
-          }
         }
-      } catch (err) {
-        if (signal?.aborted) {
-          onEvent({ type: 'error', error: 'Agent stopped by user.' })
-          return
-        }
-        onEvent({ type: 'error', error: err instanceof Error ? err.message : String(err) })
+      }
+    } catch (err) {
+      if (signal?.aborted) {
+        onEvent({ type: 'error', error: 'Agent stopped by user.' })
         return
       }
+      onEvent({ type: 'error', error: err instanceof Error ? err.message : String(err) })
+      return
+    }
 
-      // Add assistant message to history
-      const assistantParts: Array<TextPart | ToolCallPart> = []
-      if (currentText) assistantParts.push({ type: 'text', text: currentText })
+    // Add assistant message to history
+    const assistantParts: Array<TextPart | ToolCallPart> = []
+    if (currentText) assistantParts.push({ type: 'text', text: currentText })
+    for (const tc of completedToolCalls) {
+      assistantParts.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
+    }
+    if (assistantParts.length > 0) {
+      normalizedHistory.push({ role: 'assistant', content: assistantParts })
+    }
+
+    // Execute any tool calls that were made
+    if (completedToolCalls.length > 0) {
+      const toolResults: Array<ToolResultPart> = []
+
+      // Track tool calls for loop detection
       for (const tc of completedToolCalls) {
-        assistantParts.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
-      }
-      if (assistantParts.length > 0) {
-        normalizedHistory.push({ role: 'assistant', content: assistantParts })
-      }
-
-      // Execute any tool calls that were made
-      if (completedToolCalls.length > 0) {
-        const toolResults: Array<ToolResultPart> = []
-
-        // Track tool calls for loop detection
-        for (const tc of completedToolCalls) {
-          recentToolCalls.push({ name: tc.name, input: tc.input, timestamp: Date.now() })
-          // Keep only last 10 tool calls in memory
-          if (recentToolCalls.length > 10) recentToolCalls.shift()
+        recentToolCalls.push({ name: tc.name, input: tc.input, timestamp: Date.now() })
+        // Keep only last 10 tool calls in memory
+        if (recentToolCalls.length > 10) recentToolCalls.shift()
       }
 
       // Detect tool loop
@@ -412,18 +358,12 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     }
   }
 
-    if (iterations >= MAX_TOOL_ITERATIONS) {
-      console.log('⚠️  runAgent: Max iterations reached')
-      onEvent({
-        type: 'error',
-        error: `Agent reached maximum iterations (${MAX_TOOL_ITERATIONS}). Task may be incomplete.`,
-      })
-    }
-
-    console.log('✅ runAgent: Agent loop complete')
-    onEvent({ type: 'agent_complete' })
-  } catch (err) {
-    console.error('💥 runAgent FATAL ERROR:', err instanceof Error ? err.message : String(err), err)
-    onEvent({ type: 'error', error: `Agent error: ${err instanceof Error ? err.message : String(err)}` })
+  if (iterations >= MAX_TOOL_ITERATIONS) {
+    onEvent({
+      type: 'error',
+      error: `Agent reached maximum iterations (${MAX_TOOL_ITERATIONS}). Task may be incomplete.`,
+    })
   }
+
+  onEvent({ type: 'agent_complete' })
 }

@@ -89,130 +89,128 @@ function toAnthropicTools(tools: ToolDefinition[]): unknown[] {
   }))
 }
 
-async function* anthropicComplete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-  const { settings, messages, tools, systemPrompt, signal } = options
-  const { provider } = settings
-
-  if (!provider.apiKey) {
-    yield { type: 'error', error: 'Anthropic API key is not set. Please add your key in Settings.' }
-    return
-  }
-
-  let response: Response
-  try {
-    response = await fetchWithRetry(
-      'https://api.anthropic.com/v1/messages',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': provider.apiKey ?? '',
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-direct-browser-only-api': 'true',
-        },
-        body: JSON.stringify({
-          model: provider.model,
-          max_tokens: settings.maxTokens ?? 8192,
-          system: systemPrompt,
-          messages: toAnthropicMessages(messages),
-          tools: toAnthropicTools(tools),
-          stream: true,
-        }),
-        signal,
-      },
-      { maxAttempts: 5 }
-    )
-  } catch (err) {
-    const classification = classifyError(null, err)
-    yield {
-      type: 'error',
-      error: `Failed to reach Anthropic API: ${classification.message}`,
-    }
-    return
-  }
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => '')
-    const classification = classifyError(response.status, new Error(errorText))
-    yield { type: 'error', error: `Anthropic API error ${response.status}: ${errorText || classification.message}` }
-    return
-  }
-
-  const toolInputBuffers: Record<string, string> = {}
-  const toolNames: Record<string, string> = {}
-  // Maps content block index → tool ID (fixes index mismatch when text/thinking blocks precede tool blocks)
-  const toolIdByIndex: Record<number, string> = {}
-  // Thinking block buffers: index → accumulated thinking text
-  const thinkingBuffers: Record<number, string> = {}
-
-  for await (const data of parseSSE(response, signal)) {
-    let event: Record<string, unknown>
-    try {
-      event = JSON.parse(data)
-    } catch {
-      continue
-    }
-
-    const eventType = event.type as string
-
-    if (eventType === 'content_block_start') {
-      const block = event.content_block as Record<string, unknown>
-      const blockIndex = event.index as number
-      if (block.type === 'tool_use') {
-        const id = block.id as string
-        const name = block.name as string
-        toolInputBuffers[id] = ''
-        toolNames[id] = name
-        toolIdByIndex[blockIndex] = id
-        yield { type: 'tool_call_start', id, name }
-      } else if (block.type === 'thinking') {
-        thinkingBuffers[blockIndex] = ''
-      }
-    } else if (eventType === 'content_block_delta') {
-      const delta = event.delta as Record<string, unknown>
-      if (delta.type === 'text_delta') {
-        yield { type: 'text_delta', text: delta.text as string }
-      } else if (delta.type === 'thinking_delta') {
-        const idx = event.index as number
-        thinkingBuffers[idx] = (thinkingBuffers[idx] ?? '') + (delta.thinking as string)
-        yield { type: 'thinking', text: delta.thinking as string }
-      } else if (delta.type === 'input_json_delta') {
-        const toolId = toolIdByIndex[event.index as number]
-        if (toolId) {
-          toolInputBuffers[toolId] += delta.partial_json as string
-          yield { type: 'tool_call_input_delta', id: toolId, delta: delta.partial_json as string }
-        }
-      }
-    } else if (eventType === 'content_block_stop') {
-      const idx = event.index as number
-      const toolId = toolIdByIndex[idx]
-      if (toolId && toolNames[toolId]) {
-        let input: Record<string, unknown> = {}
-        try {
-          input = JSON.parse(toolInputBuffers[toolId] || '{}')
-        } catch {
-          input = {}
-        }
-        yield { type: 'tool_call_complete', id: toolId, name: toolNames[toolId], input }
-        delete toolInputBuffers[toolId]
-        delete toolNames[toolId]
-        delete toolIdByIndex[idx]
-      }
-    } else if (eventType === 'message_delta') {
-      const delta = event.delta as Record<string, unknown>
-      if (delta.stop_reason) {
-        yield { type: 'message_complete', stopReason: delta.stop_reason as string }
-      }
-    } else if (eventType === 'error') {
-      const err = event.error as Record<string, unknown>
-      yield { type: 'error', error: (err.message as string) ?? 'Unknown Anthropic error' }
-    }
-  }
-}
-
 export const anthropicProvider: ProviderAdapter = {
   name: 'anthropic',
-  complete: anthropicComplete,
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    const { settings, messages, tools, systemPrompt, signal } = options
+    const { provider } = settings
+
+    if (!provider.apiKey) {
+      yield { type: 'error', error: 'Anthropic API key is not set. Please add your key in Settings.' }
+      return
+    }
+
+    let response: Response
+    try {
+      response = await fetchWithRetry(
+        'https://api.anthropic.com/v1/messages',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': provider.apiKey ?? '',
+            'anthropic-version': '2023-06-01',
+            'anthropic-dangerous-direct-browser-only-api': 'true',
+          },
+          body: JSON.stringify({
+            model: provider.model,
+            max_tokens: settings.maxTokens ?? 8192,
+            system: systemPrompt,
+            messages: toAnthropicMessages(messages),
+            tools: toAnthropicTools(tools),
+            stream: true,
+          }),
+          signal,
+        },
+        { maxAttempts: 5 }
+      )
+    } catch (err) {
+      const classification = classifyError(null, err)
+      yield {
+        type: 'error',
+        error: `Failed to reach Anthropic API: ${classification.message}`,
+      }
+      return
+    }
+
+    if (!response.ok) {
+      const errorText = await response.text().catch(() => '')
+      const classification = classifyError(response.status, new Error(errorText))
+      yield { type: 'error', error: `Anthropic API error ${response.status}: ${errorText || classification.message}` }
+      return
+    }
+
+    const toolInputBuffers: Record<string, string> = {}
+    const toolNames: Record<string, string> = {}
+    // Maps content block index → tool ID (fixes index mismatch when text/thinking blocks precede tool blocks)
+    const toolIdByIndex: Record<number, string> = {}
+    // Thinking block buffers: index → accumulated thinking text
+    const thinkingBuffers: Record<number, string> = {}
+
+    for await (const data of parseSSE(response, signal)) {
+      let event: Record<string, unknown>
+      try {
+        event = JSON.parse(data)
+      } catch {
+        continue
+      }
+
+      const eventType = event.type as string
+
+      if (eventType === 'content_block_start') {
+        const block = event.content_block as Record<string, unknown>
+        const blockIndex = event.index as number
+        if (block.type === 'tool_use') {
+          const id = block.id as string
+          const name = block.name as string
+          toolInputBuffers[id] = ''
+          toolNames[id] = name
+          toolIdByIndex[blockIndex] = id
+          yield { type: 'tool_call_start', id, name }
+        } else if (block.type === 'thinking') {
+          thinkingBuffers[blockIndex] = ''
+        }
+      } else if (eventType === 'content_block_delta') {
+        const delta = event.delta as Record<string, unknown>
+        if (delta.type === 'text_delta') {
+          yield { type: 'text_delta', text: delta.text as string }
+        } else if (delta.type === 'thinking_delta') {
+          const idx = event.index as number
+          thinkingBuffers[idx] = (thinkingBuffers[idx] ?? '') + (delta.thinking as string)
+          yield { type: 'thinking', text: delta.thinking as string }
+        } else if (delta.type === 'input_json_delta') {
+          const toolId = toolIdByIndex[event.index as number]
+          if (toolId) {
+            toolInputBuffers[toolId] += delta.partial_json as string
+            yield { type: 'tool_call_input_delta', id: toolId, delta: delta.partial_json as string }
+          }
+        }
+      } else if (eventType === 'content_block_stop') {
+        const idx = event.index as number
+        const toolId = toolIdByIndex[idx]
+        if (toolId && toolNames[toolId]) {
+          let input: Record<string, unknown> = {}
+          try {
+            input = JSON.parse(toolInputBuffers[toolId] || '{}')
+          } catch {
+            input = {}
+          }
+          yield { type: 'tool_call_complete', id: toolId, name: toolNames[toolId], input }
+          delete toolInputBuffers[toolId]
+          delete toolNames[toolId]
+          delete toolIdByIndex[idx]
+        }
+      } else if (eventType === 'message_delta') {
+        const delta = event.delta as Record<string, unknown>
+        if (delta.stop_reason) {
+          yield { type: 'message_complete', stopReason: delta.stop_reason as string }
+        }
+      } else if (eventType === 'error') {
+        const err = event.error as Record<string, unknown>
+        yield { type: 'error', error: (err.message as string) ?? 'Unknown Anthropic error' }
+      }
+    }
+  },
 }
 
 // ─── Streaming <think> tag parser ─────────────────────────────────────────────
@@ -389,25 +387,14 @@ async function* openAICompatibleComplete(
   extraBody?: { temperature?: number; top_p?: number; max_tokens?: number; chat_template_kwargs?: Record<string, unknown> },
   imageSupport = false,
 ): AsyncGenerator<CompletionEvent> {
-  console.log('🌐 openAICompatibleComplete: Function started')
-
-  console.log('🌐 openAICompatibleComplete: Destructuring options...')
   const { settings, messages, tools, systemPrompt, signal } = options
-  console.log('✅ openAICompatibleComplete: Options destructured')
-
-  console.log('🌐 openAICompatibleComplete: Getting providerName...')
   const providerName = settings.provider.provider
-  console.log('✅ openAICompatibleComplete: providerName =', providerName)
 
-  console.log('🌐 openAICompatibleComplete: Checking apiKey...')
   if (!apiKey && providerName !== 'ollama' && providerName !== 'harbor-free') {
-    console.log('❌ openAICompatibleComplete: Missing API key')
     yield { type: 'error', error: `${providerName} API key is not set. Please add your key in Settings.` }
     return
   }
-  console.log('✅ openAICompatibleComplete: API key check passed')
 
-  console.log('🌐 openAICompatibleComplete: About to fetch from', baseUrl)
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -528,7 +515,7 @@ export const openaiCompatibleProvider: ProviderAdapter = {
   complete: (options) => openAICompatibleComplete(
     options.settings.provider.baseUrl ?? 'http://localhost:11434/v1',
     options.settings.provider.apiKey ?? '',
-    options,
+    options
   ),
 }
 
@@ -536,8 +523,8 @@ export const ollamaProvider: ProviderAdapter = {
   name: 'ollama',
   complete: (options) => openAICompatibleComplete(
     (options.settings.provider.baseUrl ?? 'http://localhost:11434') + '/v1',
-    'ollama',
-    options,
+    'ollama', // Ollama doesn't need a real key but the endpoint requires one
+    options
   ),
 }
 
@@ -592,70 +579,68 @@ function toGeminiTools(tools: ToolDefinition[]): unknown[] {
   ]
 }
 
-async function* googleComplete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-  const { settings, messages, tools, systemPrompt, signal } = options
-  const { provider } = settings
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${provider.model}:streamGenerateContent?key=${provider.apiKey}&alt=sse`
-
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      systemInstruction: { parts: [{ text: systemPrompt }] },
-      contents: toGeminiMessages(messages),
-      tools: tools.length > 0 ? toGeminiTools(tools) : undefined,
-      generationConfig: {
-        maxOutputTokens: settings.maxTokens ?? 8192,
-      },
-    }),
-    signal,
-  })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    yield { type: 'error', error: `Google API error ${response.status}: ${errorText}` }
-    return
-  }
-
-  for await (const data of parseSSE(response, signal)) {
-    let chunk: Record<string, unknown>
-    try {
-      chunk = JSON.parse(data)
-    } catch {
-      continue
-    }
-
-    const candidates = chunk.candidates as Array<Record<string, unknown>>
-    if (!candidates || candidates.length === 0) continue
-
-    const candidate = candidates[0]
-    const content = candidate.content as Record<string, unknown>
-    if (!content) continue
-
-    const parts = content.parts as Array<Record<string, unknown>>
-    for (const part of parts ?? []) {
-      if (part.text) {
-        yield { type: 'text_delta', text: part.text as string }
-      }
-      if (part.functionCall) {
-        const fc = part.functionCall as Record<string, unknown>
-        const id = `gemini-${fc.name}-${Date.now()}`
-        yield { type: 'tool_call_start', id, name: fc.name as string }
-        yield { type: 'tool_call_complete', id, name: fc.name as string, input: fc.args as Record<string, unknown> }
-      }
-    }
-
-    const finishReason = candidate.finishReason as string
-    if (finishReason && finishReason !== 'FINISH_REASON_UNSPECIFIED') {
-      yield { type: 'message_complete', stopReason: finishReason }
-    }
-  }
-}
-
 export const googleProvider: ProviderAdapter = {
   name: 'google',
-  complete: googleComplete,
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    const { settings, messages, tools, systemPrompt, signal } = options
+    const { provider } = settings
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${provider.model}:streamGenerateContent?key=${provider.apiKey}&alt=sse`
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: toGeminiMessages(messages),
+        tools: tools.length > 0 ? toGeminiTools(tools) : undefined,
+        generationConfig: {
+          maxOutputTokens: settings.maxTokens ?? 8192,
+        },
+      }),
+      signal,
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      yield { type: 'error', error: `Google API error ${response.status}: ${errorText}` }
+      return
+    }
+
+    for await (const data of parseSSE(response, signal)) {
+      let chunk: Record<string, unknown>
+      try {
+        chunk = JSON.parse(data)
+      } catch {
+        continue
+      }
+
+      const candidates = chunk.candidates as Array<Record<string, unknown>>
+      if (!candidates || candidates.length === 0) continue
+
+      const candidate = candidates[0]
+      const content = candidate.content as Record<string, unknown>
+      if (!content) continue
+
+      const parts = content.parts as Array<Record<string, unknown>>
+      for (const part of parts ?? []) {
+        if (part.text) {
+          yield { type: 'text_delta', text: part.text as string }
+        }
+        if (part.functionCall) {
+          const fc = part.functionCall as Record<string, unknown>
+          const id = `gemini-${fc.name}-${Date.now()}`
+          yield { type: 'tool_call_start', id, name: fc.name as string }
+          yield { type: 'tool_call_complete', id, name: fc.name as string, input: fc.args as Record<string, unknown> }
+        }
+      }
+
+      const finishReason = candidate.finishReason as string
+      if (finishReason && finishReason !== 'FINISH_REASON_UNSPECIFIED') {
+        yield { type: 'message_complete', stopReason: finishReason }
+      }
+    }
+  },
 }
 
 // ─── Harbor Free Provider ─────────────────────────────────────────────────────
