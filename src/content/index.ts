@@ -1375,6 +1375,20 @@ chrome.storage.local.get('harbor_keybindings', (data) => {
 
   window.addEventListener('keydown', (e: KeyboardEvent) => {
     const ctrlOrMeta = needsCtrl || needsMeta
+
+    // DEBUG: Log Ctrl+Alt combinations to see what's being pressed
+    if (e.ctrlKey || e.altKey) {
+      console.log('🎯 DEBUG: Key pressed:', {
+        key: e.key,
+        keyLower: e.key.toLowerCase(),
+        expectedKey,
+        ctrl: e.ctrlKey,
+        alt: e.altKey,
+        shift: e.shiftKey,
+        meta: e.metaKey,
+      })
+    }
+
     const matches =
       e.key.toLowerCase() === expectedKey &&
       (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
