@@ -563,17 +563,44 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
 
         case 'harbor_evaluate': {
           const { expression } = message as { type: string; expression: string }
-          // Execute in page context via eval (already in content script)
-          const result = await (async () => {
-            try {
-              // Use Function constructor to evaluate in a clean scope
-              const fn = new Function(`return (async () => { return ${expression} })()`)
-              return await fn()
-            } catch {
-              const fn = new Function(`return (async () => { ${expression} })()`)
-              return await fn()
+          // Inject a script tag to bypass CSP restrictions
+          const result = await new Promise<unknown>((resolve, reject) => {
+            const randomId = Math.random().toString(36).substring(7)
+            const handler = (event: CustomEvent) => {
+              if (event.detail.id === randomId) {
+                window.removeEventListener(`harbor-eval-result-${randomId}`, handler as EventListener)
+                if (event.detail.error) {
+                  reject(new Error(event.detail.error))
+                } else {
+                  resolve(event.detail.result)
+                }
+              }
             }
-          })()
+            window.addEventListener(`harbor-eval-result-${randomId}`, handler as EventListener)
+
+            const script = document.createElement('script')
+            script.textContent = `
+              (function() {
+                try {
+                  const result = (function() { return (async () => { return ${expression} })() }).call(window)
+                  Promise.resolve(result).then(r => {
+                    window.dispatchEvent(new CustomEvent('harbor-eval-result-${randomId}', { detail: { id: '${randomId}', result: r } }))
+                  }).catch(err => {
+                    window.dispatchEvent(new CustomEvent('harbor-eval-result-${randomId}', { detail: { id: '${randomId}', error: err.message } }))
+                  })
+                } catch (err) {
+                  window.dispatchEvent(new CustomEvent('harbor-eval-result-${randomId}', { detail: { id: '${randomId}', error: err.message } }))
+                }
+              })()
+            `
+            document.documentElement.appendChild(script)
+            script.remove()
+
+            // Timeout after 10 seconds
+            setTimeout(() => {
+              reject(new Error('Evaluation timeout'))
+            }, 10000)
+          })
           sendResponse({ success: true, data: JSON.stringify(result) })
           break
         }
