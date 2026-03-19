@@ -60,6 +60,7 @@ export interface AgentSettings {
   temperature?: number
   enableMemory?: boolean
   enableScreenshots?: boolean
+  toolExecutionMode?: 'parallel' | 'sequential' // Default: parallel for speed
 }
 
 // ─── Tool Types ───────────────────────────────────────────────────────────────

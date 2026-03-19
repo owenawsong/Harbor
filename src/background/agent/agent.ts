@@ -196,53 +196,103 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     // Execute any tool calls that were made
     if (completedToolCalls.length > 0) {
       const toolResults: Array<ToolResultPart> = []
+      const executionMode = settings.toolExecutionMode ?? 'parallel'
 
-      for (const tc of completedToolCalls) {
-        const handler = getToolByName(tc.name)
-        if (!handler) {
-          const result = { success: false, error: `Unknown tool: ${tc.name}` }
+      if (executionMode === 'sequential') {
+        // Sequential: Execute tools one at a time (safer for interdependent tools)
+        for (const tc of completedToolCalls) {
+          const handler = getToolByName(tc.name)
+          if (!handler) {
+            const result = { success: false, error: `Unknown tool: ${tc.name}` }
+            onEvent({
+              type: 'tool_call_result',
+              toolCallId: tc.id,
+              toolName: tc.name,
+              result,
+            })
+            toolResults.push({
+              type: 'tool_result',
+              toolCallId: tc.id,
+              content: JSON.stringify(result),
+              isError: true,
+            })
+            continue
+          }
+
+          let toolResult: import('../../shared/types').ToolResult
+          try {
+            toolResult = await Promise.race([
+              handler.execute(tc.input, browserContext),
+              new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
+              ),
+            ])
+          } catch (err) {
+            toolResult = { success: false, error: err instanceof Error ? err.message : String(err) }
+          }
+
           onEvent({
             type: 'tool_call_result',
             toolCallId: tc.id,
             toolName: tc.name,
-            result,
+            result: toolResult,
           })
+
           toolResults.push({
             type: 'tool_result',
             toolCallId: tc.id,
-            content: JSON.stringify(result),
-            isError: true,
+            content: toolResult.success
+              ? JSON.stringify(toolResult.output)
+              : `Error: ${toolResult.error}`,
+            isError: !toolResult.success,
           })
-          continue
         }
+      } else {
+        // Parallel: Execute all tools concurrently (faster, but less safe for interdependencies)
+        const parallelResults = await Promise.all(
+          completedToolCalls.map(async (tc) => {
+            const handler = getToolByName(tc.name)
+            if (!handler) {
+              return {
+                toolCall: tc,
+                result: { success: false, error: `Unknown tool: ${tc.name}` } as import('../../shared/types').ToolResult,
+              }
+            }
 
-        let toolResult: import('../../shared/types').ToolResult
-        try {
-          toolResult = await Promise.race([
-            handler.execute(tc.input, browserContext),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
-            ),
-          ])
-        } catch (err) {
-          toolResult = { success: false, error: err instanceof Error ? err.message : String(err) }
+            let toolResult: import('../../shared/types').ToolResult
+            try {
+              toolResult = await Promise.race([
+                handler.execute(tc.input, browserContext),
+                new Promise<never>((_, reject) =>
+                  setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
+                ),
+              ])
+            } catch (err) {
+              toolResult = { success: false, error: err instanceof Error ? err.message : String(err) }
+            }
+
+            return { toolCall: tc, result: toolResult }
+          })
+        )
+
+        // Process results and emit events in order
+        for (const { toolCall: tc, result: toolResult } of parallelResults) {
+          onEvent({
+            type: 'tool_call_result',
+            toolCallId: tc.id,
+            toolName: tc.name,
+            result: toolResult,
+          })
+
+          toolResults.push({
+            type: 'tool_result',
+            toolCallId: tc.id,
+            content: toolResult.success
+              ? JSON.stringify(toolResult.output)
+              : `Error: ${toolResult.error}`,
+            isError: !toolResult.success,
+          })
         }
-
-        onEvent({
-          type: 'tool_call_result',
-          toolCallId: tc.id,
-          toolName: tc.name,
-          result: toolResult,
-        })
-
-        toolResults.push({
-          type: 'tool_result',
-          toolCallId: tc.id,
-          content: toolResult.success
-            ? JSON.stringify(toolResult.output)
-            : `Error: ${toolResult.error}`,
-          isError: !toolResult.success,
-        })
       }
 
       // Add tool results to history so agent can see them in next iteration
