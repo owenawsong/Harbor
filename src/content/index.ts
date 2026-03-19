@@ -963,6 +963,13 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
           break
         }
 
+        case 'harbor_toggle_palette': {
+          console.log('🎯 ContentScript: Received toggle-palette command!')
+          toggleOverlay()
+          sendResponse({ success: true })
+          break
+        }
+
         default:
           sendResponse({ success: false, error: `Unknown message type: ${message.type}` })
       }
@@ -1366,34 +1373,7 @@ function toggleOverlay(): void {
   }
 }
 
-// Keyboard listener for command palette (reads shortcut from storage)
-console.log('🎯 ContentScript: Setting up keyboard listener for command palette...')
-
-// Parse shortcut string into config
-function parseShortcut(shortcutStr: string) {
-  const parts = shortcutStr.split('+')
-  return {
-    expectedKey: parts[parts.length - 1].toLowerCase(),
-    needsCtrl: parts.includes('Ctrl'),
-    needsMeta: parts.includes('Cmd'),
-    needsShift: parts.includes('Shift'),
-    needsAlt: parts.includes('Alt'),
-  }
-}
-
-// Start with default shortcut immediately (don't wait for storage)
-// ─── Command Palette Toggle (via background service worker) ────────────────────
-// The background service worker listens for chrome.commands and sends this message
-console.log('🎯 ContentScript: Listening for toggle-palette command from background...')
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'harbor_toggle_palette') {
-    console.log('🎯 ContentScript: Received toggle-palette command!')
-    toggleOverlay()
-    sendResponse({ success: true })
-    return true
-  }
-})
+// Command palette is now toggled via chrome.commands API in the background service worker
 
 // Overlay interaction handler (for arrow keys, enter, escape WHEN overlay is open)
 document.addEventListener('keydown', (e: KeyboardEvent) => {
