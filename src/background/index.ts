@@ -122,7 +122,11 @@ chrome.runtime.onConnect.addListener((port) => {
   port.onMessage.addListener(async (message: PortMessage) => {
     const send = (event: AgentEvent) => {
       try {
-        console.log('🔤 Sending event back to port:', event.type)
+        if (event.type === 'error') {
+          console.error('❌🔤 ERROR EVENT being sent to port:', (event as any).error)
+        } else {
+          console.log('🔤 Sending event back to port:', event.type)
+        }
         port.postMessage(event)
       } catch (err) {
         console.error('❌ Failed to send event to port:', err)

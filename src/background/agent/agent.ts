@@ -161,6 +161,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     const tools = getToolDefinitions()
     console.log('✅ runAgent: Tools loaded:', { toolCount: tools.length })
 
+    console.log('🤖 runAgent: Building browser context...')
     // Build browser context
     const browserContext: BrowserContext = {
       async sendToTab(tabId, msg) {
@@ -186,8 +187,12 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       },
     }
 
+    console.log('✅ runAgent: Browser context created')
+
+    console.log('🤖 runAgent: Normalizing message history...')
     // Normalize existing history
     const normalizedHistory = chatMessagesToNormalized(history)
+    console.log('✅ runAgent: History normalized:', { normalizedCount: normalizedHistory.length })
 
   // Add the new user message
   const userMessage: NormalizedMessage = {
