@@ -1356,39 +1356,48 @@ function toggleOverlay(): void {
 
 // Keyboard listener for command palette (reads shortcut from storage)
 console.log('🎯 ContentScript: Setting up keyboard listener for command palette...')
-chrome.storage.local.get('harbor_keybindings', (data) => {
-  console.log('🎯 ContentScript: chrome.storage.local.get callback fired')
-  let shortcutStr = 'Ctrl+Alt+H' // Default to new shortcut
-  if (data.harbor_keybindings?.commandPalette) {
-    shortcutStr = data.harbor_keybindings.commandPalette as string
-  }
 
-  // Parse shortcut (e.g., "Ctrl+Alt+H" -> key: 'h', ctrl: true, alt: true)
+// Parse shortcut string into config
+function parseShortcut(shortcutStr: string) {
   const parts = shortcutStr.split('+')
-  const expectedKey = parts[parts.length - 1].toLowerCase()
-  const needsCtrl = parts.includes('Ctrl')
-  const needsMeta = parts.includes('Cmd')
-  const needsShift = parts.includes('Shift')
-  const needsAlt = parts.includes('Alt')
+  return {
+    expectedKey: parts[parts.length - 1].toLowerCase(),
+    needsCtrl: parts.includes('Ctrl'),
+    needsMeta: parts.includes('Cmd'),
+    needsShift: parts.includes('Shift'),
+    needsAlt: parts.includes('Alt'),
+  }
+}
 
-  console.log('🎯 ContentScript: Overlay keyboard listener ready for:', shortcutStr, { expectedKey, needsCtrl, needsMeta, needsShift, needsAlt })
+// Start with default shortcut immediately (don't wait for storage)
+let keyConfig = parseShortcut('Ctrl+Alt+H')
+console.log('🎯 ContentScript: Using default shortcut Ctrl+Alt+H:', keyConfig)
 
-  window.addEventListener('keydown', (e: KeyboardEvent) => {
-    const ctrlOrMeta = needsCtrl || needsMeta
+// Setup listener IMMEDIATELY with default, will be updated from storage
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+  const ctrlOrMeta = keyConfig.needsCtrl || keyConfig.needsMeta
 
-    const matches =
-      e.key.toLowerCase() === expectedKey &&
-      (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
-      e.shiftKey === needsShift &&
-      e.altKey === needsAlt
+  const matches =
+    e.key.toLowerCase() === keyConfig.expectedKey &&
+    (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
+    e.shiftKey === keyConfig.needsShift &&
+    e.altKey === keyConfig.needsAlt
 
-    if (matches) {
-      console.log('🎯 ContentScript: Command palette hotkey matched!')
-      e.preventDefault()
-      e.stopPropagation()
-      toggleOverlay()
-    }
-  }, true) // Use CAPTURE phase to intercept events before page handlers
+  if (matches) {
+    console.log('🎯 ContentScript: Command palette hotkey matched!')
+    e.preventDefault()
+    e.stopPropagation()
+    toggleOverlay()
+  }
+}, true) // Use CAPTURE phase to intercept events before page handlers
+
+// Load custom shortcut from storage (update if user configured different one)
+chrome.storage.local.get('harbor_keybindings', (data) => {
+  if (data.harbor_keybindings?.commandPalette) {
+    const newShortcut = data.harbor_keybindings.commandPalette as string
+    keyConfig = parseShortcut(newShortcut)
+    console.log('🎯 ContentScript: Updated shortcut from storage to:', newShortcut, keyConfig)
+  }
 })
 
 // Overlay interaction handler
