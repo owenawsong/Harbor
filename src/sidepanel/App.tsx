@@ -138,6 +138,16 @@ export default function App() {
     const handler = (e: KeyboardEvent) => {
       const { key, ctrl, meta, shift, alt } = parseShortcut(cmdShortcut)
       const ctrlOrMeta = ctrl || meta
+
+      // DEBUG: Log every key press to see if we're receiving events
+      if (e.ctrlKey && e.shiftKey) {
+        console.log('🎯 DEBUG: Ctrl+Shift key detected:', {
+          eventKey: e.key,
+          expectedKey: key,
+          parsedShortcut: { key, ctrl, meta, shift, alt }
+        })
+      }
+
       const matches =
         e.key.toUpperCase() === key.toUpperCase() &&
         (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
