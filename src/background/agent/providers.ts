@@ -6,6 +6,7 @@
 
 import type { ProviderAdapter, CompletionOptions, CompletionEvent, NormalizedMessage } from './types'
 import type { ToolDefinition } from '../../shared/types'
+import { HARBOR_FREE_CONFIG } from '../../shared/constants'
 
 // ─── SSE Parser ───────────────────────────────────────────────────────────────
 
@@ -633,10 +634,8 @@ export const googleProvider: ProviderAdapter = {
 // - Qwen3.5-122B: Supports text, images (png/jpg/jpeg/webp, up to 5), and video (mp4/mov/webm, 1)
 // Automatically switches to Qwen if message contains image/video attachments.
 
-const HARBOR_FREE_KEY = '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'
-const HARBOR_FREE_NVIDIA_URL = 'https://integrate.api.nvidia.com/v1'
-const HARBOR_FREE_TEXT_MODEL = 'minimaxai/minimax-m2.5'
-const HARBOR_FREE_IMAGE_MODEL = 'qwen/qwen3.5-122b-a10b'
+// Use constants from shared/constants.ts to centralize API configuration
+const { apiKey: HARBOR_FREE_KEY, baseUrl: HARBOR_FREE_NVIDIA_URL, textModel: HARBOR_FREE_TEXT_MODEL, imageModel: HARBOR_FREE_IMAGE_MODEL } = HARBOR_FREE_CONFIG
 
 function hasAttachments(messages: NormalizedMessage[]): boolean {
   for (const msg of messages) {

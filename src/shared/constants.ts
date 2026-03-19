@@ -81,6 +81,16 @@ export const API_ENDPOINTS: Record<string, string> = {
   openrouter: 'https://openrouter.ai/api/v1/chat/completions',
 }
 
+// ─── Harbor Free Configuration (NVIDIA NIM) ───────────────────────────────
+// These are shared/public demo credentials for the Harbor Free service
+// Users can override with their own NVIDIA API keys in settings
+export const HARBOR_FREE_CONFIG = {
+  apiKey: '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',
+  baseUrl: 'https://integrate.api.nvidia.com/v1',
+  textModel: 'minimaxai/minimax-m2.5',
+  imageModel: 'qwen/qwen3.5-122b-a10b',
+}
+
 export const MAX_TOOL_ITERATIONS = 50
 export const MAX_TOKENS = 8192
 export const SCREENSHOT_QUALITY = 85
