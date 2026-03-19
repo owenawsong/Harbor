@@ -158,9 +158,19 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   // Auto-save: debounced 500ms after any change (not on initial mount)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isFirstRender = useRef(true)
+  const lastSavedStateRef = useRef<string>('')
 
   useEffect(() => {
     if (isFirstRender.current) { isFirstRender.current = false; return }
+
+    // Create a snapshot of current state
+    const currentState = JSON.stringify({
+      provider, model, apiKey, baseUrl, enableMemory, currentTheme,
+      userName, tone, verbosity, language, useEmoji, customPersonality,
+    })
+
+    // Only proceed if state actually changed
+    if (currentState === lastSavedStateRef.current) return
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
 
@@ -183,6 +193,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         console.log('💾 Saving to background...', { provider, apiKey: apiKey ? '***' : 'empty' })
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
         console.log('✅ Saved')
+        lastSavedStateRef.current = currentState
         onSave(newSettings, currentTheme, newIdentity)
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
