@@ -379,8 +379,6 @@ async function* openAICompatibleComplete(
     return
   }
 
-  console.log('🔐 Making API request:', { baseUrl, apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'empty', provider: providerName, model: settings.provider.model })
-
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -655,24 +653,15 @@ function hasAttachments(messages: NormalizedMessage[]): boolean {
 }
 
 async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-  const useCustomKey = Boolean(options.settings.provider.apiKey)
   const hasImages = hasAttachments(options.messages)
-  const apiKey = options.settings.provider.apiKey || HARBOR_FREE_KEY
+  // Harbor Free ALWAYS uses the shared API key, never user-provided keys
+  const apiKey = HARBOR_FREE_KEY
 
-  console.log('🌊 harborFreeComplete:', {
-    useCustomKey,
-    hasImages,
-    apiKeyProvided: options.settings.provider.apiKey ? `${options.settings.provider.apiKey.substring(0, 10)}...` : 'none',
-    usingKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'empty',
-    model: options.settings.provider.model
-  })
-
-  // If user has custom key or images detected, skip MiniMax entirely
-  if (useCustomKey || hasImages) {
-    const model = useCustomKey ? options.settings.provider.model : HARBOR_FREE_IMAGE_MODEL
+  // If images detected, use Qwen (image-capable model)
+  if (hasImages) {
     yield* openAICompatibleComplete(
       HARBOR_FREE_NVIDIA_URL, apiKey,
-      { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model } } },
+      { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model: HARBOR_FREE_IMAGE_MODEL } } },
       { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768) },
       true,
     )
