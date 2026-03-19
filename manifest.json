@@ -57,5 +57,14 @@
       "resources": ["icons/*", "assets/*", "*.html"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "commands": {
+    "toggle-command-palette": {
+      "suggested_key": {
+        "default": "Ctrl+Alt+H",
+        "mac": "Command+Alt+H"
+      },
+      "description": "Toggle Harbor command palette"
+    }
+  }
 }

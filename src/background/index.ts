@@ -9,6 +9,25 @@ import { PORT_NAME, STORAGE_KEYS, VERSION } from '../shared/constants'
 
 console.log(`🌊 Harbor Extension loaded - Version ${VERSION}`)
 
+// ─── Global Command Listener ──────────────────────────────────────────────────
+// Listen for keyboard commands registered in manifest.json
+chrome.commands.onCommand.addListener((command) => {
+  console.log('🎯 [COMMAND] Received command:', command)
+
+  if (command === 'toggle-command-palette') {
+    console.log('🎯 [COMMAND] Toggling command palette...')
+    // Get the active tab and send message to content script
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0]?.id) {
+        console.log('🎯 [COMMAND] Sending toggle to tab:', tabs[0].id)
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'harbor_toggle_palette' }).catch((err) => {
+          console.warn('⚠️  [COMMAND] Could not send to tab (content script not loaded):', err)
+        })
+      }
+    })
+  }
+})
+
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_SETTINGS: AgentSettings = {
