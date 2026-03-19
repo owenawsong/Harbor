@@ -660,8 +660,11 @@ async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<C
   // If user has custom key or images detected, skip MiniMax entirely
   if (useCustomKey || hasImages) {
     const model = useCustomKey ? options.settings.provider.model : HARBOR_FREE_IMAGE_MODEL
+    const baseUrl = useCustomKey && options.settings.provider.baseUrl
+      ? options.settings.provider.baseUrl
+      : HARBOR_FREE_NVIDIA_URL
     yield* openAICompatibleComplete(
-      HARBOR_FREE_NVIDIA_URL, apiKey,
+      baseUrl, apiKey,
       { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model } } },
       { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768) },
       true,
