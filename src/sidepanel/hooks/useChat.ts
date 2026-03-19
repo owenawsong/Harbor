@@ -17,6 +17,7 @@ export interface UIToolCall {
   input?: Record<string, unknown>
   result?: { success: boolean; output?: unknown; error?: string; screenshot?: string }
   status: 'pending' | 'running' | 'done' | 'error'
+  timestamp: number
 }
 
 export interface UIMessage {
@@ -79,7 +80,7 @@ function convertStoredMessages(messages: ChatMessage[]): UIMessage[] {
       .filter((c) => c.type === 'tool_call')
       .map((c) => {
         if (c.type !== 'tool_call') return null
-        return { id: c.id, name: c.name, input: c.input, status: 'done' as const }
+        return { id: c.id, name: c.name, input: c.input, status: 'done' as const, timestamp: Date.now() }
       })
       .filter(Boolean) as UIToolCall[]
 
@@ -195,7 +196,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
 
           setMessages((prev) => {
             const last = prev[prev.length - 1]
-            const newTool: UIToolCall = { id: toolCallId, name: toolName, status: 'running' }
+            const newTool: UIToolCall = { id: toolCallId, name: toolName, status: 'running', timestamp: Date.now() }
 
             if (last?.id === messageId && last.role === 'assistant') {
               return [...prev.slice(0, -1), {
