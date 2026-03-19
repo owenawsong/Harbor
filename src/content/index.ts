@@ -8,6 +8,8 @@
  * defined inline here.
  */
 
+console.log('🎯 ContentScript: Harbor content script loaded on', document.location.href)
+
 // Inlined from shared/constants.ts — do NOT import; content scripts are classic scripts
 const HARBOR_ELEMENT_ATTR = 'data-harbor-id'
 
@@ -1353,7 +1355,9 @@ function toggleOverlay(): void {
 }
 
 // Keyboard listener for command palette (reads shortcut from storage)
+console.log('🎯 ContentScript: Setting up keyboard listener for command palette...')
 chrome.storage.local.get('harbor_keybindings', (data) => {
+  console.log('🎯 ContentScript: chrome.storage.local.get callback fired')
   let shortcutStr = 'Ctrl+Alt+H' // Default to new shortcut
   if (data.harbor_keybindings?.commandPalette) {
     shortcutStr = data.harbor_keybindings.commandPalette as string
@@ -1367,7 +1371,7 @@ chrome.storage.local.get('harbor_keybindings', (data) => {
   const needsShift = parts.includes('Shift')
   const needsAlt = parts.includes('Alt')
 
-  console.log('🎯 ContentScript: Overlay keyboard listener ready for:', shortcutStr)
+  console.log('🎯 ContentScript: Overlay keyboard listener ready for:', shortcutStr, { expectedKey, needsCtrl, needsMeta, needsShift, needsAlt })
 
   window.addEventListener('keydown', (e: KeyboardEvent) => {
     const ctrlOrMeta = needsCtrl || needsMeta
