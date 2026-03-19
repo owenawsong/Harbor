@@ -298,10 +298,10 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
       const scrollAmount = 460 // Approximately 6-7 tab items worth
       tabsRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'auto',
+        behavior: 'smooth',
       })
-      // Check scroll state immediately (no animation delay)
-      checkScroll()
+      // Check scroll state after smooth animation completes
+      setTimeout(checkScroll, 500)
     }
   }
 
@@ -539,7 +539,7 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
   currentTheme: 'light' | 'dark' | 'system'
   onThemeChange: (t: 'light' | 'dark' | 'system') => void
 }) {
-  const [shortcut, setShortcut] = useState('Ctrl+Shift+J')
+  const [shortcut, setShortcut] = useState('Ctrl+Shift+H')
 
   useEffect(() => {
     chrome.storage.local.get('harbor_keybindings', (data) => {
