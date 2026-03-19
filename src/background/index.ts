@@ -121,20 +121,35 @@ chrome.runtime.onConnect.addListener((port) => {
 
   port.onMessage.addListener(async (message: PortMessage) => {
     const send = (event: AgentEvent) => {
-      try { port.postMessage(event) } catch { /* port disconnected */ }
+      try {
+        console.log('🔤 Sending event back to port:', event.type)
+        port.postMessage(event)
+      } catch (err) {
+        console.error('❌ Failed to send event to port:', err)
+      }
     }
 
     try {
+      console.log('📨 Background received message:', message.type)
       switch (message.type) {
         case 'chat': {
+          console.log('💬 Processing chat message')
           const { sessionId, message: userMessage, attachedTabId } = message
+          console.log('📝 Chat details:', { sessionId, messageLength: userMessage.length, attachedTabId })
 
+          console.log('🛑 Aborting previous controller if exists')
           activeControllers.get(sessionId)?.abort()
           const controller = new AbortController()
           activeControllers.set(sessionId, controller)
+          console.log('✅ New controller created')
 
+          console.log('⚙️  Getting settings')
           const settings = await getSettings()
+          console.log('✅ Settings loaded:', { provider: settings.provider.provider })
+
+          console.log('📂 Getting session')
           const session = await getSession(sessionId)
+          console.log('✅ Session loaded:', { messageCount: session?.messages.length ?? 0 })
 
           // Show running indicator on the active tab
           let indicatorTabId: number | undefined

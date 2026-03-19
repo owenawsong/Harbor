@@ -132,26 +132,38 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   const connectPortRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
-    // Initialize debouncer if not already created
-    if (!debouncerRef.current) {
-      debouncerRef.current = new StreamDebouncer((debouncedDelta) => {
-        const { text, messageId } = debouncedDelta
-        setMessages((prev) => {
-          const last = prev[prev.length - 1]
-          if (last?.id === messageId && last.role === 'assistant') {
-            return [...prev.slice(0, -1), { ...last, text: last.text + text, isStreaming: true }]
+    try {
+      console.log('⏱️  Debouncer setup: Checking if debouncer exists', { hasDebouncer: !!debouncerRef.current })
+      // Initialize debouncer if not already created
+      if (!debouncerRef.current) {
+        console.log('⏱️  Creating new StreamDebouncer instance')
+        debouncerRef.current = new StreamDebouncer((debouncedDelta) => {
+          try {
+            console.log('⏱️  Debouncer flush callback triggered:', { messageId: debouncedDelta.messageId, textLength: debouncedDelta.text.length })
+            const { text, messageId } = debouncedDelta
+            setMessages((prev) => {
+              const last = prev[prev.length - 1]
+              if (last?.id === messageId && last.role === 'assistant') {
+                return [...prev.slice(0, -1), { ...last, text: last.text + text, isStreaming: true }]
+              }
+              // If the last message is a streaming assistant msg with thinking blocks,
+              // reasoning_content arrived before text — merge into that message instead
+              if (last?.role === 'assistant' && last.isStreaming && last.thinkingBlocks.length > 0 && !last.text) {
+                return [...prev.slice(0, -1), { ...last, id: messageId, text, isStreaming: true }]
+              }
+              return [...prev, {
+                id: messageId, role: 'assistant', text, toolCalls: [],
+                thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
+              }]
+            })
+          } catch (err) {
+            console.error('💥 Debouncer callback error:', err instanceof Error ? err.message : String(err), err)
           }
-          // If the last message is a streaming assistant msg with thinking blocks,
-          // reasoning_content arrived before text — merge into that message instead
-          if (last?.role === 'assistant' && last.isStreaming && last.thinkingBlocks.length > 0 && !last.text) {
-            return [...prev.slice(0, -1), { ...last, id: messageId, text, isStreaming: true }]
-          }
-          return [...prev, {
-            id: messageId, role: 'assistant', text, toolCalls: [],
-            thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
-          }]
-        })
-      }, 50) // 50ms debounce interval
+        }, 50) // 50ms debounce interval
+        console.log('✅ StreamDebouncer created successfully')
+      }
+    } catch (err) {
+      console.error('💥 Debouncer setup error:', err instanceof Error ? err.message : String(err), err)
     }
 
     // Event handler defined once; state setters are stable refs so no deps needed
@@ -303,16 +315,27 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
     }
 
     function connectPort() {
-      const port = chrome.runtime.connect({ name: PORT_NAME })
-      portRef.current = port
-      port.onMessage.addListener(handleEvent)
-      port.onDisconnect.addListener(() => {
-        portRef.current = null
-      })
+      try {
+        console.log('🔗 connectPort: Attempting to connect...')
+        const port = chrome.runtime.connect({ name: PORT_NAME })
+        console.log('🔗 connectPort: Port created successfully')
+        portRef.current = port
+        console.log('🔗 connectPort: Setting up listeners')
+        port.onMessage.addListener(handleEvent)
+        port.onDisconnect.addListener(() => {
+          console.log('❌ connectPort: Port disconnected')
+          portRef.current = null
+        })
+        console.log('✅ connectPort: Connection setup complete')
+      } catch (err) {
+        console.error('💥 connectPort ERROR:', err instanceof Error ? err.message : String(err), err)
+      }
     }
 
+    console.log('🔌 useEffect: Setting up port connection')
     connectPortRef.current = connectPort
     connectPort()
+    console.log('🔌 useEffect: Initial connection attempted')
 
     return () => {
       connectPortRef.current = null
@@ -325,35 +348,55 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
 
   const sendMessage = useCallback(
     (text: string, attachedTabId?: number) => {
-      if (isRunning) return
-      setError(null)
-      setIsRunning(true)
+      try {
+        console.log('🚀 useChat.sendMessage called with:', { textLength: text.length, attachedTabId, isRunning, sessionId })
 
-      // Strip base64 blobs from the displayed bubble — show just "📎 filename" pills.
-      // The full text (with base64) is still sent to the agent for the API call.
-      const displayText = text.replace(
-        /\n\n\[Attached file: ([^\]]+)\]\ndata:[^\s]+/g,
-        '\n\n📎 $1',
-      )
+        if (isRunning) {
+          console.log('⚠️ Already running, ignoring message')
+          return
+        }
 
-      const userMsg: UIMessage = {
-        id: uid(), role: 'user', text: displayText, toolCalls: [],
-        thinkingBlocks: [], isStreaming: false, timestamp: Date.now(),
-      }
-      setMessages((prev) => [...prev, userMsg])
+        console.log('📋 Setting error to null and isRunning to true')
+        setError(null)
+        setIsRunning(true)
 
-      // Reconnect port if background service worker went idle
-      if (!portRef.current) {
-        connectPortRef.current?.()
-      }
+        // Strip base64 blobs from the displayed bubble — show just "📎 filename" pills.
+        // The full text (with base64) is still sent to the agent for the API call.
+        console.log('📝 Stripping base64 from display text')
+        const displayText = text.replace(
+          /\n\n\[Attached file: ([^\]]+)\]\ndata:[^\s]+/g,
+          '\n\n📎 $1',
+        )
 
-      if (!portRef.current) {
-        setError('Lost connection to agent. Please try again.')
+        const userMsg: UIMessage = {
+          id: uid(), role: 'user', text: displayText, toolCalls: [],
+          thinkingBlocks: [], isStreaming: false, timestamp: Date.now(),
+        }
+        console.log('👤 Adding user message to messages array')
+        setMessages((prev) => [...prev, userMsg])
+
+        // Reconnect port if background service worker went idle
+        console.log('🔌 Checking port connection:', { hasPort: !!portRef.current, hasConnectPort: !!connectPortRef.current })
+        if (!portRef.current) {
+          console.log('🔄 Port is null, attempting reconnect...')
+          connectPortRef.current?.()
+        }
+
+        if (!portRef.current) {
+          console.log('❌ Port still null after reconnect')
+          setError('Lost connection to agent. Please try again.')
+          setIsRunning(false)
+          return
+        }
+
+        console.log('📤 Posting message to background:', { type: 'chat', sessionId, textLength: text.length, attachedTabId })
+        portRef.current.postMessage({ type: 'chat', sessionId, message: text, attachedTabId })
+        console.log('✅ Message posted successfully')
+      } catch (err) {
+        console.error('💥 ERROR in sendMessage:', err instanceof Error ? err.message : String(err), err)
+        setError(`Error sending message: ${err instanceof Error ? err.message : String(err)}`)
         setIsRunning(false)
-        return
       }
-
-      portRef.current.postMessage({ type: 'chat', sessionId, message: text, attachedTabId })
     },
     [sessionId, isRunning],
   )

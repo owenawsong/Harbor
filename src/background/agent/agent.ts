@@ -142,40 +142,52 @@ function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] 
 }
 
 export async function runAgent(options: AgentRunOptions): Promise<void> {
-  const { sessionId, message, settings, history, onEvent, signal, attachedTabId } = options
-  const provider = getProvider(settings.provider.provider)
-  const systemPrompt = buildSystemPrompt({
-    enableMemory: settings.enableMemory,
-  })
-  const tools = getToolDefinitions()
+  try {
+    console.log('🤖 runAgent: Starting agent loop')
+    const { sessionId, message, settings, history, onEvent, signal, attachedTabId } = options
+    console.log('🤖 runAgent: Extracted options:', { sessionId, messageLength: message.length, providerName: settings.provider.provider, historyLength: history.length })
 
-  // Build browser context
-  const browserContext: BrowserContext = {
-    async sendToTab(tabId, msg) {
-      return chrome.tabs.sendMessage(tabId, msg)
-    },
-    async getActiveTab() {
-      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
-      return tab
-    },
-    async captureScreenshot(tabId?: number) {
-      let targetTabId = tabId
-      if (!targetTabId) {
+    console.log('🤖 runAgent: Getting provider:', settings.provider.provider)
+    const provider = getProvider(settings.provider.provider)
+    console.log('✅ runAgent: Provider retrieved:', { providerName: provider.name })
+
+    console.log('🤖 runAgent: Building system prompt')
+    const systemPrompt = buildSystemPrompt({
+      enableMemory: settings.enableMemory,
+    })
+    console.log('✅ runAgent: System prompt built')
+
+    console.log('🤖 runAgent: Getting tool definitions')
+    const tools = getToolDefinitions()
+    console.log('✅ runAgent: Tools loaded:', { toolCount: tools.length })
+
+    // Build browser context
+    const browserContext: BrowserContext = {
+      async sendToTab(tabId, msg) {
+        return chrome.tabs.sendMessage(tabId, msg)
+      },
+      async getActiveTab() {
         const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
-        targetTabId = tab?.id
-      }
-      if (!targetTabId) throw new Error('No tab to screenshot')
+        return tab
+      },
+      async captureScreenshot(tabId?: number) {
+        let targetTabId = tabId
+        if (!targetTabId) {
+          const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
+          targetTabId = tab?.id
+        }
+        if (!targetTabId) throw new Error('No tab to screenshot')
 
-      const dataUrl = await chrome.tabs.captureVisibleTab(
-        await chrome.tabs.get(targetTabId).then((t) => t.windowId),
-        { format: 'jpeg', quality: 85 }
-      )
-      return dataUrl
-    },
-  }
+        const dataUrl = await chrome.tabs.captureVisibleTab(
+          await chrome.tabs.get(targetTabId).then((t) => t.windowId),
+          { format: 'jpeg', quality: 85 }
+        )
+        return dataUrl
+      },
+    }
 
-  // Normalize existing history
-  const normalizedHistory = chatMessagesToNormalized(history)
+    // Normalize existing history
+    const normalizedHistory = chatMessagesToNormalized(history)
 
   // Add the new user message
   const userMessage: NormalizedMessage = {
@@ -358,12 +370,18 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     }
   }
 
-  if (iterations >= MAX_TOOL_ITERATIONS) {
-    onEvent({
-      type: 'error',
-      error: `Agent reached maximum iterations (${MAX_TOOL_ITERATIONS}). Task may be incomplete.`,
-    })
-  }
+    if (iterations >= MAX_TOOL_ITERATIONS) {
+      console.log('⚠️  runAgent: Max iterations reached')
+      onEvent({
+        type: 'error',
+        error: `Agent reached maximum iterations (${MAX_TOOL_ITERATIONS}). Task may be incomplete.`,
+      })
+    }
 
-  onEvent({ type: 'agent_complete' })
+    console.log('✅ runAgent: Agent loop complete')
+    onEvent({ type: 'agent_complete' })
+  } catch (err) {
+    console.error('💥 runAgent FATAL ERROR:', err instanceof Error ? err.message : String(err), err)
+    onEvent({ type: 'error', error: `Agent error: ${err instanceof Error ? err.message : String(err)}` })
+  }
 }
