@@ -989,6 +989,13 @@ function showAgentIndicator(): void {
         0%, 100% { box-shadow: 0 0 0 0 rgba(78, 142, 168, 0.7); }
         50% { box-shadow: 0 0 0 4px rgba(78, 142, 168, 0.3); }
       }
+      @keyframes harbor-border-glow {
+        0%, 100% { box-shadow: inset 0 0 0 2px rgba(78, 142, 168, 0.4), inset 0 0 10px rgba(78, 142, 168, 0.1); }
+        50% { box-shadow: inset 0 0 0 2px rgba(78, 142, 168, 0.7), inset 0 0 20px rgba(78, 142, 168, 0.2); }
+      }
+      body.harbor-agent-active {
+        animation: harbor-border-glow 2s ease-in-out infinite;
+      }
     `
     document.head.appendChild(style)
   }
@@ -1043,6 +1050,9 @@ function showAgentIndicator(): void {
   document.documentElement.appendChild(pill)
   harborStatusPill = pill
 
+  // Add glowing border to body
+  document.body.classList.add('harbor-agent-active')
+
   // Trigger fade-in on next frame
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (harborAgentBar) harborAgentBar.style.opacity = '1'
@@ -1051,6 +1061,9 @@ function showAgentIndicator(): void {
 }
 
 function hideAgentIndicator(): void {
+  // Remove glowing border from body
+  document.body.classList.remove('harbor-agent-active')
+
   if (harborAgentBar) {
     const bar = harborAgentBar
     harborAgentBar = null
