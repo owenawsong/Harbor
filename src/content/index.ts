@@ -1348,12 +1348,12 @@ function toggleOverlay(): void {
 
 // Keyboard listener for command palette (reads shortcut from storage)
 chrome.storage.local.get('harbor_keybindings', (data) => {
-  let shortcutStr = 'Ctrl+Shift+H' // Default to new shortcut
+  let shortcutStr = 'Ctrl+Alt+H' // Default to new shortcut
   if (data.harbor_keybindings?.commandPalette) {
     shortcutStr = data.harbor_keybindings.commandPalette as string
   }
 
-  // Parse shortcut (e.g., "Ctrl+Shift+H" -> key: 'h', ctrl: true, shift: true)
+  // Parse shortcut (e.g., "Ctrl+Alt+H" -> key: 'h', ctrl: true, alt: true)
   const parts = shortcutStr.split('+')
   const expectedKey = parts[parts.length - 1].toLowerCase()
   const needsCtrl = parts.includes('Ctrl')

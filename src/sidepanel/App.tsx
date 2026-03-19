@@ -25,7 +25,7 @@ export default function App() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [chatKey, setChatKey]                   = useState(0)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
-  const [cmdShortcut, setCmdShortcut] = useState('Ctrl+Shift+H')
+  const [cmdShortcut, setCmdShortcut] = useState('Ctrl+Alt+H')
   // Pending message to send when switching to chat
   const [pendingMessage, setPendingMessage]     = useState<string | null>(null)
 

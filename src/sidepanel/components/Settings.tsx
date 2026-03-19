@@ -539,7 +539,7 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
   currentTheme: 'light' | 'dark' | 'system'
   onThemeChange: (t: 'light' | 'dark' | 'system') => void
 }) {
-  const [shortcut, setShortcut] = useState('Ctrl+Shift+H')
+  const [shortcut, setShortcut] = useState('Ctrl+Alt+H')
 
   useEffect(() => {
     chrome.storage.local.get('harbor_keybindings', (data) => {
