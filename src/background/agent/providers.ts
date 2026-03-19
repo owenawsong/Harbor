@@ -513,38 +513,30 @@ async function* openAICompatibleComplete(
 
 export const openaiProvider: ProviderAdapter = {
   name: 'openai',
-  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-    yield* openAICompatibleComplete('https://api.openai.com/v1', options.settings.provider.apiKey ?? '', options)
-  },
+  complete: (options) => openAICompatibleComplete('https://api.openai.com/v1', options.settings.provider.apiKey ?? '', options),
 }
 
 export const openrouterProvider: ProviderAdapter = {
   name: 'openrouter',
-  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-    yield* openAICompatibleComplete('https://openrouter.ai/api/v1', options.settings.provider.apiKey ?? '', options)
-  },
+  complete: (options) => openAICompatibleComplete('https://openrouter.ai/api/v1', options.settings.provider.apiKey ?? '', options),
 }
 
 export const openaiCompatibleProvider: ProviderAdapter = {
   name: 'openai-compatible',
-  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-    yield* openAICompatibleComplete(
-      options.settings.provider.baseUrl ?? 'http://localhost:11434/v1',
-      options.settings.provider.apiKey ?? '',
-      options
-    )
-  },
+  complete: (options) => openAICompatibleComplete(
+    options.settings.provider.baseUrl ?? 'http://localhost:11434/v1',
+    options.settings.provider.apiKey ?? '',
+    options,
+  ),
 }
 
 export const ollamaProvider: ProviderAdapter = {
   name: 'ollama',
-  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-    yield* openAICompatibleComplete(
-      (options.settings.provider.baseUrl ?? 'http://localhost:11434') + '/v1',
-      'ollama',
-      options
-    )
-  },
+  complete: (options) => openAICompatibleComplete(
+    (options.settings.provider.baseUrl ?? 'http://localhost:11434') + '/v1',
+    'ollama',
+    options,
+  ),
 }
 
 // ─── Google Gemini Provider ───────────────────────────────────────────────────
@@ -765,17 +757,8 @@ export const harborFreeProvider: ProviderAdapter = {
 
 export const poeProvider: ProviderAdapter = {
   name: 'poe',
-  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-    console.log('📱 poeProvider.complete: Starting')
-    try {
-      console.log('📱 poeProvider.complete: About to call openAICompatibleComplete')
-      yield* openAICompatibleComplete('https://api.poe.com/v1', options.settings.provider.apiKey ?? '', options)
-      console.log('📱 poeProvider.complete: Finished')
-    } catch (err) {
-      console.error('💥 poeProvider.complete ERROR:', err)
-      yield { type: 'error', error: `Poe provider error: ${err instanceof Error ? err.message : String(err)}` }
-    }
-  },
+  complete: (options) =>
+    openAICompatibleComplete('https://api.poe.com/v1', options.settings.provider.apiKey ?? '', options),
 }
 
 // ─── Provider Registry ────────────────────────────────────────────────────────
