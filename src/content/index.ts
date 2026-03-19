@@ -1385,24 +1385,19 @@ function parseShortcut(shortcutStr: string) {
 let keyConfig = parseShortcut('Ctrl+Alt+H')
 console.log('🎯 ContentScript: Using default shortcut Ctrl+Alt+H:', keyConfig)
 
-// Setup listener IMMEDIATELY with default, will be updated from storage
+// Setup DUAL listeners - both window AND document - to ensure we catch the event
+// Some websites might block one or the other
+
+// Listener 1: Window with CAPTURE phase
 window.addEventListener('keydown', (e: KeyboardEvent) => {
   const ctrlOrMeta = keyConfig.needsCtrl || keyConfig.needsMeta
 
   // DEBUG: Log ALL ctrl+alt combinations
   if (e.ctrlKey || e.metaKey || e.altKey) {
-    console.log('🎯 [KEYDOWN]', {
+    console.log('🎯 [KEYDOWN-WINDOW]', {
       key: e.key,
-      keyLower: e.key.toLowerCase(),
       ctrl: e.ctrlKey,
-      meta: e.metaKey,
       alt: e.altKey,
-      shift: e.shiftKey,
-      expectedKey: keyConfig.expectedKey,
-      needsCtrl: keyConfig.needsCtrl,
-      needsMeta: keyConfig.needsMeta,
-      needsAlt: keyConfig.needsAlt,
-      needsShift: keyConfig.needsShift,
     })
   }
 
@@ -1413,14 +1408,72 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
     e.altKey === keyConfig.needsAlt
 
   if (matches) {
-    console.log('✅ ContentScript: Command palette hotkey MATCHED! Toggling overlay...')
-    console.log('Event:', { bubbles: e.bubbles, cancelable: e.cancelable, composed: e.composed })
+    console.log('✅ [WINDOW-CAPTURE] Command palette hotkey MATCHED!')
     e.preventDefault()
     e.stopPropagation()
-    console.log('✅ Called preventDefault and stopPropagation')
     toggleOverlay()
   }
-}, true) // Use CAPTURE phase to intercept events before page handlers
+}, true) // CAPTURE phase
+
+// Listener 2: Document with CAPTURE phase
+document.addEventListener('keydown', (e: KeyboardEvent) => {
+  const ctrlOrMeta = keyConfig.needsCtrl || keyConfig.needsMeta
+
+  // Log only special key combos
+  if (e.ctrlKey || e.metaKey || e.altKey) {
+    console.log('🎯 [KEYDOWN-DOCUMENT]', {
+      key: e.key,
+      ctrl: e.ctrlKey,
+      alt: e.altKey,
+    })
+  }
+
+  // Skip if overlay is open (handled by separate handler below)
+  if (overlayRoot?.classList.contains('open')) return
+
+  const matches =
+    e.key.toLowerCase() === keyConfig.expectedKey &&
+    (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
+    e.shiftKey === keyConfig.needsShift &&
+    e.altKey === keyConfig.needsAlt
+
+  if (matches) {
+    console.log('✅ [DOCUMENT-CAPTURE] Command palette hotkey MATCHED!')
+    e.preventDefault()
+    e.stopPropagation()
+    toggleOverlay()
+  }
+}, true) // CAPTURE phase
+
+// Listener 3: documentElement with CAPTURE phase (deepest root)
+document.documentElement.addEventListener('keydown', (e: KeyboardEvent) => {
+  const ctrlOrMeta = keyConfig.needsCtrl || keyConfig.needsMeta
+
+  if (e.ctrlKey || e.metaKey || e.altKey) {
+    console.log('🎯 [KEYDOWN-HTML]', {
+      key: e.key,
+      ctrl: e.ctrlKey,
+      alt: e.altKey,
+    })
+  }
+
+  if (overlayRoot?.classList.contains('open')) return
+
+  const matches =
+    e.key.toLowerCase() === keyConfig.expectedKey &&
+    (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
+    e.shiftKey === keyConfig.needsShift &&
+    e.altKey === keyConfig.needsAlt
+
+  if (matches) {
+    console.log('✅ [HTML-CAPTURE] Command palette hotkey MATCHED!')
+    e.preventDefault()
+    e.stopPropagation()
+    toggleOverlay()
+  }
+}, true) // CAPTURE phase
+
+console.log('🎯 ContentScript: Attached 3 keyboard listeners (window, document, html)')
 
 // Load custom shortcut from storage (update if user configured different one)
 chrome.storage.local.get('harbor_keybindings', (data) => {
@@ -1431,7 +1484,7 @@ chrome.storage.local.get('harbor_keybindings', (data) => {
   }
 })
 
-// Overlay interaction handler
+// Overlay interaction handler (for arrow keys, enter, escape WHEN overlay is open)
 document.addEventListener('keydown', (e: KeyboardEvent) => {
   if (!overlayRoot?.classList.contains('open')) return
 
