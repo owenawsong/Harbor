@@ -61,8 +61,8 @@
   "commands": {
     "toggle-command-palette": {
       "suggested_key": {
-        "default": "Ctrl+Shift+K",
-        "mac": "Command+Shift+K"
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
       },
       "description": "Toggle Harbor command palette"
     }
