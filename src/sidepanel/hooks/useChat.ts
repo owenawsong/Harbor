@@ -8,6 +8,7 @@ export interface UIThinkingBlock {
   id: string
   text: string
   isOpen: boolean
+  timestamp: number
 }
 
 export interface UIToolCall {
@@ -46,7 +47,7 @@ function extractThinkingBlocks(
 
   // <think>...</think> or <thinking>...</thinking>
   cleaned = cleaned.replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, (_, inner) => {
-    if (inner.trim()) blocks.push({ id: uid(), text: inner.trim(), isOpen: false })
+    if (inner.trim()) blocks.push({ id: uid(), text: inner.trim(), isOpen: false, timestamp: Date.now() })
     return ''
   })
 
@@ -58,7 +59,7 @@ function extractThinkingBlocks(
       .map((l: string) => l.replace(/^>\s?/, ''))
       .join('\n')
       .trim()
-    if (thinkText) blocks.push({ id: uid(), text: thinkText, isOpen: false })
+    if (thinkText) blocks.push({ id: uid(), text: thinkText, isOpen: false, timestamp: Date.now() })
     return ''
   })
 
@@ -163,7 +164,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             if (idx === -1) {
               return [...prev, {
                 id: messageId, role: 'assistant', text: '', toolCalls: [],
-                thinkingBlocks: [{ id: uid(), text, isOpen: true }],
+                thinkingBlocks: [{ id: uid(), text, isOpen: true, timestamp: Date.now() }],
                 isStreaming: true, timestamp: Date.now(),
               }]
             }
@@ -178,7 +179,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
                 { ...lastBlock, text: lastBlock.text + text },
               ]
             } else {
-              msg.thinkingBlocks = [...msg.thinkingBlocks, { id: uid(), text, isOpen: true }]
+              msg.thinkingBlocks = [...msg.thinkingBlocks, { id: uid(), text, isOpen: true, timestamp: Date.now() }]
             }
 
             updated[idx] = msg

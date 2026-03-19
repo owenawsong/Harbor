@@ -88,29 +88,39 @@ export default function ChatMessage({ message, onToggleThinking }: Props) {
 
       {/* Content */}
       <div className="flex-1 min-w-0 flex flex-col gap-2 select-text">
-        {/* Thinking blocks */}
-        {message.thinkingBlocks.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            {message.thinkingBlocks.map((block) => (
-              <ThinkingBlock
-                key={block.id}
-                block={block}
-                onToggle={() => onToggleThinking?.(message.id, block.id)}
-              />
-            ))}
-          </div>
-        )}
+        {/* Thinking blocks and tool calls, interleaved chronologically */}
+        {(() => {
+          const events: Array<{ type: 'thinking' | 'tool'; timestamp: number; block?: UIThinkingBlock; toolCall?: typeof message.toolCalls[0]; index?: number }> = []
 
-        {/* Tool calls */}
-        {message.toolCalls.length > 0 && (
-          <div className="flex flex-col gap-1.5">
-            {message.toolCalls.map((tc, i) => (
-              <div key={tc.id} className="animate-fade-in" style={{ animationDelay: `${i * 40}ms` }}>
-                <ToolCallDisplay toolCall={tc} />
-              </div>
-            ))}
-          </div>
-        )}
+          message.thinkingBlocks.forEach((block) => {
+            events.push({ type: 'thinking', timestamp: block.timestamp, block })
+          })
+
+          message.toolCalls.forEach((tc, i) => {
+            events.push({ type: 'tool', timestamp: tc.id ? parseInt(tc.id, 36) % Date.now() : Date.now(), toolCall: tc, index: i })
+          })
+
+          // Sort by timestamp
+          events.sort((a, b) => a.timestamp - b.timestamp)
+
+          return events.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              {events.map((event) => (
+                event.type === 'thinking' && event.block ? (
+                  <ThinkingBlock
+                    key={event.block.id}
+                    block={event.block}
+                    onToggle={() => onToggleThinking?.(message.id, event.block!.id)}
+                  />
+                ) : event.type === 'tool' && event.toolCall ? (
+                  <div key={event.toolCall.id} className="animate-fade-in" style={{ animationDelay: `${event.index! * 40}ms` }}>
+                    <ToolCallDisplay toolCall={event.toolCall} />
+                  </div>
+                ) : null
+              ))}
+            </div>
+          ) : null
+        })()}
 
         {/* Text content */}
         {(message.text || (message.isStreaming && !message.toolCalls.length)) && (
