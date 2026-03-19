@@ -218,59 +218,59 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
     console.log('🤖 runAgent: Starting main while loop...')
     while (iterations < MAX_TOOL_ITERATIONS) {
-    if (signal?.aborted) {
-      onEvent({ type: 'error', error: 'Agent stopped by user.' })
-      return
-    }
+      if (signal?.aborted) {
+        onEvent({ type: 'error', error: 'Agent stopped by user.' })
+        return
+      }
 
-    iterations++
+      iterations++
 
-    // Accumulate the response
-    let currentText = ''
-    const pendingToolCalls: Map<string, { name: string; input: string }> = new Map()
-    const completedToolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
-    let stopReason = ''
+      // Accumulate the response
+      let currentText = ''
+      const pendingToolCalls: Map<string, { name: string; input: string }> = new Map()
+      const completedToolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
+      let stopReason = ''
 
-    try {
-      for await (const event of provider.complete({
-        settings,
-        messages: normalizedHistory,
-        tools,
-        systemPrompt,
-        signal,
-      })) {
-        if (signal?.aborted) break
+      try {
+        for await (const event of provider.complete({
+          settings,
+          messages: normalizedHistory,
+          tools,
+          systemPrompt,
+          signal,
+        })) {
+          if (signal?.aborted) break
 
-        switch (event.type) {
-          case 'text_delta':
-            currentText += event.text
-            onEvent({ type: 'text_delta', text: event.text, messageId })
-            break
+          switch (event.type) {
+            case 'text_delta':
+              currentText += event.text
+              onEvent({ type: 'text_delta', text: event.text, messageId })
+              break
 
-          case 'thinking':
-            onEvent({ type: 'thinking', text: event.text, messageId })
-            break
+            case 'thinking':
+              onEvent({ type: 'thinking', text: event.text, messageId })
+              break
 
-          case 'tool_call_start':
-            pendingToolCalls.set(event.id, { name: event.name, input: '' })
-            onEvent({
-              type: 'tool_call_start',
-              messageId,
-              toolCallId: event.id,
-              toolName: event.name,
-            })
-            break
-
-          case 'tool_call_input_delta':
-            if (pendingToolCalls.has(event.id)) {
-              pendingToolCalls.get(event.id)!.input += event.delta
+            case 'tool_call_start':
+              pendingToolCalls.set(event.id, { name: event.name, input: '' })
               onEvent({
-                type: 'tool_call_input',
+                type: 'tool_call_start',
+                messageId,
                 toolCallId: event.id,
-                partialInput: event.delta,
+                toolName: event.name,
               })
-            }
-            break
+              break
+
+            case 'tool_call_input_delta':
+              if (pendingToolCalls.has(event.id)) {
+                pendingToolCalls.get(event.id)!.input += event.delta
+                onEvent({
+                  type: 'tool_call_input',
+                  toolCallId: event.id,
+                  partialInput: event.delta,
+                })
+              }
+              break
 
           case 'tool_call_complete':
             completedToolCalls.push({
@@ -291,36 +291,36 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
           case 'error':
             onEvent({ type: 'error', error: event.error })
             return
+          }
         }
-      }
-    } catch (err) {
-      if (signal?.aborted) {
-        onEvent({ type: 'error', error: 'Agent stopped by user.' })
+      } catch (err) {
+        if (signal?.aborted) {
+          onEvent({ type: 'error', error: 'Agent stopped by user.' })
+          return
+        }
+        onEvent({ type: 'error', error: err instanceof Error ? err.message : String(err) })
         return
       }
-      onEvent({ type: 'error', error: err instanceof Error ? err.message : String(err) })
-      return
-    }
 
-    // Add assistant message to history
-    const assistantParts: Array<TextPart | ToolCallPart> = []
-    if (currentText) assistantParts.push({ type: 'text', text: currentText })
-    for (const tc of completedToolCalls) {
-      assistantParts.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
-    }
-    if (assistantParts.length > 0) {
-      normalizedHistory.push({ role: 'assistant', content: assistantParts })
-    }
-
-    // Execute any tool calls that were made
-    if (completedToolCalls.length > 0) {
-      const toolResults: Array<ToolResultPart> = []
-
-      // Track tool calls for loop detection
+      // Add assistant message to history
+      const assistantParts: Array<TextPart | ToolCallPart> = []
+      if (currentText) assistantParts.push({ type: 'text', text: currentText })
       for (const tc of completedToolCalls) {
-        recentToolCalls.push({ name: tc.name, input: tc.input, timestamp: Date.now() })
-        // Keep only last 10 tool calls in memory
-        if (recentToolCalls.length > 10) recentToolCalls.shift()
+        assistantParts.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
+      }
+      if (assistantParts.length > 0) {
+        normalizedHistory.push({ role: 'assistant', content: assistantParts })
+      }
+
+      // Execute any tool calls that were made
+      if (completedToolCalls.length > 0) {
+        const toolResults: Array<ToolResultPart> = []
+
+        // Track tool calls for loop detection
+        for (const tc of completedToolCalls) {
+          recentToolCalls.push({ name: tc.name, input: tc.input, timestamp: Date.now() })
+          // Keep only last 10 tool calls in memory
+          if (recentToolCalls.length > 10) recentToolCalls.shift()
       }
 
       // Detect tool loop
