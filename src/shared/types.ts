@@ -70,6 +70,7 @@ export interface AgentSettings {
   enableScreenshots?: boolean
   toolExecutionMode?: 'parallel' | 'sequential' // Default: parallel for speed
   rateLimitConfig?: RateLimitConfig
+  toolTimeouts?: Record<string, number> // Per-tool timeout overrides (in ms)
 }
 
 // ─── Tool Types ───────────────────────────────────────────────────────────────
@@ -94,6 +95,7 @@ export interface ToolDefinition {
     properties: Record<string, ToolParameter>
     required?: string[]
   }
+  timeoutMs?: number // Optional per-tool timeout (defaults to 30s)
 }
 
 export interface ToolResult {

@@ -82,10 +82,11 @@ export const API_ENDPOINTS: Record<string, string> = {
 }
 
 // ─── Harbor Free Configuration (NVIDIA NIM) ───────────────────────────────
-// These are shared/public demo credentials for the Harbor Free service
-// Users can override with their own NVIDIA API keys in settings
+// Default public demo credentials for Harbor Free service (non-sensitive)
+// Users MUST set their own NVIDIA API keys in settings for production use
+// Never commit real API keys to source code
 export const HARBOR_FREE_CONFIG = {
-  apiKey: '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',
+  apiKey: process.env.VITE_HARBOR_FREE_API_KEY || 'nvapi-placeholder', // Use env var or placeholder
   baseUrl: 'https://integrate.api.nvidia.com/v1',
   textModel: 'minimaxai/minimax-m2.5',
   imageModel: 'qwen/qwen3.5-122b-a10b',

@@ -10,6 +10,7 @@ import { buildSystemPrompt } from './prompt'
 import { getToolByName, getToolDefinitions } from '../tools/index'
 import { MAX_TOOL_ITERATIONS } from '../../shared/constants'
 import { RateLimitManager, sleep, isRateLimitError } from './rateLimitManager'
+import { ToolLoopDetector } from './toolLoopDetector'
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 11)
@@ -63,6 +64,9 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
   // Initialize rate limit manager with settings config
   const rateLimitManager = new RateLimitManager(settings.rateLimitConfig)
+
+  // Initialize tool loop detector
+  const loopDetector = new ToolLoopDetector()
 
   // Build browser context
   const browserContext: BrowserContext = {
@@ -234,6 +238,16 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       const toolResults: Array<ToolResultPart> = []
       const executionMode = settings.toolExecutionMode ?? 'parallel'
 
+      // Check for tool loops before executing
+      for (const tc of completedToolCalls) {
+        if (loopDetector.wouldCreateLoop(tc.name, tc.input)) {
+          const loopInfo = loopDetector.getLoopInfo()
+          const errorMsg = `Tool loop detected: "${tc.name}" called ${loopInfo?.callCount || 0} times with identical inputs. Breaking loop.`
+          onEvent({ type: 'error', error: errorMsg })
+          return
+        }
+      }
+
       if (executionMode === 'sequential') {
         // Sequential: Execute tools one at a time (safer for interdependent tools)
         for (const tc of completedToolCalls) {
@@ -257,10 +271,14 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
           let toolResult: import('../../shared/types').ToolResult
           try {
+            // Use per-tool timeout if defined (priority: settings > definition > default)
+            const toolDef = tools.find((t) => t.name === tc.name)
+            const timeoutMs = settings.toolTimeouts?.[tc.name] ?? toolDef?.timeoutMs ?? 30_000
+
             toolResult = await Promise.race([
               handler.execute(tc.input, browserContext),
               new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
+                setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after ${timeoutMs}ms`)), timeoutMs),
               ),
             ])
           } catch (err) {
@@ -297,10 +315,14 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
             let toolResult: import('../../shared/types').ToolResult
             try {
+              // Use per-tool timeout if defined (priority: settings > definition > default)
+              const toolDef = tools.find((t) => t.name === tc.name)
+              const timeoutMs = settings.toolTimeouts?.[tc.name] ?? toolDef?.timeoutMs ?? 30_000
+
               toolResult = await Promise.race([
                 handler.execute(tc.input, browserContext),
                 new Promise<never>((_, reject) =>
-                  setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
+                  setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after ${timeoutMs}ms`)), timeoutMs),
                 ),
               ])
             } catch (err) {
