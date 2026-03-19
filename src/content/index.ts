@@ -1346,12 +1346,37 @@ function toggleOverlay(): void {
   }
 }
 
-// Keyboard listener for Ctrl+Shift+K
-window.addEventListener('keydown', (e: KeyboardEvent) => {
-  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
-    e.preventDefault()
-    toggleOverlay()
+// Keyboard listener for command palette (reads shortcut from storage)
+chrome.storage.local.get('harbor_keybindings', (data) => {
+  let shortcutStr = 'Ctrl+Shift+H' // Default to new shortcut
+  if (data.harbor_keybindings?.commandPalette) {
+    shortcutStr = data.harbor_keybindings.commandPalette as string
   }
+
+  // Parse shortcut (e.g., "Ctrl+Shift+H" -> key: 'h', ctrl: true, shift: true)
+  const parts = shortcutStr.split('+')
+  const expectedKey = parts[parts.length - 1].toLowerCase()
+  const needsCtrl = parts.includes('Ctrl')
+  const needsMeta = parts.includes('Cmd')
+  const needsShift = parts.includes('Shift')
+  const needsAlt = parts.includes('Alt')
+
+  console.log('🎯 ContentScript: Overlay keyboard listener ready for:', shortcutStr)
+
+  window.addEventListener('keydown', (e: KeyboardEvent) => {
+    const ctrlOrMeta = needsCtrl || needsMeta
+    const matches =
+      e.key.toLowerCase() === expectedKey &&
+      (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
+      e.shiftKey === needsShift &&
+      e.altKey === needsAlt
+
+    if (matches) {
+      console.log('🎯 ContentScript: Command palette hotkey matched!')
+      e.preventDefault()
+      toggleOverlay()
+    }
+  })
 })
 
 // Overlay interaction handler
