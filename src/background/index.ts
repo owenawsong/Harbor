@@ -280,6 +280,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         case 'harbor_get_palette_commands': {
           // Return list of available commands for the command palette overlay
+          console.log('🎯 [BACKGROUND] harbor_get_palette_commands requested')
           const commands = [
             { id: 'new-chat', label: 'New conversation', description: 'Start a fresh chat' },
             { id: 'settings', label: 'Open Settings', description: 'Configure Harbor' },
@@ -288,23 +289,30 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             { id: 'skills', label: 'Browse Skills', description: 'Explore available tools' },
             { id: 'dashboard', label: 'Open Dashboard', description: 'View usage statistics' },
           ]
+          console.log('✅ [BACKGROUND] Sending', commands.length, 'commands')
           sendResponse({ success: true, data: { commands } })
           break
         }
 
         case 'harbor_execute_palette_command': {
           const { commandId } = message
+          console.log('🎯 [BACKGROUND] harbor_execute_palette_command:', commandId)
           // Send command to the active extension panel
           try {
             // Send message to sidepanel to execute the command
+            console.log('🎯 [BACKGROUND] Sending command to sidepanel...')
             chrome.runtime.sendMessage({
               type: 'harbor_palette_command_execute',
               commandId,
-            }).catch(() => {
+            }).then(() => {
+              console.log('✅ [BACKGROUND] Command sent to sidepanel')
+            }).catch((err) => {
+              console.warn('⚠️  [BACKGROUND] Sidepanel not responding:', err)
               // Sidepanel might not be open, that's ok
             })
             sendResponse({ success: true })
           } catch (err) {
+            console.error('❌ [BACKGROUND] Error executing command:', err)
             sendResponse({ success: false, error: err instanceof Error ? err.message : String(err) })
           }
           break

@@ -1328,29 +1328,41 @@ async function executeOverlayCommand(commandId: string): Promise<void> {
 }
 
 function toggleOverlay(): void {
-  console.log('🎯 ContentScript: toggleOverlay called, isOverlayOpen:', isOverlayOpen)
+  console.log('🎯 ⚡ toggleOverlay called, isOverlayOpen:', isOverlayOpen)
+  console.log('🎯 overlayRoot exists?', !!overlayRoot)
 
   if (!overlayRoot) {
-    console.log('🎯 ContentScript: Creating overlay DOM...')
-    injectOverlayStyles()
-    overlayRoot = createOverlayDOM()
-    document.documentElement.appendChild(overlayRoot)
-    console.log('🎯 ContentScript: Overlay DOM appended to page')
+    console.log('🎯 Creating overlay DOM...')
+    try {
+      injectOverlayStyles()
+      overlayRoot = createOverlayDOM()
+      document.documentElement.appendChild(overlayRoot)
+      console.log('✅ Overlay DOM appended to page')
+    } catch (err) {
+      console.error('❌ ERROR creating overlay:', err)
+      return
+    }
   }
 
   if (isOverlayOpen) {
-    console.log('🎯 ContentScript: Closing overlay')
+    console.log('🎯 Closing overlay')
     overlayRoot.classList.remove('open')
     isOverlayOpen = false
   } else {
-    console.log('🎯 ContentScript: Opening overlay')
-    overlayRoot.classList.add('open')
-    isOverlayOpen = true
-    selectedCommandIndex = 0
-    const input = overlayRoot.querySelector('#harbor-overlay-input') as HTMLInputElement
-    input.focus()
-    input.value = ''
-    loadCommandsFromBackground().then(() => renderOverlayList(''))
+    console.log('🎯 Opening overlay')
+    try {
+      overlayRoot.classList.add('open')
+      isOverlayOpen = true
+      selectedCommandIndex = 0
+      const input = overlayRoot.querySelector('#harbor-overlay-input') as HTMLInputElement
+      console.log('🎯 Input element:', input)
+      input.focus()
+      input.value = ''
+      loadCommandsFromBackground().then(() => renderOverlayList(''))
+      console.log('✅ Overlay opened successfully')
+    } catch (err) {
+      console.error('❌ ERROR opening overlay:', err)
+    }
   }
 }
 
@@ -1377,6 +1389,23 @@ console.log('🎯 ContentScript: Using default shortcut Ctrl+Alt+H:', keyConfig)
 window.addEventListener('keydown', (e: KeyboardEvent) => {
   const ctrlOrMeta = keyConfig.needsCtrl || keyConfig.needsMeta
 
+  // DEBUG: Log ALL ctrl+alt combinations
+  if (e.ctrlKey || e.metaKey || e.altKey) {
+    console.log('🎯 [KEYDOWN]', {
+      key: e.key,
+      keyLower: e.key.toLowerCase(),
+      ctrl: e.ctrlKey,
+      meta: e.metaKey,
+      alt: e.altKey,
+      shift: e.shiftKey,
+      expectedKey: keyConfig.expectedKey,
+      needsCtrl: keyConfig.needsCtrl,
+      needsMeta: keyConfig.needsMeta,
+      needsAlt: keyConfig.needsAlt,
+      needsShift: keyConfig.needsShift,
+    })
+  }
+
   const matches =
     e.key.toLowerCase() === keyConfig.expectedKey &&
     (ctrlOrMeta ? (e.ctrlKey || e.metaKey) : true) &&
@@ -1384,9 +1413,11 @@ window.addEventListener('keydown', (e: KeyboardEvent) => {
     e.altKey === keyConfig.needsAlt
 
   if (matches) {
-    console.log('🎯 ContentScript: Command palette hotkey matched!')
+    console.log('✅ ContentScript: Command palette hotkey MATCHED! Toggling overlay...')
+    console.log('Event:', { bubbles: e.bubbles, cancelable: e.cancelable, composed: e.composed })
     e.preventDefault()
     e.stopPropagation()
+    console.log('✅ Called preventDefault and stopPropagation')
     toggleOverlay()
   }
 }, true) // Use CAPTURE phase to intercept events before page handlers
