@@ -11,22 +11,35 @@ console.log(`🌊 Harbor Extension loaded - Version ${VERSION}`)
 
 // ─── Global Command Listener ──────────────────────────────────────────────────
 // Listen for keyboard commands registered in manifest.json
-chrome.commands.onCommand.addListener((command) => {
-  console.log('🎯 [COMMAND] Received command:', command)
+console.log('🎯 [BACKGROUND] Setting up chrome.commands listener...')
+
+chrome.commands.onCommand.addListener((command, tab) => {
+  console.log('🎯 [BACKGROUND-COMMAND] ===== COMMAND FIRED =====')
+  console.log('🎯 [BACKGROUND-COMMAND] Received command:', command)
+  console.log('🎯 [BACKGROUND-COMMAND] Tab:', tab?.id, tab?.url)
 
   if (command === 'toggle-command-palette') {
-    console.log('🎯 [COMMAND] Toggling command palette...')
+    console.log('🎯 [BACKGROUND-COMMAND] Toggling command palette...')
     // Get the active tab and send message to content script
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      console.log('🎯 [BACKGROUND-COMMAND] Query results:', tabs.length, 'tabs')
       if (tabs[0]?.id) {
-        console.log('🎯 [COMMAND] Sending toggle to tab:', tabs[0].id)
-        chrome.tabs.sendMessage(tabs[0].id, { type: 'harbor_toggle_palette' }).catch((err) => {
-          console.warn('⚠️  [COMMAND] Could not send to tab (content script not loaded):', err)
+        console.log('🎯 [BACKGROUND-COMMAND] Sending toggle to tab:', tabs[0].id, tabs[0].url)
+        chrome.tabs.sendMessage(tabs[0].id, { type: 'harbor_toggle_palette' }).then(() => {
+          console.log('✅ [BACKGROUND-COMMAND] Message sent successfully!')
+        }).catch((err) => {
+          console.error('❌ [BACKGROUND-COMMAND] Could not send to tab:', err)
         })
+      } else {
+        console.warn('⚠️  [BACKGROUND-COMMAND] No active tab found')
       }
     })
+  } else {
+    console.log('⚠️  [BACKGROUND-COMMAND] Unknown command:', command)
   }
 })
+
+console.log('✅ [BACKGROUND] chrome.commands listener registered')
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
