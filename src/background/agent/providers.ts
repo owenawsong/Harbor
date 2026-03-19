@@ -383,7 +383,6 @@ async function* openAICompatibleComplete(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Accept': 'text/event-stream',
       Authorization: `Bearer ${apiKey}`,
       ...(baseUrl.includes('openrouter')
         ? { 'HTTP-Referer': 'https://harbor-extension.app', 'X-Title': 'Harbor AI Agent' }
