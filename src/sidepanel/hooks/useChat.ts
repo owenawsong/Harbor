@@ -8,7 +8,7 @@ export interface UIThinkingBlock {
   id: string
   text: string
   isOpen: boolean
-  timestamp: number
+  sequence: number
 }
 
 export interface UIToolCall {
@@ -17,7 +17,7 @@ export interface UIToolCall {
   input?: Record<string, unknown>
   result?: { success: boolean; output?: unknown; error?: string; screenshot?: string }
   status: 'pending' | 'running' | 'done' | 'error'
-  timestamp: number
+  sequence: number
 }
 
 export interface UIMessage {
@@ -48,7 +48,7 @@ function extractThinkingBlocks(
 
   // <think>...</think> or <thinking>...</thinking>
   cleaned = cleaned.replace(/<think(?:ing)?>([\s\S]*?)<\/think(?:ing)?>/gi, (_, inner) => {
-    if (inner.trim()) blocks.push({ id: uid(), text: inner.trim(), isOpen: false, timestamp: Date.now() })
+    if (inner.trim()) blocks.push({ id: uid(), text: inner.trim(), isOpen: false, sequence: 0 })
     return ''
   })
 
@@ -60,7 +60,7 @@ function extractThinkingBlocks(
       .map((l: string) => l.replace(/^>\s?/, ''))
       .join('\n')
       .trim()
-    if (thinkText) blocks.push({ id: uid(), text: thinkText, isOpen: false, timestamp: Date.now() })
+    if (thinkText) blocks.push({ id: uid(), text: thinkText, isOpen: false, sequence: 0 })
     return ''
   })
 
@@ -80,7 +80,7 @@ function convertStoredMessages(messages: ChatMessage[]): UIMessage[] {
       .filter((c) => c.type === 'tool_call')
       .map((c) => {
         if (c.type !== 'tool_call') return null
-        return { id: c.id, name: c.name, input: c.input, status: 'done' as const, timestamp: Date.now() }
+        return { id: c.id, name: c.name, input: c.input, status: 'done' as const, sequence: 0 }
       })
       .filter(Boolean) as UIToolCall[]
 
@@ -107,6 +107,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   const [sessionId] = useState(() => loadSessionId ?? uid())
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const eventSequenceRef = useRef(0)
 
   // Load session when sessionId changes
   useEffect(() => {
@@ -158,6 +159,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
         case 'thinking': {
           const { text, messageId } = event as { text: string; messageId: string }
           currentMsgId.current = messageId
+          const seq = ++eventSequenceRef.current
 
           setMessages((prev) => {
             const idx = prev.findIndex((m) => m.id === messageId && m.role === 'assistant')
@@ -165,7 +167,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             if (idx === -1) {
               return [...prev, {
                 id: messageId, role: 'assistant', text: '', toolCalls: [],
-                thinkingBlocks: [{ id: uid(), text, isOpen: true, timestamp: Date.now() }],
+                thinkingBlocks: [{ id: uid(), text, isOpen: true, sequence: seq }],
                 isStreaming: true, timestamp: Date.now(),
               }]
             }
@@ -180,7 +182,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
                 { ...lastBlock, text: lastBlock.text + text },
               ]
             } else {
-              msg.thinkingBlocks = [...msg.thinkingBlocks, { id: uid(), text, isOpen: true, timestamp: Date.now() }]
+              msg.thinkingBlocks = [...msg.thinkingBlocks, { id: uid(), text, isOpen: true, sequence: seq }]
             }
 
             updated[idx] = msg
@@ -193,10 +195,11 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
         case 'tool_call_start': {
           const { messageId, toolCallId, toolName } = event
           currentMsgId.current = messageId
+          const seq = ++eventSequenceRef.current
 
           setMessages((prev) => {
             const last = prev[prev.length - 1]
-            const newTool: UIToolCall = { id: toolCallId, name: toolName, status: 'running', timestamp: Date.now() }
+            const newTool: UIToolCall = { id: toolCallId, name: toolName, status: 'running', sequence: seq }
 
             if (last?.id === messageId && last.role === 'assistant') {
               return [...prev.slice(0, -1), {
