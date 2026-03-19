@@ -155,10 +155,13 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     setProvider(p)
   }
 
-  // Auto-save: debounced 500ms after any change
+  // Auto-save: debounced 500ms after any change (not on initial mount)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isFirstRender = useRef(true)
 
-  const triggerSave = useCallback(() => {
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return }
+
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
 
     saveTimerRef.current = setTimeout(async () => {
@@ -180,7 +183,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         console.log('💾 Saving to background...', { provider, apiKey: apiKey ? '***' : 'empty' })
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
         console.log('✅ Saved')
-        // Update App's state so next time Settings opens, it has the new data
         onSave(newSettings, currentTheme, newIdentity)
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
@@ -188,14 +190,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         console.error('❌ Save failed:', err)
       }
     }, 500)
-  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, identity])
-
-  // Trigger save on any change (but not on initial mount)
-  const isFirstRender = useRef(true)
-  useEffect(() => {
-    if (isFirstRender.current) { isFirstRender.current = false; return }
-    triggerSave()
-  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, triggerSave])
+  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, identity, model, onSave])
 
   const renderSection = () => {
     console.log('📭 Settings: About to render section, current state:', { provider, apiKey: apiKey ? '***' : 'EMPTY', userName, tone })
