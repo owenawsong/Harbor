@@ -279,10 +279,10 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
 
   const checkScroll = useCallback(() => {
     if (tabsRef.current) {
-      setCanScrollLeft(tabsRef.current.scrollLeft > 0)
-      setCanScrollRight(
-        tabsRef.current.scrollLeft < tabsRef.current.scrollWidth - tabsRef.current.clientWidth - 5
-      )
+      const { scrollLeft, scrollWidth, clientWidth } = tabsRef.current
+      // Add more buffer (10px) to prevent off-by-one jittering
+      setCanScrollLeft(scrollLeft > 10)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
     }
   }, [])
 
@@ -294,14 +294,14 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
 
   const scroll = (direction: 'left' | 'right') => {
     if (tabsRef.current) {
-      // Scroll to show approximately 4-5 items at once, with smooth cubic-bezier easing
-      const scrollAmount = 280 // Approximately 4-5 tab items worth
+      // Scroll by multiple tab items (more noticeable movement)
+      const scrollAmount = 360 // Approximately 5-6 tab items worth
       tabsRef.current.scrollBy({
         left: direction === 'left' ? -scrollAmount : scrollAmount,
         behavior: 'smooth',
       })
       // Check scroll state after animation completes
-      setTimeout(checkScroll, 350)
+      setTimeout(checkScroll, 400)
     }
   }
 
