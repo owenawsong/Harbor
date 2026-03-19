@@ -757,8 +757,17 @@ export const harborFreeProvider: ProviderAdapter = {
 
 export const poeProvider: ProviderAdapter = {
   name: 'poe',
-  complete: (options) =>
-    openAICompatibleComplete('https://api.poe.com/v1', options.settings.provider.apiKey ?? '', options),
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    console.log('📱 poeProvider.complete: Starting')
+    try {
+      console.log('📱 poeProvider.complete: About to call openAICompatibleComplete')
+      yield* openAICompatibleComplete('https://api.poe.com/v1', options.settings.provider.apiKey ?? '', options)
+      console.log('📱 poeProvider.complete: Finished')
+    } catch (err) {
+      console.error('💥 poeProvider.complete ERROR:', err)
+      yield { type: 'error', error: `Poe provider error: ${err instanceof Error ? err.message : String(err)}` }
+    }
+  },
 }
 
 // ─── Provider Registry ────────────────────────────────────────────────────────
