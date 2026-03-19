@@ -513,30 +513,38 @@ async function* openAICompatibleComplete(
 
 export const openaiProvider: ProviderAdapter = {
   name: 'openai',
-  complete: (options) => openAICompatibleComplete('https://api.openai.com/v1', options.settings.provider.apiKey ?? '', options),
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    yield* openAICompatibleComplete('https://api.openai.com/v1', options.settings.provider.apiKey ?? '', options)
+  },
 }
 
 export const openrouterProvider: ProviderAdapter = {
   name: 'openrouter',
-  complete: (options) => openAICompatibleComplete('https://openrouter.ai/api/v1', options.settings.provider.apiKey ?? '', options),
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    yield* openAICompatibleComplete('https://openrouter.ai/api/v1', options.settings.provider.apiKey ?? '', options)
+  },
 }
 
 export const openaiCompatibleProvider: ProviderAdapter = {
   name: 'openai-compatible',
-  complete: (options) => openAICompatibleComplete(
-    options.settings.provider.baseUrl ?? 'http://localhost:11434/v1',
-    options.settings.provider.apiKey ?? '',
-    options
-  ),
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    yield* openAICompatibleComplete(
+      options.settings.provider.baseUrl ?? 'http://localhost:11434/v1',
+      options.settings.provider.apiKey ?? '',
+      options
+    )
+  },
 }
 
 export const ollamaProvider: ProviderAdapter = {
   name: 'ollama',
-  complete: (options) => openAICompatibleComplete(
-    (options.settings.provider.baseUrl ?? 'http://localhost:11434') + '/v1',
-    'ollama', // Ollama doesn't need a real key but the endpoint requires one
-    options
-  ),
+  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+    yield* openAICompatibleComplete(
+      (options.settings.provider.baseUrl ?? 'http://localhost:11434') + '/v1',
+      'ollama',
+      options
+    )
+  },
 }
 
 // ─── Google Gemini Provider ───────────────────────────────────────────────────
