@@ -9,6 +9,7 @@ import { getProvider } from './providers'
 import { buildSystemPrompt } from './prompt'
 import { getToolByName, getToolDefinitions } from '../tools/index'
 import { MAX_TOOL_ITERATIONS } from '../../shared/constants'
+import { RateLimitManager, sleep, isRateLimitError } from './rateLimitManager'
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 11)
@@ -60,6 +61,9 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
   })
   const tools = getToolDefinitions()
 
+  // Initialize rate limit manager with settings config
+  const rateLimitManager = new RateLimitManager(settings.rateLimitConfig)
+
   // Build browser context
   const browserContext: BrowserContext = {
     async sendToTab(tabId, msg) {
@@ -105,6 +109,28 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     }
 
     iterations++
+
+    // Check if we're rate limited and need to wait
+    if (rateLimitManager.getState().isLimited && !rateLimitManager.shouldRetry()) {
+      onEvent({
+        type: 'error',
+        error: `Rate limit exceeded. Max retries exhausted. Last error: ${rateLimitManager.getState().lastError}`,
+      })
+      return
+    }
+
+    if (rateLimitManager.getState().isLimited) {
+      const waitTimeMs = rateLimitManager.getWaitTimeMs()
+      if (waitTimeMs > 0) {
+        onEvent({
+          type: 'rate_limited',
+          waitTimeMs,
+          attemptCount: rateLimitManager.getState().attemptCount,
+          messageId,
+        })
+        await sleep(waitTimeMs)
+      }
+    }
 
     // Accumulate the response
     let currentText = ''
@@ -164,6 +190,8 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
           case 'message_complete':
             stopReason = event.stopReason
+            // Mark rate limit as resolved on successful completion
+            rateLimitManager.markSuccess()
             // Emit message_complete so the frontend stops the streaming cursor on this message.
             // NOTE: isRunning stays true — agent_complete is emitted at the end of the full loop.
             onEvent({ type: 'message_complete', messageId, stopReason: event.stopReason })
@@ -179,6 +207,14 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
         onEvent({ type: 'error', error: 'Agent stopped by user.' })
         return
       }
+
+      // Check if this is a rate limit error
+      if (isRateLimitError(err)) {
+        rateLimitManager.markLimited(err)
+        // Continue to retry in next iteration
+        continue
+      }
+
       onEvent({ type: 'error', error: err instanceof Error ? err.message : String(err) })
       return
     }

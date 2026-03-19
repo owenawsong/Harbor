@@ -121,7 +121,17 @@ export const anthropicProvider: ProviderAdapter = {
 
     if (!response.ok) {
       const errorText = await response.text()
-      yield { type: 'error', error: `Anthropic API error ${response.status}: ${errorText}` }
+      const errorMessage = `Anthropic API error ${response.status}: ${errorText}`
+
+      // Check for rate limit (429) or service unavailable (503)
+      if (response.status === 429 || response.status === 503) {
+        // Preserve the original error info but mark it as rate limited for agent handling
+        const error = new Error(errorMessage)
+        ;(error as any).__isRateLimited = true
+        throw error
+      }
+
+      yield { type: 'error', error: errorMessage }
       return
     }
 

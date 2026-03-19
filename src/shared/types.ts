@@ -53,6 +53,14 @@ export interface ProviderConfig {
   secretAccessKey?: string
 }
 
+export interface RateLimitConfig {
+  maxRetries?: number
+  initialBackoffMs?: number
+  maxBackoffMs?: number
+  backoffMultiplier?: number
+  jitterFactor?: number
+}
+
 export interface AgentSettings {
   provider: ProviderConfig
   systemPrompt?: string
@@ -61,6 +69,7 @@ export interface AgentSettings {
   enableMemory?: boolean
   enableScreenshots?: boolean
   toolExecutionMode?: 'parallel' | 'sequential' // Default: parallel for speed
+  rateLimitConfig?: RateLimitConfig
 }
 
 // ─── Tool Types ───────────────────────────────────────────────────────────────
@@ -143,6 +152,13 @@ export interface AgentEventAgentComplete {
   type: 'agent_complete'
 }
 
+export interface AgentEventRateLimited {
+  type: 'rate_limited'
+  waitTimeMs: number
+  attemptCount: number
+  messageId?: string
+}
+
 export type AgentEvent =
   | AgentEventTextDelta
   | AgentEventToolCallStart
@@ -152,6 +168,7 @@ export type AgentEvent =
   | AgentEventError
   | AgentEventThinking
   | AgentEventAgentComplete
+  | AgentEventRateLimited
 
 // ─── Port Message Types ───────────────────────────────────────────────────────
 

@@ -297,6 +297,14 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           break
         }
 
+        // ── Rate limited ────────────────────────────────────────────────────
+        case 'rate_limited': {
+          const { waitTimeMs, attemptCount } = event
+          const waitSecs = Math.ceil(waitTimeMs / 1000)
+          setError(`Rate limited (attempt ${attemptCount}). Retrying in ${waitSecs}s...`)
+          break
+        }
+
         // ── Error ───────────────────────────────────────────────────────────
         case 'error': {
           const { error: err } = event
