@@ -178,6 +178,53 @@ export default function App() {
     return () => chrome.storage.onChanged.removeListener(listener)
   }, [view])
 
+  // ── Command Palette Overlay (Ctrl+Shift+K from webpage) ────────────────────
+
+  useEffect(() => {
+    const handlePaletteCommand = (message: any, _sender: any, sendResponse: any) => {
+      if (message.type !== 'harbor_palette_command_execute') return
+
+      const commandId = message.commandId as string
+      console.log('🎨 App: Executing palette command:', commandId)
+
+      // Execute the command based on ID
+      switch (commandId) {
+        case 'new-chat':
+          setCurrentSessionId(null)
+          setChatKey((k) => k + 1)
+          setView('chat')
+          sendResponse({ success: true })
+          break
+        case 'settings':
+          setView('settings')
+          sendResponse({ success: true })
+          break
+        case 'history':
+          loadSessions()
+          setView('history')
+          sendResponse({ success: true })
+          break
+        case 'memory':
+          setView('memory')
+          sendResponse({ success: true })
+          break
+        case 'skills':
+          setView('skills')
+          sendResponse({ success: true })
+          break
+        case 'dashboard':
+          setView('dashboard')
+          sendResponse({ success: true })
+          break
+        default:
+          sendResponse({ success: false, error: `Unknown command: ${commandId}` })
+      }
+    }
+
+    chrome.runtime.onMessage.addListener(handlePaletteCommand)
+    return () => chrome.runtime.onMessage.removeListener(handlePaletteCommand)
+  }, [loadSessions])
+
   // ── Sessions ──────────────────────────────────────────────────────────────
 
   const loadSessions = useCallback(() => {
