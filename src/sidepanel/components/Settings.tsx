@@ -294,8 +294,14 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
 
   const scroll = (direction: 'left' | 'right') => {
     if (tabsRef.current) {
-      tabsRef.current.scrollBy({ left: direction === 'left' ? -150 : 150, behavior: 'smooth' })
-      setTimeout(checkScroll, 300)
+      // Scroll to show approximately 4-5 items at once, with smooth cubic-bezier easing
+      const scrollAmount = 280 // Approximately 4-5 tab items worth
+      tabsRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      })
+      // Check scroll state after animation completes
+      setTimeout(checkScroll, 350)
     }
   }
 
@@ -325,7 +331,7 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
               borderBottomColor: activeSection === id ? 'rgb(var(--harbor-accent))' : 'transparent',
               color: activeSection === id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
               background: 'transparent',
-              transition: 'color 150ms ease, border-color 150ms ease',
+              transition: 'color 200ms cubic-bezier(0.4, 0, 0.2, 1), border-color 200ms cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             <Icon size={12} />
