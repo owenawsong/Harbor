@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   SETTINGS: 'harbor_settings',
   SESSIONS: 'harbor_sessions',
   CURRENT_SESSION: 'harbor_current_session',
+  LAST_SESSION: 'harbor_last_session',
   MEMORY: 'harbor_memory',
 } as const
 

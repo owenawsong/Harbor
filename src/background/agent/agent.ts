@@ -9,9 +9,98 @@ import { getProvider } from './providers'
 import { buildSystemPrompt } from './prompt'
 import { getToolByName, getToolDefinitions } from '../tools/index'
 import { MAX_TOOL_ITERATIONS } from '../../shared/constants'
+import { normalizeStopReason, isToolUseReason, isFinishedReason, getStopReasonDescription } from './stop-reason'
+import { detectToolLoop, getSuggestionForLoop } from './tool-loop-detection'
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 11)
+}
+
+/**
+ * Tools that modify page state and should execute sequentially
+ */
+const SEQUENTIAL_TOOLS = new Set([
+  'click',
+  'fill_input',
+  'clear_input',
+  'press_key',
+  'select_option',
+  'check_input',
+  'navigate',
+  'go_back',
+  'go_forward',
+  'reload_page',
+])
+
+/**
+ * Detect if tool calls have dependencies that require sequential execution
+ * Tools like clicking, filling, and navigation should run one-at-a-time
+ * because the page state changes between operations
+ */
+function detectSequentialDependencies(toolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }>): boolean {
+  if (toolCalls.length <= 1) return false
+
+  // If any tool modifies page state, execute sequentially
+  return toolCalls.some((tc) => SEQUENTIAL_TOOLS.has(tc.name))
+}
+
+/**
+ * Execute a single tool and return its result
+ */
+async function executeSingleTool(
+  tc: { id: string; name: string; input: Record<string, unknown> },
+  getToolByName: (name: string) => import('../agent/types').ToolHandler | undefined,
+  browserContext: import('./types').BrowserContext,
+  onEvent: (event: AgentEvent) => void,
+  messageId: string
+): Promise<ToolResultPart> {
+  const handler = getToolByName(tc.name)
+  if (!handler) {
+    const result = { success: false, error: `Unknown tool: ${tc.name}` }
+    onEvent({
+      type: 'tool_call_result',
+      toolCallId: tc.id,
+      toolName: tc.name,
+      result,
+    })
+    return {
+      type: 'tool_result',
+      toolCallId: tc.id,
+      content: JSON.stringify(result),
+      isError: true,
+    }
+  }
+
+  let toolResult: import('../../shared/types').ToolResult
+  try {
+    // Add small delay before navigation tools to ensure page is ready
+    if (SEQUENTIAL_TOOLS.has(tc.name)) {
+      await new Promise((resolve) => setTimeout(resolve, 100))
+    }
+
+    toolResult = await Promise.race([
+      handler.execute(tc.input, browserContext),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000)
+      ),
+    ])
+  } catch (err) {
+    toolResult = { success: false, error: err instanceof Error ? err.message : String(err) }
+  }
+
+  onEvent({
+    type: 'tool_call_result',
+    toolCallId: tc.id,
+    toolName: tc.name,
+    result: toolResult,
+  })
+
+  return {
+    type: 'tool_result',
+    toolCallId: tc.id,
+    content: toolResult.success ? JSON.stringify(toolResult.output) : `Error: ${toolResult.error}`,
+    isError: !toolResult.success,
+  }
 }
 
 function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] {
@@ -97,6 +186,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
   let iterations = 0
   const messageId = generateId()
+  const recentToolCalls: Array<{ name: string; input: Record<string, unknown>; timestamp: number }> = []
 
   while (iterations < MAX_TOOL_ITERATIONS) {
     if (signal?.aborted) {
@@ -197,52 +287,39 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     if (completedToolCalls.length > 0) {
       const toolResults: Array<ToolResultPart> = []
 
+      // Track tool calls for loop detection
       for (const tc of completedToolCalls) {
-        const handler = getToolByName(tc.name)
-        if (!handler) {
-          const result = { success: false, error: `Unknown tool: ${tc.name}` }
-          onEvent({
-            type: 'tool_call_result',
-            toolCallId: tc.id,
-            toolName: tc.name,
-            result,
-          })
-          toolResults.push({
-            type: 'tool_result',
-            toolCallId: tc.id,
-            content: JSON.stringify(result),
-            isError: true,
-          })
-          continue
-        }
+        recentToolCalls.push({ name: tc.name, input: tc.input, timestamp: Date.now() })
+        // Keep only last 10 tool calls in memory
+        if (recentToolCalls.length > 10) recentToolCalls.shift()
+      }
 
-        let toolResult: import('../../shared/types').ToolResult
-        try {
-          toolResult = await Promise.race([
-            handler.execute(tc.input, browserContext),
-            new Promise<never>((_, reject) =>
-              setTimeout(() => reject(new Error(`Tool "${tc.name}" timed out after 30s`)), 30_000),
-            ),
-          ])
-        } catch (err) {
-          toolResult = { success: false, error: err instanceof Error ? err.message : String(err) }
-        }
-
+      // Detect tool loop
+      const loopDetection = detectToolLoop(recentToolCalls, 3)
+      if (loopDetection.isLooped) {
+        console.warn(`⚠️ Tool loop detected: ${loopDetection.suggestion}`)
         onEvent({
-          type: 'tool_call_result',
-          toolCallId: tc.id,
-          toolName: tc.name,
-          result: toolResult,
+          type: 'error',
+          error: `Tool loop detected: Agent is calling "${loopDetection.repeatedToolName}" repeatedly (${loopDetection.consecutiveCount} times). ${loopDetection.suggestion}`,
         })
+        return
+      }
 
-        toolResults.push({
-          type: 'tool_result',
-          toolCallId: tc.id,
-          content: toolResult.success
-            ? JSON.stringify(toolResult.output)
-            : `Error: ${toolResult.error}`,
-          isError: !toolResult.success,
-        })
+      // Detect dependencies and execute sequentially when needed
+      const shouldSequenceExecution = detectSequentialDependencies(completedToolCalls)
+
+      if (shouldSequenceExecution) {
+        // Execute tools one at a time for operations that depend on page state changes
+        for (const tc of completedToolCalls) {
+          const result = await executeSingleTool(tc, getToolByName, browserContext, onEvent, messageId)
+          toolResults.push(result)
+        }
+      } else {
+        // Execute tools in parallel when independent
+        const results = await Promise.all(
+          completedToolCalls.map((tc) => executeSingleTool(tc, getToolByName, browserContext, onEvent, messageId))
+        )
+        toolResults.push(...results)
       }
 
       // Add tool results to history so agent can see them in next iteration
@@ -255,15 +332,28 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     }
 
     // No tool calls were made - check stop reason to determine if task is complete
-    // Support various formats: 'tool_use', 'tool_calls', 'TOOL_USE', 'function_calls', etc.
-    const isToolUseReason = stopReason && /tool|function/i.test(stopReason)
-    if (stopReason && !isToolUseReason) {
+    const settings = await Promise.resolve(options.settings)
+    const providerName = settings.provider.provider
+    const normalizedReason = normalizeStopReason(providerName, stopReason)
+
+    if (isFinishedReason(normalizedReason)) {
       // Model finished naturally without requesting more tools
+      console.log(`✅ Agent finished: ${getStopReasonDescription(normalizedReason)}`)
       break
     }
 
-    // If no tools were called AND stop reason is unknown/empty, assume we're done
-    if (!stopReason) {
+    if (isToolUseReason(normalizedReason)) {
+      // Model expects tool results but none were made - shouldn't happen
+      console.log(`⚠️ Unexpected state: ${getStopReasonDescription(normalizedReason)} but no tools were called`)
+      break
+    }
+
+    // Unknown reason - log and continue loop in case model has more to say
+    console.log(`ℹ️ ${getStopReasonDescription(normalizedReason)}`)
+    if (iterations < MAX_TOOL_ITERATIONS - 1) {
+      // Continue looping to let model finish naturally
+      continue
+    } else {
       break
     }
   }

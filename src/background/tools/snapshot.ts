@@ -12,29 +12,62 @@ export const snapshotTools: ToolHandler[] = [
     definition: {
       name: 'take_snapshot',
       description:
-        'Get a concise snapshot of interactive elements on the current page. Returns a text representation with element IDs you can use to interact with them. Use this before clicking or filling inputs.',
+        'Get a concise snapshot of interactive elements on the current page. Returns a text representation with element IDs you can use to interact with them. Use offset/limit for pagination to avoid overwhelming context window. Set viewportOnly=true to see only visible elements.',
       parameters: {
         type: 'object',
         properties: {
           tabId: { type: 'number', description: 'Tab ID to snapshot. Defaults to active tab.' },
+          offset: {
+            type: 'number',
+            description: 'Start index for element pagination. Default: 0. Use for scrolling through large element lists.',
+            minimum: 0,
+          },
+          limit: {
+            type: 'number',
+            description: 'Max elements to return. Default: 500. Lower values improve performance for large pages.',
+            minimum: 1,
+            maximum: 1000,
+          },
+          viewportOnly: {
+            type: 'boolean',
+            description: 'If true, only return elements visible in current viewport. Default: false. Useful for agent to focus on immediate UI.',
+          },
         },
       },
     },
     async execute(input) {
       try {
-        let { tabId } = input as { tabId?: number }
+        let { tabId, offset = 0, limit = 500, viewportOnly = false } = input as {
+          tabId?: number
+          offset?: number
+          limit?: number
+          viewportOnly?: boolean
+        }
         if (!tabId) tabId = await getActiveTabId()
         if (!tabId) return error('No active tab')
 
-        const result = await sendToContentScript(tabId, { type: 'harbor_snapshot' })
+        // Validate pagination params
+        const validOffset = Math.max(0, Math.min(offset, 10000))
+        const validLimit = Math.max(1, Math.min(limit, 1000))
+
+        const result = await sendToContentScript(tabId, {
+          type: 'harbor_snapshot',
+          offset: validOffset,
+          limit: validLimit,
+          viewportOnly,
+        })
         if (!result.success) return error(result.error ?? 'Snapshot failed')
 
         const snapshot = result.data as { formattedText: string; elements: unknown[]; url: string; title: string }
         return ok({
           text: snapshot.formattedText,
           elementCount: (snapshot.elements as unknown[]).length,
+          totalElements: (snapshot.elements as unknown[]).length, // In this batch
+          offset: validOffset,
+          limit: validLimit,
           url: snapshot.url,
           title: snapshot.title,
+          viewportOnly,
         })
       } catch (err) {
         return error(String(err))

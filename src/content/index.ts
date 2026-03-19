@@ -112,16 +112,13 @@ function getElementText(el: Element): string {
   return text
 }
 
-function takeSnapshot(): PageSnapshot {
-  resetElements()
+/**
+ * Get all visible interactive elements on the page
+ */
+function getAllInteractiveElements(): SnapshotElement[] {
   const elements: SnapshotElement[] = []
-  const lines: string[] = []
-  const MAX_ELEMENTS = 500
 
   function processElement(el: Element) {
-    // Stop processing if we've hit the element limit
-    if (elements.length >= MAX_ELEMENTS) return
-
     if (!isVisible(el)) return
 
     const tag = el.tagName.toLowerCase()
@@ -155,50 +152,98 @@ function takeSnapshot(): PageSnapshot {
         height: Math.round(rect.height),
       }
       elements.push(element)
-
-      // Format line for text representation
-      let line = `[${id}] `
-      if (role === 'link' || tag === 'a') {
-        line += `<link> "${text}"${href ? ` → ${href}` : ''}`
-      } else if (role === 'button' || tag === 'button') {
-        line += `<button> "${text}"${disabled ? ' (disabled)' : ''}`
-      } else if (role === 'textbox' || tag === 'textarea') {
-        line += `<input:${type || 'text'}> ${placeholder ? `placeholder="${placeholder}"` : ''}${value ? ` value="${value}"` : ''}`
-      } else if (role === 'checkbox') {
-        line += `<checkbox> "${text}" ${checked ? '(checked)' : '(unchecked)'}`
-      } else if (role === 'radio') {
-        line += `<radio> "${text}" ${checked ? '(selected)' : '(unselected)'}`
-      } else if (role === 'combobox' || tag === 'select') {
-        line += `<select> "${text || value}"`
-      } else {
-        line += `<${role || tag}> "${text}"`
-      }
-      lines.push(line)
     }
 
-    // Process children (stop if we've hit the limit)
-    if (elements.length < MAX_ELEMENTS) {
-      for (const child of el.children) {
-        if (elements.length >= MAX_ELEMENTS) break
-        processElement(child)
-      }
+    // Process children
+    for (const child of el.children) {
+      processElement(child)
     }
   }
 
   processElement(document.body)
+  return elements
+}
+
+/**
+ * Format element to text line
+ */
+function formatElementLine(el: SnapshotElement): string {
+  let line = `[${el.id}] `
+  if (el.role === 'link' || el.tag === 'a') {
+    line += `<link> "${el.text}"${el.href ? ` → ${el.href}` : ''}`
+  } else if (el.role === 'button' || el.tag === 'button') {
+    line += `<button> "${el.text}"${el.disabled ? ' (disabled)' : ''}`
+  } else if (el.role === 'textbox' || el.tag === 'textarea') {
+    line += `<input:${el.type || 'text'}> ${el.placeholder ? `placeholder="${el.placeholder}"` : ''}${el.value ? ` value="${el.value}"` : ''}`
+  } else if (el.role === 'checkbox') {
+    line += `<checkbox> "${el.text}" ${el.checked ? '(checked)' : '(unchecked)'}`
+  } else if (el.role === 'radio') {
+    line += `<radio> "${el.text}" ${el.checked ? '(selected)' : '(unselected)'}`
+  } else if (el.role === 'combobox' || el.tag === 'select') {
+    line += `<select> "${el.text || el.value}"`
+  } else {
+    line += `<${el.role || el.tag}> "${el.text}"`
+  }
+  return line
+}
+
+/**
+ * Get viewport bounds
+ */
+function getViewportBounds(): { top: number; bottom: number; left: number; right: number } {
+  return {
+    top: window.scrollY,
+    bottom: window.scrollY + window.innerHeight,
+    left: window.scrollX,
+    right: window.scrollX + window.innerWidth,
+  }
+}
+
+/**
+ * Check if element is in viewport
+ */
+function isInViewport(el: SnapshotElement): boolean {
+  const viewport = getViewportBounds()
+  return !(
+    el.y > viewport.bottom ||
+    el.y + el.height < viewport.top ||
+    el.x > viewport.right ||
+    el.x + el.width < viewport.left
+  )
+}
+
+function takeSnapshot(options?: { offset?: number; limit?: number; viewportOnly?: boolean }): PageSnapshot {
+  resetElements()
+  const offset = options?.offset ?? 0
+  const limit = options?.limit ?? 500
+  const viewportOnly = options?.viewportOnly ?? false
+
+  // Get all interactive elements
+  const allElements = getAllInteractiveElements()
+
+  // Filter to viewport if requested
+  const filtered = viewportOnly
+    ? allElements.filter(isInViewport)
+    : allElements
+
+  // Apply pagination
+  const paginated = filtered.slice(offset, offset + limit)
+
+  // Format lines
+  const lines = paginated.map(formatElementLine)
 
   const formattedText = [
     `URL: ${document.location.href}`,
     `Title: ${document.title}`,
     ``,
-    `=== Interactive Elements ===`,
+    `=== Interactive Elements (${offset}-${offset + paginated.length} of ${filtered.length}) ===`,
     ...lines,
   ].join('\n')
 
   return {
     url: document.location.href,
     title: document.title,
-    elements,
+    elements: paginated,
     formattedText,
   }
 }
@@ -263,6 +308,46 @@ function getPageContent(): string {
   }
 
   return processNode(clone).replace(/\n{3,}/g, '\n\n').trim()
+}
+
+// ─── Modal Detection ──────────────────────────────────────────────────────────
+
+interface DetectedModal {
+  tag: string
+  role?: string
+  selector: string
+  isVisible: boolean
+  text?: string
+}
+
+function detectVisibleModal(): DetectedModal | null {
+  // Common modal selectors
+  const modalSelectors = [
+    '[role="dialog"]',
+    '[role="alertdialog"]',
+    '.modal',
+    '.dialog',
+    '.popup',
+    '.overlay[class*="modal"]',
+    '[aria-modal="true"]',
+  ]
+
+  for (const selector of modalSelectors) {
+    const modals = document.querySelectorAll(selector)
+    for (const modal of modals) {
+      if (isVisible(modal)) {
+        return {
+          tag: modal.tagName.toLowerCase(),
+          role: modal.getAttribute('role') ?? undefined,
+          selector,
+          isVisible: true,
+          text: modal.textContent?.slice(0, 100),
+        }
+      }
+    }
+  }
+
+  return null
 }
 
 // ─── Element Interaction ──────────────────────────────────────────────────────
@@ -370,7 +455,13 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
         }
 
         case 'harbor_snapshot': {
-          const snapshot = takeSnapshot()
+          const { offset, limit, viewportOnly } = message as {
+            type: string
+            offset?: number
+            limit?: number
+            viewportOnly?: boolean
+          }
+          const snapshot = takeSnapshot({ offset, limit, viewportOnly })
           sendResponse({ success: true, data: snapshot })
           break
         }
@@ -676,6 +767,196 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
           break
         }
 
+        case 'harbor_extract_tables': {
+          const { format = 'json', maxTables = 20 } = message as { type: string; format?: string; maxTables?: number }
+          const tables: unknown[] = []
+          document.querySelectorAll('table').forEach((table, idx) => {
+            if (idx >= maxTables) return
+            const rows: string[][] = []
+            table.querySelectorAll('tr').forEach((tr) => {
+              const cells: string[] = []
+              tr.querySelectorAll('td, th').forEach((cell) => {
+                cells.push(cell.textContent?.trim() ?? '')
+              })
+              if (cells.length > 0) rows.push(cells)
+            })
+            if (rows.length > 0) {
+              if (format === 'json') {
+                const headers = rows[0] ?? []
+                const data = rows.slice(1).map((row) =>
+                  Object.fromEntries(headers.map((h, i) => [h, row[i] ?? '']))
+                )
+                tables.push({ headers, data })
+              } else if (format === 'markdown') {
+                const md = rows.map((row) => `| ${row.join(' | ')} |`).join('\n')
+                tables.push(md)
+              } else if (format === 'csv') {
+                const csv = rows.map((row) => row.map((c) => `"${c.replace(/"/g, '""')}"`).join(',')).join('\n')
+                tables.push(csv)
+              }
+            }
+          })
+          sendResponse({ success: true, data: tables })
+          break
+        }
+
+        case 'harbor_get_selected_text': {
+          const selectedText = window.getSelection()?.toString() ?? ''
+          sendResponse({ success: true, data: selectedText })
+          break
+        }
+
+        case 'harbor_extract_by_selector': {
+          const { selectors, limit = 20 } = message as { type: string; selectors: Record<string, string>; limit?: number }
+          const results: Record<string, unknown[]> = {}
+          for (const [name, selector] of Object.entries(selectors)) {
+            try {
+              results[name] = Array.from(document.querySelectorAll(selector))
+                .slice(0, limit)
+                .map((el) => ({
+                  tag: el.tagName.toLowerCase(),
+                  text: el.textContent?.trim().slice(0, 200),
+                  html: el.innerHTML.slice(0, 500),
+                }))
+            } catch {
+              results[name] = []
+            }
+          }
+          sendResponse({ success: true, data: results })
+          break
+        }
+
+        case 'harbor_get_local_storage': {
+          const { keys } = message as { type: string; keys?: string[] }
+          const items: Record<string, unknown> = {}
+          if (keys && keys.length > 0) {
+            keys.forEach((k) => {
+              items[k] = localStorage.getItem(k)
+            })
+          } else {
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i)
+              if (k) items[k] = localStorage.getItem(k)
+            }
+          }
+          sendResponse({ success: true, data: items })
+          break
+        }
+
+        case 'harbor_set_local_storage': {
+          const { items } = message as { type: string; items: Record<string, unknown> }
+          try {
+            for (const [k, v] of Object.entries(items)) {
+              localStorage.setItem(k, String(v))
+            }
+            sendResponse({ success: true })
+          } catch (err) {
+            sendResponse({ success: false, error: String(err) })
+          }
+          break
+        }
+
+        case 'harbor_get_session_storage': {
+          const { keys } = message as { type: string; keys?: string[] }
+          const items: Record<string, unknown> = {}
+          if (keys && keys.length > 0) {
+            keys.forEach((k) => {
+              items[k] = sessionStorage.getItem(k)
+            })
+          } else {
+            for (let i = 0; i < sessionStorage.length; i++) {
+              const k = sessionStorage.key(i)
+              if (k) items[k] = sessionStorage.getItem(k)
+            }
+          }
+          sendResponse({ success: true, data: items })
+          break
+        }
+
+        case 'harbor_set_session_storage': {
+          const { items } = message as { type: string; items: Record<string, unknown> }
+          try {
+            for (const [k, v] of Object.entries(items)) {
+              sessionStorage.setItem(k, String(v))
+            }
+            sendResponse({ success: true })
+          } catch (err) {
+            sendResponse({ success: false, error: String(err) })
+          }
+          break
+        }
+
+        case 'harbor_delete_local_storage': {
+          const { keys } = message as { type: string; keys?: string[] }
+          try {
+            if (keys && keys.length > 0) {
+              keys.forEach((k) => localStorage.removeItem(k))
+              sendResponse({ success: true, data: keys })
+            } else {
+              localStorage.clear()
+              sendResponse({ success: true, data: 'all' })
+            }
+          } catch (err) {
+            sendResponse({ success: false, error: String(err) })
+          }
+          break
+        }
+
+        case 'harbor_find_file_inputs': {
+          const inputs: Array<{ id: number; name?: string; accept?: string }> = []
+          document.querySelectorAll('input[type="file"]').forEach((input) => {
+            const id = assignId(input)
+            inputs.push({
+              id,
+              name: (input as HTMLInputElement).name,
+              accept: (input as HTMLInputElement).accept,
+            })
+          })
+          sendResponse({ success: true, data: inputs })
+          break
+        }
+
+        case 'harbor_detect_modal': {
+          const modal = detectVisibleModal()
+          sendResponse({ success: true, data: { isPresent: !!modal, modal } })
+          break
+        }
+
+        case 'harbor_wait_for_modal': {
+          const { timeout = 30000 } = message as { type: string; timeout?: number }
+          const startTime = Date.now()
+          let found = false
+          let modal: Record<string, unknown> | undefined
+
+          while (Date.now() - startTime < timeout) {
+            modal = detectVisibleModal()
+            if (modal) {
+              found = true
+              break
+            }
+            await new Promise((resolve) => setTimeout(resolve, 500))
+          }
+
+          sendResponse({ success: true, data: { found, modal } })
+          break
+        }
+
+        case 'harbor_close_modal': {
+          const { method = 'escape' } = message as { type: string; method?: string }
+          try {
+            if (method === 'escape') {
+              document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+            } else if (method === 'close_button') {
+              const closeBtn = document.querySelector('[role="button"][aria-label*="close" i], .close, .modal-close, [class*="close"]')
+              if (closeBtn instanceof HTMLElement) closeBtn.click()
+            }
+            sendResponse({ success: true })
+          } catch (err) {
+            sendResponse({ success: false, error: String(err) })
+          }
+          break
+        }
+
         default:
           sendResponse({ success: false, error: `Unknown message type: ${message.type}` })
       }
@@ -690,6 +971,7 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
 // ─── Agent Running Indicator ──────────────────────────────────────────────────
 
 let harborAgentBar: HTMLDivElement | null = null
+let harborStatusPill: HTMLDivElement | null = null
 
 function showAgentIndicator(): void {
   if (harborAgentBar) return
@@ -698,11 +980,20 @@ function showAgentIndicator(): void {
   if (!document.getElementById('harbor-agent-styles')) {
     const style = document.createElement('style')
     style.id = 'harbor-agent-styles'
-    style.textContent =
-      '@keyframes harbor-scan{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}'
+    style.textContent = `
+      @keyframes harbor-scan {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(350%); }
+      }
+      @keyframes harbor-pulse {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(78, 142, 168, 0.7); }
+        50% { box-shadow: 0 0 0 4px rgba(78, 142, 168, 0.3); }
+      }
+    `
     document.head.appendChild(style)
   }
 
+  // Top indicator bar
   const bar = document.createElement('div')
   bar.id = 'harbor-agent-indicator'
   bar.style.cssText = [
@@ -723,19 +1014,229 @@ function showAgentIndicator(): void {
   document.documentElement.appendChild(bar)
   harborAgentBar = bar
 
+  // Bottom-center status pill
+  const pill = document.createElement('div')
+  pill.id = 'harbor-status-pill'
+  pill.style.cssText = [
+    'position:fixed', 'bottom:20px', 'left:50%', 'transform:translateX(-50%)',
+    'z-index:2147483647', 'pointer-events:none',
+    'padding:8px 16px', 'border-radius:20px',
+    'background:rgba(78,142,168,0.95)', 'color:white',
+    'font-size:13px', 'font-weight:500', 'font-family:system-ui,-apple-system,sans-serif',
+    'box-shadow:0 4px 12px rgba(0,0,0,0.15)',
+    'display:flex', 'align-items:center', 'gap:8px',
+    'opacity:0', 'transition:opacity 350ms ease',
+  ].join(';')
+
+  const indicator = document.createElement('div')
+  indicator.style.cssText = [
+    'width:6px', 'height:6px', 'border-radius:50%',
+    'background:rgba(255,255,255,0.9)',
+    'animation:harbor-pulse 2s infinite',
+  ].join(';')
+
+  const text = document.createElement('span')
+  text.textContent = 'Harbor is accessing the screen'
+
+  pill.appendChild(indicator)
+  pill.appendChild(text)
+  document.documentElement.appendChild(pill)
+  harborStatusPill = pill
+
   // Trigger fade-in on next frame
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (harborAgentBar) harborAgentBar.style.opacity = '1'
+    if (harborStatusPill) harborStatusPill.style.opacity = '1'
   }))
 }
 
 function hideAgentIndicator(): void {
-  if (!harborAgentBar) return
-  const bar = harborAgentBar
-  harborAgentBar = null
-  bar.style.opacity = '0'
-  setTimeout(() => bar.remove(), 400)
+  if (harborAgentBar) {
+    const bar = harborAgentBar
+    harborAgentBar = null
+    bar.style.opacity = '0'
+    setTimeout(() => bar.remove(), 400)
+  }
+  if (harborStatusPill) {
+    const pill = harborStatusPill
+    harborStatusPill = null
+    pill.style.opacity = '0'
+    setTimeout(() => pill.remove(), 400)
+  }
 }
+
+// ─── Command Palette Overlay ─────────────────────────────────────────────────
+
+// Simple overlay implementation inline (to avoid module issues with content scripts)
+let overlayRoot: HTMLDivElement | null = null
+let isOverlayOpen = false
+
+function injectOverlayStyles(): void {
+  if (document.getElementById('harbor-overlay-styles')) return
+
+  const style = document.createElement('style')
+  style.id = 'harbor-overlay-styles'
+  style.textContent = `
+    #harbor-overlay-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 2147483646;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 120px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(2px);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 150ms ease, visibility 150ms ease;
+      pointer-events: none;
+    }
+
+    #harbor-overlay-container.open {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    #harbor-overlay-box {
+      background: rgb(var(--harbor-bg, 255, 255, 255));
+      border: 1px solid rgb(var(--harbor-border, 200, 200, 200));
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      width: 90%;
+      max-width: 500px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      max-height: 70vh;
+    }
+
+    #harbor-overlay-input {
+      padding: 12px 16px;
+      font-size: 15px;
+      border: none;
+      border-bottom: 1px solid rgb(var(--harbor-border, 200, 200, 200));
+      background: transparent;
+      color: rgb(var(--harbor-text, 0, 0, 0));
+      outline: none;
+      font-family: inherit;
+    }
+
+    #harbor-overlay-input::placeholder {
+      color: rgb(var(--harbor-text-muted, 100, 100, 100));
+    }
+
+    #harbor-overlay-list {
+      overflow-y: auto;
+      max-height: calc(70vh - 50px);
+      list-style: none;
+      margin: 0;
+      padding: 4px 0;
+    }
+
+    .harbor-overlay-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: rgb(var(--harbor-text, 0, 0, 0));
+      border-left: 3px solid transparent;
+      transition: background-color 100ms ease;
+    }
+
+    .harbor-overlay-item:hover {
+      background-color: rgba(78, 142, 168, 0.08);
+    }
+
+    .harbor-overlay-item.active {
+      background-color: rgba(78, 142, 168, 0.15);
+      border-left-color: rgb(78, 142, 168);
+    }
+
+    .harbor-overlay-item-label {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .harbor-overlay-item-title {
+      font-weight: 500;
+    }
+
+    .harbor-overlay-item-desc {
+      font-size: 11px;
+      color: rgb(var(--harbor-text-muted, 100, 100, 100));
+    }
+  `
+  document.head.appendChild(style)
+}
+
+function createOverlayDOM(): HTMLDivElement {
+  const container = document.createElement('div')
+  container.id = 'harbor-overlay-container'
+
+  const box = document.createElement('div')
+  box.id = 'harbor-overlay-box'
+
+  const input = document.createElement('input')
+  input.id = 'harbor-overlay-input'
+  input.type = 'text'
+  input.placeholder = 'Search or type command...'
+  input.spellcheck = false
+
+  const list = document.createElement('ul')
+  list.id = 'harbor-overlay-list'
+
+  box.appendChild(input)
+  box.appendChild(list)
+  container.appendChild(box)
+
+  return container
+}
+
+function toggleOverlay(): void {
+  if (!overlayRoot) {
+    injectOverlayStyles()
+    overlayRoot = createOverlayDOM()
+    document.documentElement.appendChild(overlayRoot)
+  }
+
+  if (isOverlayOpen) {
+    overlayRoot.classList.remove('open')
+    isOverlayOpen = false
+  } else {
+    overlayRoot.classList.add('open')
+    isOverlayOpen = true
+    const input = overlayRoot.querySelector('#harbor-overlay-input') as HTMLInputElement
+    input.focus()
+    input.value = ''
+  }
+}
+
+// Keyboard listener for Ctrl+Shift+K
+window.addEventListener('keydown', (e: KeyboardEvent) => {
+  if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'k') {
+    e.preventDefault()
+    toggleOverlay()
+  }
+})
+
+// Overlay interaction handler
+document.addEventListener('keydown', (e: KeyboardEvent) => {
+  if (!overlayRoot?.classList.contains('open')) return
+  if (e.key === 'Escape') {
+    e.preventDefault()
+    overlayRoot.classList.remove('open')
+    isOverlayOpen = false
+  }
+}, true)
 
 // Let the service worker know the content script is ready
 chrome.runtime.sendMessage({ type: 'harbor_content_ready', url: document.location.href }).catch(() => {

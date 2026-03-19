@@ -77,6 +77,14 @@ export default function App() {
       if (!onboarding?.completed) {
         setView('onboarding')
       } else {
+        // Load last session for persistence
+        chrome.storage.local.get('harbor_last_session', (sessionData) => {
+          const lastSessionId = sessionData.harbor_last_session as string | undefined
+          if (lastSessionId) {
+            console.log('📚 App: Restoring last session:', lastSessionId)
+            setCurrentSessionId(lastSessionId)
+          }
+        })
         setView('chat')
       }
     })

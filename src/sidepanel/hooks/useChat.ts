@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import type { AgentSettings, AgentEvent, ChatMessage } from '../../shared/types'
 import { PORT_NAME } from '../../shared/constants'
+import { StreamDebouncer } from '../utils/stream-debouncer'
 
 // ─── UI Types ─────────────────────────────────────────────────────────────────
 
@@ -108,6 +109,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const eventSequenceRef = useRef(0)
+  const debouncerRef = useRef<StreamDebouncer | null>(null)
 
   // Load session when sessionId changes
   useEffect(() => {
@@ -130,28 +132,39 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   const connectPortRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
+    // Initialize debouncer if not already created
+    if (!debouncerRef.current) {
+      debouncerRef.current = new StreamDebouncer((debouncedDelta) => {
+        const { text, messageId } = debouncedDelta
+        setMessages((prev) => {
+          const last = prev[prev.length - 1]
+          if (last?.id === messageId && last.role === 'assistant') {
+            return [...prev.slice(0, -1), { ...last, text: last.text + text, isStreaming: true }]
+          }
+          // If the last message is a streaming assistant msg with thinking blocks,
+          // reasoning_content arrived before text — merge into that message instead
+          if (last?.role === 'assistant' && last.isStreaming && last.thinkingBlocks.length > 0 && !last.text) {
+            return [...prev.slice(0, -1), { ...last, id: messageId, text, isStreaming: true }]
+          }
+          return [...prev, {
+            id: messageId, role: 'assistant', text, toolCalls: [],
+            thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
+          }]
+        })
+      }, 50) // 50ms debounce interval
+    }
+
     // Event handler defined once; state setters are stable refs so no deps needed
     function handleEvent(event: AgentEvent) {
       switch (event.type) {
-        // ── Streaming text ──────────────────────────────────────────────────
+        // ── Streaming text (debounced) ──────────────────────────────────────
         case 'text_delta': {
           const { text, messageId } = event
           currentMsgId.current = messageId
-          setMessages((prev) => {
-            const last = prev[prev.length - 1]
-            if (last?.id === messageId && last.role === 'assistant') {
-              return [...prev.slice(0, -1), { ...last, text: last.text + text, isStreaming: true }]
-            }
-            // If the last message is a streaming assistant msg with thinking blocks,
-            // reasoning_content arrived before text — merge into that message instead
-            if (last?.role === 'assistant' && last.isStreaming && last.thinkingBlocks.length > 0 && !last.text) {
-              return [...prev.slice(0, -1), { ...last, id: messageId, text, isStreaming: true }]
-            }
-            return [...prev, {
-              id: messageId, role: 'assistant', text, toolCalls: [],
-              thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
-            }]
-          })
+          // Buffer the delta instead of immediately updating
+          if (debouncerRef.current) {
+            debouncerRef.current.addDelta({ type: 'text_delta', text, messageId })
+          }
           break
         }
 
@@ -235,6 +248,10 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
         // ── Message complete (one provider turn done, agent may still be running) ──
         case 'message_complete': {
           const { messageId } = event
+          // Flush any remaining buffered text
+          if (debouncerRef.current) {
+            debouncerRef.current.flush(messageId)
+          }
           setMessages((prev) =>
             prev.map((m) => {
               if (m.id !== messageId) return m

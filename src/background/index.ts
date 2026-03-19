@@ -86,6 +86,8 @@ async function saveSession(session: StoredSession): Promise<void> {
   const sessions = (data[STORAGE_KEYS.SESSIONS] ?? {}) as Record<string, StoredSession>
   sessions[session.id] = session
   await chrome.storage.local.set({ [STORAGE_KEYS.SESSIONS]: sessions })
+  // Auto-save as last session for persistence
+  await chrome.storage.local.set({ [STORAGE_KEYS.LAST_SESSION]: session.id })
 }
 
 async function deleteSession(sessionId: string): Promise<void> {
