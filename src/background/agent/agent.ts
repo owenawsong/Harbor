@@ -218,20 +218,39 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
     console.log('🤖 runAgent: Starting main while loop...')
     while (iterations < MAX_TOOL_ITERATIONS) {
+      console.log('🔄 While loop iteration started:', { iterations })
+
+      console.log('🔄 Checking if signal?.aborted...')
       if (signal?.aborted) {
+        console.log('⚠️ Signal was aborted')
         onEvent({ type: 'error', error: 'Agent stopped by user.' })
         return
       }
+      console.log('✅ Signal check passed')
 
+      console.log('🔄 Incrementing iterations...')
       iterations++
+      console.log('✅ iterations incremented to:', iterations)
 
+      console.log('🔄 Declaring response accumulation variables...')
       // Accumulate the response
       let currentText = ''
+      console.log('✅ currentText declared')
+
       const pendingToolCalls: Map<string, { name: string; input: string }> = new Map()
+      console.log('✅ pendingToolCalls Map created')
+
       const completedToolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
+      console.log('✅ completedToolCalls array created')
+
       let stopReason = ''
+      console.log('✅ stopReason declared')
+
+      console.log('🔄 Entering try block, about to call provider.complete()...')
+      console.log('Provider details:', { providerName: provider.name, hasComplete: !!provider.complete })
 
       try {
+        console.log('🔄 Starting for await on provider.complete()...')
         for await (const event of provider.complete({
           settings,
           messages: normalizedHistory,
@@ -239,8 +258,14 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
           systemPrompt,
           signal,
         })) {
-          if (signal?.aborted) break
+          console.log('📡 Received event from provider:', { eventType: event.type })
 
+          if (signal?.aborted) {
+            console.log('⚠️ Signal aborted during event processing')
+            break
+          }
+
+          console.log('🔄 Processing event in switch statement...')
           switch (event.type) {
             case 'text_delta':
               currentText += event.text
