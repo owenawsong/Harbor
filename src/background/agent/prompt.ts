@@ -3,8 +3,6 @@
  * Modeled after BrowserOS's prompt structure with adaptation for Chrome extension context.
  */
 
-import { getFormHandlingInstructions } from './form-parsing-guide'
-
 export interface BuildPromptOptions {
   enableMemory?: boolean
   memory?: string
@@ -19,7 +17,6 @@ export function buildSystemPrompt(options: BuildPromptOptions = {}): string {
   sections.push(taskExecutionSection())
   sections.push(observeActVerifySection())
   sections.push(errorRecoverySection())
-  sections.push(formHandlingSection())
   sections.push(toolGuidanceSection())
   if (options.enableMemory && options.memory) {
     sections.push(memorySection(options.memory))
@@ -138,10 +135,6 @@ You have access to stored memories from previous sessions:
 ${memory}
 
 Use these memories to personalize your responses and remember user preferences.`
-}
-
-function formHandlingSection(): string {
-  return getFormHandlingInstructions()
 }
 
 function outputFormatSection(): string {

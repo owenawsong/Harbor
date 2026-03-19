@@ -6,7 +6,6 @@
 
 import type { ProviderAdapter, CompletionOptions, CompletionEvent, NormalizedMessage } from './types'
 import type { ToolDefinition } from '../../shared/types'
-import { fetchWithRetry, classifyError } from './retry'
 
 // ─── SSE Parser ───────────────────────────────────────────────────────────────
 
@@ -100,43 +99,28 @@ export const anthropicProvider: ProviderAdapter = {
       return
     }
 
-    let response: Response
-    try {
-      response = await fetchWithRetry(
-        'https://api.anthropic.com/v1/messages',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': provider.apiKey ?? '',
-            'anthropic-version': '2023-06-01',
-            'anthropic-dangerous-direct-browser-only-api': 'true',
-          },
-          body: JSON.stringify({
-            model: provider.model,
-            max_tokens: settings.maxTokens ?? 8192,
-            system: systemPrompt,
-            messages: toAnthropicMessages(messages),
-            tools: toAnthropicTools(tools),
-            stream: true,
-          }),
-          signal,
-        },
-        { maxAttempts: 5 }
-      )
-    } catch (err) {
-      const classification = classifyError(null, err)
-      yield {
-        type: 'error',
-        error: `Failed to reach Anthropic API: ${classification.message}`,
-      }
-      return
-    }
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': provider.apiKey ?? '',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-only-api': 'true',
+      },
+      body: JSON.stringify({
+        model: provider.model,
+        max_tokens: settings.maxTokens ?? 8192,
+        system: systemPrompt,
+        messages: toAnthropicMessages(messages),
+        tools: toAnthropicTools(tools),
+        stream: true,
+      }),
+      signal,
+    })
 
     if (!response.ok) {
-      const errorText = await response.text().catch(() => '')
-      const classification = classifyError(response.status, new Error(errorText))
-      yield { type: 'error', error: `Anthropic API error ${response.status}: ${errorText || classification.message}` }
+      const errorText = await response.text()
+      yield { type: 'error', error: `Anthropic API error ${response.status}: ${errorText}` }
       return
     }
 
