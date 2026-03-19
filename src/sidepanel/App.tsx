@@ -25,7 +25,7 @@ export default function App() {
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [chatKey, setChatKey]                   = useState(0)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
-  const [cmdShortcut, setCmdShortcut] = useState('Ctrl+Shift+K')
+  const [cmdShortcut, setCmdShortcut] = useState('Ctrl+Shift+J')
   // Pending message to send when switching to chat
   const [pendingMessage, setPendingMessage]     = useState<string | null>(null)
 
@@ -145,11 +145,13 @@ export default function App() {
         e.altKey === alt
 
       if (matches) {
+        console.log('🎯 CommandPalette: Hotkey matched! Opening palette')
         e.preventDefault()
         setCommandPaletteOpen((v) => !v)
       }
     }
     window.addEventListener('keydown', handler)
+    console.log('🎯 CommandPalette: Listener registered for shortcut:', cmdShortcut)
     return () => window.removeEventListener('keydown', handler)
   }, [cmdShortcut])
 
