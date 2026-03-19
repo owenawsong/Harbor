@@ -21,37 +21,64 @@ export function normalizeStopReason(
 
   const normalized = rawStopReason.toLowerCase().trim()
 
-  // Anthropic native format (already normalized)
+  // ── Anthropic (Claude) ─────────────────────────────────────────────────────
+  // Native format: 'end_turn', 'tool_use', 'max_tokens', 'stop_sequence'
   if (normalized === 'end_turn') return 'end_turn'
   if (normalized === 'tool_use') return 'tool_use'
   if (normalized === 'max_tokens') return 'max_tokens'
   if (normalized === 'stop_sequence') return 'stop_sequence'
 
-  // OpenAI format
-  if (providerName === 'openai' || providerName === 'openai-compatible') {
+  // ── OpenAI (GPT models) ────────────────────────────────────────────────────
+  if (providerName === 'openai') {
     if (normalized === 'stop') return 'end_turn'
     if (normalized === 'length') return 'max_tokens'
-    if (normalized === 'function_calls' || normalized === 'tool_calls') return 'tool_use'
+    if (normalized === 'tool_calls' || normalized === 'function_calls') return 'tool_use'
+    if (normalized === 'content_filter') return 'stop_sequence' // Safety block
   }
 
-  // Google format
+  // ── OpenAI-compatible (Ollama, local, etc) ────────────────────────────────
+  if (providerName === 'openai-compatible' || providerName === 'ollama') {
+    if (normalized === 'stop') return 'end_turn'
+    if (normalized === 'length') return 'max_tokens'
+    if (normalized === 'tool_calls' || normalized === 'function_calls') return 'tool_use'
+  }
+
+  // ── Google (Gemini) ────────────────────────────────────────────────────────
+  // Format: 'STOP', 'MAX_TOKENS', 'SAFETY' (blocked by safety), 'RECITATION' (copyright), 'OTHER'
   if (providerName === 'google') {
     if (normalized === 'stop') return 'end_turn'
     if (normalized === 'max_tokens') return 'max_tokens'
-    // SAFETY and OTHER are unhandled - continue looping
-    return 'unknown'
+    // SAFETY, RECITATION, OTHER - these should continue trying
+    if (normalized === 'finish_reason_unspecified') return 'unknown'
   }
 
-  // Ollama format
-  if (providerName === 'ollama') {
+  // ── OpenRouter ─────────────────────────────────────────────────────────────
+  // Uses OpenAI-compatible format
+  if (providerName === 'openrouter') {
+    if (normalized === 'stop') return 'end_turn'
+    if (normalized === 'length') return 'max_tokens'
+    if (normalized === 'tool_calls' || normalized === 'function_calls') return 'tool_use'
+  }
+
+  // ── Poe ────────────────────────────────────────────────────────────────────
+  // Uses OpenAI-compatible format under the hood
+  if (providerName === 'poe') {
     if (normalized === 'stop') return 'end_turn'
     if (normalized === 'length') return 'max_tokens'
   }
 
-  // Generic detection for edge cases
+  // ── Harbor Free (NVIDIA NIM) ───────────────────────────────────────────────
+  // MiniMax and Qwen models use OpenAI-compatible format
+  if (providerName === 'harbor-free') {
+    if (normalized === 'stop') return 'end_turn'
+    if (normalized === 'length') return 'max_tokens'
+    if (normalized === 'tool_calls' || normalized === 'function_calls') return 'tool_use'
+  }
+
+  // ── Generic fallback detection for edge cases ──────────────────────────────
   if (normalized.includes('tool') || normalized.includes('function')) return 'tool_use'
   if (normalized.includes('end') || normalized.includes('stop')) return 'end_turn'
-  if (normalized.includes('token') || normalized.includes('length')) return 'max_tokens'
+  if (normalized.includes('token') || normalized.includes('length') || normalized.includes('max')) return 'max_tokens'
 
   return 'unknown'
 }
