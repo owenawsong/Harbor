@@ -379,6 +379,8 @@ async function* openAICompatibleComplete(
     return
   }
 
+  console.log('🔐 Making API request:', { baseUrl, apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'empty', provider: providerName, model: settings.provider.model })
+
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -656,6 +658,14 @@ async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<C
   const useCustomKey = Boolean(options.settings.provider.apiKey)
   const hasImages = hasAttachments(options.messages)
   const apiKey = options.settings.provider.apiKey || HARBOR_FREE_KEY
+
+  console.log('🌊 harborFreeComplete:', {
+    useCustomKey,
+    hasImages,
+    apiKeyProvided: options.settings.provider.apiKey ? `${options.settings.provider.apiKey.substring(0, 10)}...` : 'none',
+    usingKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'empty',
+    model: options.settings.provider.model
+  })
 
   // If user has custom key or images detected, skip MiniMax entirely
   if (useCustomKey || hasImages) {
