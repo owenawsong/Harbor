@@ -129,7 +129,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
             break
 
           case 'thinking':
-            onEvent({ type: 'thinking', text: event.text })
+            onEvent({ type: 'thinking', text: event.text, messageId })
             break
 
           case 'tool_call_start':

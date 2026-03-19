@@ -135,6 +135,7 @@ export interface AgentEventError {
 export interface AgentEventThinking {
   type: 'thinking'
   text: string
+  messageId: string
 }
 
 export interface AgentEventAgentComplete {

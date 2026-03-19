@@ -154,19 +154,15 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
 
         // ── Thinking blocks ─────────────────────────────────────────────────
         case 'thinking': {
-          const { text } = event
-          const msgId = currentMsgId.current ?? (() => {
-            const id = uid()
-            currentMsgId.current = id
-            return id
-          })()
+          const { text, messageId } = event as { text: string; messageId: string }
+          currentMsgId.current = messageId
 
           setMessages((prev) => {
-            const idx = prev.findIndex((m) => m.id === msgId && m.role === 'assistant')
+            const idx = prev.findIndex((m) => m.id === messageId && m.role === 'assistant')
 
             if (idx === -1) {
               return [...prev, {
-                id: msgId, role: 'assistant', text: '', toolCalls: [],
+                id: messageId, role: 'assistant', text: '', toolCalls: [],
                 thinkingBlocks: [{ id: uid(), text, isOpen: true }],
                 isStreaming: true, timestamp: Date.now(),
               }]
