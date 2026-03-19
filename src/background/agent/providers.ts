@@ -387,14 +387,25 @@ async function* openAICompatibleComplete(
   extraBody?: { temperature?: number; top_p?: number; max_tokens?: number; chat_template_kwargs?: Record<string, unknown> },
   imageSupport = false,
 ): AsyncGenerator<CompletionEvent> {
-  const { settings, messages, tools, systemPrompt, signal } = options
-  const providerName = settings.provider.provider
+  console.log('🌐 openAICompatibleComplete: Function started')
 
+  console.log('🌐 openAICompatibleComplete: Destructuring options...')
+  const { settings, messages, tools, systemPrompt, signal } = options
+  console.log('✅ openAICompatibleComplete: Options destructured')
+
+  console.log('🌐 openAICompatibleComplete: Getting providerName...')
+  const providerName = settings.provider.provider
+  console.log('✅ openAICompatibleComplete: providerName =', providerName)
+
+  console.log('🌐 openAICompatibleComplete: Checking apiKey...')
   if (!apiKey && providerName !== 'ollama' && providerName !== 'harbor-free') {
+    console.log('❌ openAICompatibleComplete: Missing API key')
     yield { type: 'error', error: `${providerName} API key is not set. Please add your key in Settings.` }
     return
   }
+  console.log('✅ openAICompatibleComplete: API key check passed')
 
+  console.log('🌐 openAICompatibleComplete: About to fetch from', baseUrl)
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
