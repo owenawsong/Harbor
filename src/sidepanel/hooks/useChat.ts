@@ -375,6 +375,9 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
         console.log('👤 Adding user message to messages array')
         setMessages((prev) => [...prev, userMsg])
 
+        // Save session as last active session
+        chrome.storage.local.set({ harbor_last_session: sessionId })
+
         // Reconnect port if background service worker went idle
         console.log('🔌 Checking port connection:', { hasPort: !!portRef.current, hasConnectPort: !!connectPortRef.current })
         if (!portRef.current) {
