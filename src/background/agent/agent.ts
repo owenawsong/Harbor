@@ -194,18 +194,30 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     const normalizedHistory = chatMessagesToNormalized(history)
     console.log('✅ runAgent: History normalized:', { normalizedCount: normalizedHistory.length })
 
-  // Add the new user message
-  const userMessage: NormalizedMessage = {
-    role: 'user',
-    content: [{ type: 'text', text: message }],
-  }
-  normalizedHistory.push(userMessage)
+    console.log('🤖 runAgent: Creating user message object...')
+    // Add the new user message
+    const userMessage: NormalizedMessage = {
+      role: 'user',
+      content: [{ type: 'text', text: message }],
+    }
+    console.log('✅ runAgent: User message created')
 
-  let iterations = 0
-  const messageId = generateId()
-  const recentToolCalls: Array<{ name: string; input: Record<string, unknown>; timestamp: number }> = []
+    console.log('🤖 runAgent: Pushing user message to history...')
+    normalizedHistory.push(userMessage)
+    console.log('✅ runAgent: User message pushed')
 
-  while (iterations < MAX_TOOL_ITERATIONS) {
+    console.log('🤖 runAgent: Initializing loop variables...')
+    let iterations = 0
+    console.log('✅ runAgent: iterations initialized')
+
+    const messageId = generateId()
+    console.log('✅ runAgent: messageId generated:', { messageId })
+
+    const recentToolCalls: Array<{ name: string; input: Record<string, unknown>; timestamp: number }> = []
+    console.log('✅ runAgent: recentToolCalls array created')
+
+    console.log('🤖 runAgent: Starting main while loop...')
+    while (iterations < MAX_TOOL_ITERATIONS) {
     if (signal?.aborted) {
       onEvent({ type: 'error', error: 'Agent stopped by user.' })
       return
