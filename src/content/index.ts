@@ -245,6 +245,10 @@ function takeSnapshot(options?: { offset?: number; limit?: number; viewportOnly?
     title: document.title,
     elements: paginated,
     formattedText,
+    totalElements: filtered.length,
+    currentOffset: offset,
+    currentLimit: limit,
+    hasMore: offset + paginated.length < filtered.length,
   }
 }
 

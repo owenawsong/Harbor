@@ -12,7 +12,10 @@ export const snapshotTools: ToolHandler[] = [
     definition: {
       name: 'take_snapshot',
       description:
-        'Get a concise snapshot of interactive elements on the current page. Returns a text representation with element IDs you can use to interact with them. Use offset/limit for pagination to avoid overwhelming context window. Set viewportOnly=true to see only visible elements.',
+        'Get a concise snapshot of interactive elements on the current page. Returns element IDs for interaction. ' +
+        'For large pages (>500 elements), use offset/limit for pagination. ' +
+        'Response includes totalElements and hasMore fields—when hasMore=true, call again with offset+=limit to fetch next page. ' +
+        'Set viewportOnly=true to see only visible elements.',
       parameters: {
         type: 'object',
         properties: {
@@ -58,13 +61,26 @@ export const snapshotTools: ToolHandler[] = [
         })
         if (!result.success) return error(result.error ?? 'Snapshot failed')
 
-        const snapshot = result.data as { formattedText: string; elements: unknown[]; url: string; title: string }
+        const snapshot = result.data as {
+          formattedText: string
+          elements: unknown[]
+          url: string
+          title: string
+          totalElements?: number
+          currentOffset?: number
+          currentLimit?: number
+          hasMore?: boolean
+        }
+        const totalElements = snapshot.totalElements ?? (snapshot.elements as unknown[]).length
+        const hasMore = snapshot.hasMore ?? (validOffset + (snapshot.elements as unknown[]).length < totalElements)
+
         return ok({
           text: snapshot.formattedText,
           elementCount: (snapshot.elements as unknown[]).length,
-          totalElements: (snapshot.elements as unknown[]).length, // In this batch
+          totalElements,
           offset: validOffset,
           limit: validLimit,
+          hasMore,
           url: snapshot.url,
           title: snapshot.title,
           viewportOnly,
