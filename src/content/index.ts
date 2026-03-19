@@ -297,12 +297,16 @@ function fillInput(el: Element, text: string, clearFirst = true) {
   // Focus the element first
   inputEl.focus()
 
-  // Set value and dispatch events
-  const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set
-    ?? Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value')?.set
+  // Get the native setter for the correct element type
+  let nativeValueSetter: ((value: string) => void) | undefined
+  if (inputEl instanceof HTMLInputElement) {
+    nativeValueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set
+  } else if (inputEl instanceof HTMLTextAreaElement) {
+    nativeValueSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set
+  }
 
-  if (nativeInputValueSetter) {
-    nativeInputValueSetter.call(inputEl, inputEl.value + text)
+  if (nativeValueSetter) {
+    nativeValueSetter.call(inputEl, inputEl.value + text)
   } else {
     inputEl.value = inputEl.value + text
   }
