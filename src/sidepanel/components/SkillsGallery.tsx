@@ -106,7 +106,7 @@ export default function SkillsGallery({ onBack, onRunSkill }: Props) {
       {/* Search */}
       <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
         <div
-          className="flex items-center gap-2 px-2.5 py-2 rounded-lg border"
+          className="flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-colors focus-within:border-[rgb(var(--harbor-accent))] focus-within:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)]"
           style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
         >
           <Search size={13} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
@@ -119,7 +119,11 @@ export default function SkillsGallery({ onBack, onRunSkill }: Props) {
             style={{ color: 'rgb(var(--harbor-text))' }}
           />
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')}>
+            <button
+              onClick={() => setSearchQuery('')}
+              className="p-0.5 rounded focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
+              title="Clear search"
+            >
               <X size={11} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
             </button>
           )}
@@ -234,7 +238,7 @@ function SkillCard({ skill, onSelect, onToggle, onRun }: {
         <div className="flex items-center gap-1">
           <button
             onClick={onRun}
-            className="text-[11px] px-2.5 py-1 rounded-lg font-medium"
+            className="text-[11px] px-2.5 py-1 rounded-lg font-medium focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
             style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
           >
             Run
@@ -389,14 +393,14 @@ function CreateSkillForm({ onSave, onCancel }: {
         <button
           onClick={handleSave}
           disabled={!name.trim() || !instructions.trim()}
-          className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-40"
+          className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
         >
           Create
         </button>
         <button
           onClick={onCancel}
-          className="text-xs px-3 py-1.5 rounded-lg"
+          className="text-xs px-3 py-1.5 rounded-lg focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           style={{ color: 'rgb(var(--harbor-text-muted))' }}
         >
           Cancel
