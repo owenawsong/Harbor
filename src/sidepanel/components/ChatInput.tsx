@@ -84,21 +84,42 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
     <div className="px-3 pb-3 pt-2 border-t border-[rgb(var(--harbor-border))]">
       {/* Attachment previews */}
       {attachments.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {attachments.map((a) => (
-            <div
-              key={a.name}
-              className="flex items-center gap-1 px-2 py-1 rounded-md border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[180px]"
-            >
-              <span className="truncate">{a.name}</span>
-              <button
-                onClick={() => removeAttachment(a.name)}
-                className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))] hover:text-red-500"
+        <div className="flex flex-wrap gap-2 mb-2">
+          {attachments.map((a) => {
+            const isImage = a.mimeType.startsWith('image/')
+            return (
+              <div
+                key={a.name}
+                className="relative group rounded-lg overflow-hidden border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))]"
               >
-                <X size={11} />
-              </button>
-            </div>
-          ))}
+                {isImage ? (
+                  <div className="relative">
+                    <img
+                      src={a.dataUrl}
+                      alt={a.name}
+                      className="h-16 w-16 object-cover"
+                    />
+                    <button
+                      onClick={() => removeAttachment(a.name)}
+                      className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 px-2 py-1 text-xs text-[rgb(var(--harbor-text-muted))] max-w-[180px]">
+                    <span className="truncate">{a.name}</span>
+                    <button
+                      onClick={() => removeAttachment(a.name)}
+                      className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))] hover:text-red-500"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
       )}
 

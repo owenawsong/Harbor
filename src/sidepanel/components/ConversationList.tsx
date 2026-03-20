@@ -10,6 +10,7 @@ interface Props {
   onNewConversation: () => void
   onDeleteSession: (id: string) => void
   onPinSession?: (id: string, pinned: boolean) => void
+  onExport?: () => void
   onBack: () => void
 }
 
@@ -75,6 +76,7 @@ export default function ConversationList({
   onNewConversation,
   onDeleteSession,
   onPinSession,
+  onExport,
   onBack,
 }: Props) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -259,6 +261,7 @@ export default function ConversationList({
                           onClick={(e) => {
                             e.stopPropagation()
                             exportSessionToMarkdown(session)
+                            onExport?.()
                           }}
                           className="p-1 rounded-lg transition-colors"
                           title="Export as Markdown"

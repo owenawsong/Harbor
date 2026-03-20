@@ -18,7 +18,7 @@
     --harbor-border-2:     205 200 191;   /* cream-400 */
     --harbor-text:          26  26  46;   /* navy-ish dark */
     --harbor-text-muted:    90  88  95;   /* medium gray */
-    --harbor-text-faint:   160 157 152;   /* faint */
+    --harbor-text-faint:   130 125 115;   /* improved contrast faint */
     --harbor-accent:        78 142 168;   /* teal harbor-500 */
     --harbor-accent-hover:  61 122 148;   /* teal harbor-600 */
     --harbor-accent-light: 221 240 246;   /* teal tint */
@@ -295,23 +295,25 @@
 
 .md pre {
   margin: 0.75em 0;
-  border-radius: 10px;
-  background: rgb(var(--harbor-surface));
+  border-radius: 12px;
+  background: rgb(var(--harbor-surface-2));
   border: 1px solid rgb(var(--harbor-border));
   overflow-x: auto;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.1);
 }
 .dark .md pre {
-  background: rgb(10 10 20);
-  border-color: rgb(38 38 64);
+  background: rgb(12 12 24);
+  border-color: rgb(40 40 70);
 }
 .md pre code {
   display: block;
-  padding: 0.85em 1em;
+  padding: 1em;
   background: none;
   border: none;
   font-size: 0.82em;
-  line-height: 1.65;
+  line-height: 1.7;
   color: rgb(var(--harbor-text));
+  letter-spacing: 0.3px;
 }
 
 .md blockquote {

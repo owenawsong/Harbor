@@ -10,6 +10,8 @@ import CommandPalette from './components/CommandPalette'
 import ErrorBoundary from './components/ErrorBoundary'
 import DataManager from './components/DataManager'
 import QuickSetup from './components/QuickSetup'
+import ToastContainer from './components/Toast'
+import { useToast } from './hooks/useToast'
 import type {
   AgentSettings, StoredSession, OnboardingData, IdentitySettings, ProviderName,
 } from '../shared/types'
@@ -20,6 +22,8 @@ const ONBOARDING_KEY  = 'harbor_onboarding'
 const IDENTITY_KEY    = 'harbor_identity'
 
 export default function App() {
+  const { messages: toastMessages, success, error, info, dismiss } = useToast()
+
   const [view, setView]                         = useState<View>('loading')
   const [settings, setSettings]                 = useState<AgentSettings | null>(null)
   const [theme, setTheme]                       = useState<'light' | 'dark' | 'system'>('system')
@@ -292,6 +296,7 @@ export default function App() {
     chrome.runtime.sendMessage({ type: 'delete_session', sessionId: id }, () => {
       loadSessions()
       if (currentSessionId === id) setCurrentSessionId(null)
+      info('Conversation deleted')
     })
   }
 
@@ -305,6 +310,7 @@ export default function App() {
       const updated = stored.map((s) => (s.id === id ? { ...s, isPinned: pinned } : s))
       chrome.storage.local.set({ harbor_sessions: updated })
     })
+    info(pinned ? 'Conversation pinned' : 'Conversation unpinned')
   }
 
   const handleSendMessage = (text: string) => {
@@ -395,6 +401,7 @@ export default function App() {
           onNewConversation={handleNewConversation}
           onDeleteSession={handleDeleteSession}
           onPinSession={handlePinSession}
+          onExport={() => info('Conversation exported')}
           onBack={() => setView('chat')}
         />
       )}
@@ -458,11 +465,15 @@ export default function App() {
               }
               handleSaveSettings(newSettings, theme, identity)
               setShowQuickSetup(false)
+              success('API Key Configured', 'Ready to start chatting!')
             }
           }}
           onDismiss={() => setShowQuickSetup(false)}
         />
       )}
+
+      {/* Toast Container */}
+      <ToastContainer messages={toastMessages} onDismiss={dismiss} />
 
       </div>
     </ErrorBoundary>
