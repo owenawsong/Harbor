@@ -9,8 +9,9 @@ import SkillsGallery from './components/SkillsGallery'
 import CommandPalette from './components/CommandPalette'
 import ErrorBoundary from './components/ErrorBoundary'
 import DataManager from './components/DataManager'
+import QuickSetup from './components/QuickSetup'
 import type {
-  AgentSettings, StoredSession, OnboardingData, IdentitySettings,
+  AgentSettings, StoredSession, OnboardingData, IdentitySettings, ProviderName,
 } from '../shared/types'
 
 type View = 'loading' | 'onboarding' | 'chat' | 'settings' | 'history' | 'dashboard' | 'memory' | 'skills' | 'data-manager'
@@ -31,6 +32,7 @@ export default function App() {
   const [agentMode, setAgentMode]               = useState(true) // true = Agent mode, false = Chat mode
   // Pending message to send when switching to chat
   const [pendingMessage, setPendingMessage]     = useState<string | null>(null)
+  const [showQuickSetup, setShowQuickSetup]     = useState(false)
 
   // ── Load on mount ─────────────────────────────────────────────────────────
 
@@ -92,6 +94,17 @@ export default function App() {
       }
     })
   }, [])
+
+  // Show QuickSetup if in chat view and no API key
+  useEffect(() => {
+    if (view === 'chat' && settings && !settings.provider.apiKey && !showQuickSetup) {
+      const hasShownBefore = sessionStorage.getItem('harbor_quick_setup_shown')
+      if (!hasShownBefore) {
+        setShowQuickSetup(true)
+        sessionStorage.setItem('harbor_quick_setup_shown', 'true')
+      }
+    }
+  }, [view, settings, showQuickSetup])
 
   // ── Apply theme ───────────────────────────────────────────────────────────
 
@@ -433,6 +446,24 @@ export default function App() {
         onSetTheme={setTheme}
         onSendMessage={handleSendMessage}
       />
+
+      {/* Quick Setup Overlay (show on first chat if no API key) */}
+      {showQuickSetup && (
+        <QuickSetup
+          onSetupComplete={(provider, apiKey) => {
+            if (settings) {
+              const newSettings: AgentSettings = {
+                ...settings,
+                provider: { ...settings.provider, provider, apiKey },
+              }
+              handleSaveSettings(newSettings, theme, identity)
+              setShowQuickSetup(false)
+            }
+          }}
+          onDismiss={() => setShowQuickSetup(false)}
+        />
+      )}
+
       </div>
     </ErrorBoundary>
   )
