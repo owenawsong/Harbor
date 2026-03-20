@@ -86,7 +86,8 @@ function ToastItem({
           setIsExiting(true)
           setTimeout(onDismiss, 200)
         }}
-        className={`flex-shrink-0 ${colors.icon} hover:opacity-70 transition-opacity`}
+        className={`flex-shrink-0 ${colors.icon} hover:opacity-70 transition-opacity focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-current rounded`}
+        title="Dismiss"
       >
         <X size={14} />
       </button>

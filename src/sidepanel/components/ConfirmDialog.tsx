@@ -43,14 +43,14 @@ export default function ConfirmDialog({
           <button
             onClick={onCancel}
             disabled={isLoading}
-            className="flex-1 px-3 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] hover:bg-[rgb(var(--harbor-surface-2))] text-sm font-medium text-[rgb(var(--harbor-text))] disabled:opacity-50 transition-colors"
+            className="flex-1 px-3 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] hover:bg-[rgb(var(--harbor-surface-2))] text-sm font-medium text-[rgb(var(--harbor-text))] disabled:opacity-50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           >
             {cancelText}
           </button>
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 transition-colors ${
+            className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] ${
               isDangerous
                 ? 'bg-red-600 hover:bg-red-700'
                 : 'bg-harbor-600 hover:bg-harbor-700'
