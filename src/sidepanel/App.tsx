@@ -7,11 +7,13 @@ import Dashboard from './components/Dashboard'
 import MemoryPanel from './components/MemoryPanel'
 import SkillsGallery from './components/SkillsGallery'
 import CommandPalette from './components/CommandPalette'
+import ErrorBoundary from './components/ErrorBoundary'
+import DataManager from './components/DataManager'
 import type {
   AgentSettings, StoredSession, OnboardingData, IdentitySettings,
 } from '../shared/types'
 
-type View = 'loading' | 'onboarding' | 'chat' | 'settings' | 'history' | 'dashboard' | 'memory' | 'skills'
+type View = 'loading' | 'onboarding' | 'chat' | 'settings' | 'history' | 'dashboard' | 'memory' | 'skills' | 'data-manager'
 
 const ONBOARDING_KEY  = 'harbor_onboarding'
 const IDENTITY_KEY    = 'harbor_identity'
@@ -314,10 +316,11 @@ export default function App() {
   }
 
   return (
-    <div
-      className="flex flex-col h-full"
-      style={{ background: 'rgb(var(--harbor-bg))', color: 'rgb(var(--harbor-text))' }}
-    >
+    <ErrorBoundary>
+      <div
+        className="flex flex-col h-full"
+        style={{ background: 'rgb(var(--harbor-bg))', color: 'rgb(var(--harbor-text))' }}
+      >
       {/* Onboarding */}
       {view === 'onboarding' && (
         <Onboarding onComplete={handleCompleteOnboarding} />
@@ -399,6 +402,11 @@ export default function App() {
         />
       )}
 
+      {/* Data Manager */}
+      {view === 'data-manager' && (
+        <DataManager onBack={() => setView('settings')} />
+      )}
+
       {/* Command Palette */}
       <CommandPalette
         isOpen={commandPaletteOpen}
@@ -412,6 +420,7 @@ export default function App() {
         onSetTheme={setTheme}
         onSendMessage={handleSendMessage}
       />
-    </div>
+      </div>
+    </ErrorBoundary>
   )
 }
