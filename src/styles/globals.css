@@ -91,7 +91,9 @@
     @apply p-1.5 rounded-lg cursor-pointer
            text-[rgb(var(--harbor-text-muted))]
            hover:text-[rgb(var(--harbor-text))]
-           hover:bg-[rgb(var(--harbor-surface-2))];
+           hover:bg-[rgb(var(--harbor-surface-2))]
+           focus-visible:outline-2 focus-visible:outline-offset-2
+           focus-visible:outline-[rgb(var(--harbor-accent))];
     transition: color 120ms ease, background-color 120ms ease, transform 100ms ease;
   }
   .icon-btn:active {
@@ -146,7 +148,9 @@
   /* Primary action button */
   .harbor-btn-primary {
     @apply flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm
-           text-white cursor-pointer select-none;
+           text-white cursor-pointer select-none
+           focus-visible:outline-2 focus-visible:outline-offset-2
+           focus-visible:outline-[rgb(var(--harbor-accent))];
     background: rgb(var(--harbor-accent));
     transition: background 150ms ease, transform 100ms ease, box-shadow 150ms ease;
   }
