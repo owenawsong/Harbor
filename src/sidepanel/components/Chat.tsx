@@ -101,18 +101,6 @@ export default function Chat({
             <SettingsIcon size={14} />
           </button>
 
-          {/* Agent Mode / Chat Mode Toggle */}
-          <button
-            onClick={onToggleAgentMode}
-            className="icon-btn"
-            title={agentMode ? 'Agent Mode (click for Chat Mode)' : 'Chat Mode (click for Agent Mode)'}
-            style={{
-              background: agentMode ? 'rgba(78, 142, 168, 0.2)' : 'transparent',
-            }}
-          >
-            <Zap size={14} />
-          </button>
-
           {/* Overflow menu: Memory, Skills, Search */}
           <div className="relative">
             <button
@@ -242,6 +230,8 @@ export default function Chat({
         isRunning={isRunning}
         disabled={!hasApiKey}
         placeholder={hasApiKey ? (agentMode ? 'Ask Harbor anything…' : 'Chat with Harbor…') : 'Configure your API key first'}
+        agentMode={agentMode}
+        onToggleAgentMode={onToggleAgentMode}
       />
     </div>
   )

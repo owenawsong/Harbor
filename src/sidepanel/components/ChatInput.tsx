@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { ArrowUp, Square, Paperclip, X } from 'lucide-react'
+import { ArrowUp, Square, Paperclip, X, Zap } from 'lucide-react'
 
 interface Attachment {
   name: string
@@ -13,9 +13,11 @@ interface Props {
   isRunning: boolean
   disabled?: boolean
   placeholder?: string
+  agentMode?: boolean
+  onToggleAgentMode?: () => void
 }
 
-export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder }: Props) {
+export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode }: Props) {
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -91,25 +93,8 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
         </div>
       )}
 
-      <div className="flex items-center gap-2 rounded-xl border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] px-3 py-2.5 focus-within:border-harbor-400">
-        {/* File upload button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={disabled || isRunning}
-          title="Attach file"
-          className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] disabled:opacity-40"
-        >
-          <Paperclip size={15} />
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          className="hidden"
-          onChange={onFileChange}
-          accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,text/*,.pdf,.csv,.json,.md"
-        />
-
+      {/* Top line: Text input */}
+      <div className="flex items-stretch gap-2 rounded-xl border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] px-3 py-2.5 focus-within:border-harbor-400 mb-2">
         <textarea
           ref={textareaRef}
           value={value}
@@ -120,32 +105,61 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
           rows={1}
           className="flex-1 bg-transparent resize-none outline-none text-sm leading-6 min-h-[24px] max-h-[160px] disabled:opacity-40 text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))]"
         />
-
-        <div className="flex-shrink-0">
-          {isRunning ? (
-            <button
-              onClick={onStop}
-              title="Stop"
-              className="w-7 h-7 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center"
-            >
-              <Square size={12} className="text-white fill-white" />
-            </button>
-          ) : (
-            <button
-              onClick={send}
-              disabled={!canSend}
-              title="Send (Enter)"
-              className="w-7 h-7 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed"
-            >
-              <ArrowUp size={14} className="text-white" />
-            </button>
-          )}
-        </div>
       </div>
 
-      <p className="text-center text-[10px] mt-1.5 text-[rgb(var(--harbor-text-faint))]">
-        Enter to send · Shift+Enter for new line
-      </p>
+      {/* Bottom line: Controls */}
+      <div className="flex items-center gap-2">
+        {/* File upload button */}
+        <button
+          onClick={() => fileInputRef.current?.click()}
+          disabled={disabled || isRunning}
+          title="Attach file"
+          className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40"
+        >
+          <Paperclip size={16} />
+        </button>
+        <input
+          ref={fileInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={onFileChange}
+          accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,text/*,.pdf,.csv,.json,.md"
+        />
+
+        {/* Agent Mode / Chat Mode Toggle */}
+        <button
+          onClick={onToggleAgentMode}
+          disabled={disabled || isRunning}
+          title={agentMode ? 'Agent Mode (click for Chat Mode)' : 'Chat Mode (click for Agent Mode)'}
+          className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] disabled:opacity-40"
+          style={agentMode ? { background: 'rgba(78, 142, 168, 0.15)' } : {}}
+        >
+          <Zap size={16} />
+        </button>
+
+        <div className="flex-1" />
+
+        {/* Send / Stop button */}
+        {isRunning ? (
+          <button
+            onClick={onStop}
+            title="Stop"
+            className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center"
+          >
+            <Square size={14} className="text-white fill-white" />
+          </button>
+        ) : (
+          <button
+            onClick={send}
+            disabled={!canSend}
+            title="Send"
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed"
+          >
+            <ArrowUp size={16} className="text-white" />
+          </button>
+        )}
+      </div>
     </div>
   )
 }
