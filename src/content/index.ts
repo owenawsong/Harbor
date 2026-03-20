@@ -984,6 +984,9 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
 // ─── Agent Running Indicator ──────────────────────────────────────────────────
 
 let harborAgentBar: HTMLDivElement | null = null
+let harborAgentLeft: HTMLDivElement | null = null
+let harborAgentRight: HTMLDivElement | null = null
+let harborAgentBottom: HTMLDivElement | null = null
 let harborStatusPill: HTMLDivElement | null = null
 
 function showAgentIndicator(): void {
@@ -998,22 +1001,19 @@ function showAgentIndicator(): void {
         0% { transform: translateX(-100%); }
         100% { transform: translateX(350%); }
       }
+      @keyframes harbor-scan-vertical {
+        0% { transform: translateY(-100%); }
+        100% { transform: translateY(350%); }
+      }
       @keyframes harbor-pulse {
         0%, 100% { box-shadow: 0 0 0 0 rgba(78, 142, 168, 0.7); }
         50% { box-shadow: 0 0 0 4px rgba(78, 142, 168, 0.3); }
-      }
-      @keyframes harbor-border-glow {
-        0%, 100% { box-shadow: inset 0 0 0 2px rgba(78, 142, 168, 0.4), inset 0 0 10px rgba(78, 142, 168, 0.1); }
-        50% { box-shadow: inset 0 0 0 2px rgba(78, 142, 168, 0.7), inset 0 0 20px rgba(78, 142, 168, 0.2); }
-      }
-      body.harbor-agent-active {
-        animation: harbor-border-glow 2s ease-in-out infinite;
       }
     `
     document.head.appendChild(style)
   }
 
-  // Top indicator bar
+  // Top indicator bar with shimmer
   const bar = document.createElement('div')
   bar.id = 'harbor-agent-indicator'
   bar.style.cssText = [
@@ -1033,6 +1033,69 @@ function showAgentIndicator(): void {
   bar.appendChild(shimmer)
   document.documentElement.appendChild(bar)
   harborAgentBar = bar
+
+  // Left border
+  const left = document.createElement('div')
+  left.id = 'harbor-agent-left'
+  left.style.cssText = [
+    'position:fixed', 'left:0', 'top:0', 'bottom:0',
+    'width:3px', 'z-index:2147483647', 'pointer-events:none',
+    'overflow:hidden', 'background:rgba(78,142,168,0.88)',
+    'opacity:0', 'transition:opacity 350ms ease',
+  ].join(';')
+
+  const leftShimmer = document.createElement('div')
+  leftShimmer.style.cssText = [
+    'position:absolute', 'left:0', 'right:0', 'height:35%',
+    'background:linear-gradient(180deg,transparent,rgba(255,255,255,0.55),transparent)',
+    'animation:harbor-scan-vertical 1.4s ease-in-out infinite',
+  ].join(';')
+
+  left.appendChild(leftShimmer)
+  document.documentElement.appendChild(left)
+  harborAgentLeft = left
+
+  // Right border
+  const right = document.createElement('div')
+  right.id = 'harbor-agent-right'
+  right.style.cssText = [
+    'position:fixed', 'right:0', 'top:0', 'bottom:0',
+    'width:3px', 'z-index:2147483647', 'pointer-events:none',
+    'overflow:hidden', 'background:rgba(78,142,168,0.88)',
+    'opacity:0', 'transition:opacity 350ms ease',
+  ].join(';')
+
+  const rightShimmer = document.createElement('div')
+  rightShimmer.style.cssText = [
+    'position:absolute', 'left:0', 'right:0', 'height:35%',
+    'background:linear-gradient(180deg,transparent,rgba(255,255,255,0.55),transparent)',
+    'animation:harbor-scan-vertical 1.4s ease-in-out infinite',
+  ].join(';')
+
+  right.appendChild(rightShimmer)
+  document.documentElement.appendChild(right)
+  harborAgentRight = right
+
+  // Bottom border
+  const bottom = document.createElement('div')
+  bottom.id = 'harbor-agent-bottom'
+  bottom.style.cssText = [
+    'position:fixed', 'bottom:0', 'left:0', 'right:0',
+    'height:3px', 'z-index:2147483647', 'pointer-events:none',
+    'overflow:hidden', 'background:rgba(78,142,168,0.88)',
+    'opacity:0', 'transition:opacity 350ms ease',
+  ].join(';')
+
+  const bottomShimmer = document.createElement('div')
+  bottomShimmer.style.cssText = [
+    'position:absolute', 'bottom:0', 'top:0', 'width:35%',
+    'background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),transparent)',
+    'animation:harbor-scan 1.4s ease-in-out infinite',
+  ].join(';')
+
+  bottom.appendChild(bottomShimmer)
+  document.documentElement.appendChild(bottom)
+  harborAgentBottom = bottom
 
   // Bottom-center status pill
   const pill = document.createElement('div')
@@ -1069,19 +1132,37 @@ function showAgentIndicator(): void {
   // Trigger fade-in on next frame
   requestAnimationFrame(() => requestAnimationFrame(() => {
     if (harborAgentBar) harborAgentBar.style.opacity = '1'
+    if (harborAgentLeft) harborAgentLeft.style.opacity = '1'
+    if (harborAgentRight) harborAgentRight.style.opacity = '1'
+    if (harborAgentBottom) harborAgentBottom.style.opacity = '1'
     if (harborStatusPill) harborStatusPill.style.opacity = '1'
   }))
 }
 
 function hideAgentIndicator(): void {
-  // Remove glowing border from body
-  document.body.classList.remove('harbor-agent-active')
-
   if (harborAgentBar) {
     const bar = harborAgentBar
     harborAgentBar = null
     bar.style.opacity = '0'
     setTimeout(() => bar.remove(), 400)
+  }
+  if (harborAgentLeft) {
+    const left = harborAgentLeft
+    harborAgentLeft = null
+    left.style.opacity = '0'
+    setTimeout(() => left.remove(), 400)
+  }
+  if (harborAgentRight) {
+    const right = harborAgentRight
+    harborAgentRight = null
+    right.style.opacity = '0'
+    setTimeout(() => right.remove(), 400)
+  }
+  if (harborAgentBottom) {
+    const bottom = harborAgentBottom
+    harborAgentBottom = null
+    bottom.style.opacity = '0'
+    setTimeout(() => bottom.remove(), 400)
   }
   if (harborStatusPill) {
     const pill = harborStatusPill

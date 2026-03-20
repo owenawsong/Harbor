@@ -23,6 +23,8 @@ interface Props {
   onOpenSkills?: () => void
   onOpenDashboard?: () => void
   onOpenCommandPalette?: () => void
+  agentMode?: boolean
+  onToggleAgentMode?: () => void
 }
 
 export default function Chat({
@@ -38,6 +40,8 @@ export default function Chat({
   onOpenSkills,
   onOpenDashboard,
   onOpenCommandPalette,
+  agentMode = true,
+  onToggleAgentMode,
 }: Props) {
   const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock } =
     useChat(settings, currentSessionId)
@@ -95,6 +99,18 @@ export default function Chat({
           </button>
           <button onClick={onOpenSettings} className="icon-btn" title="Settings">
             <SettingsIcon size={14} />
+          </button>
+
+          {/* Agent Mode / Chat Mode Toggle */}
+          <button
+            onClick={onToggleAgentMode}
+            className="icon-btn"
+            title={agentMode ? 'Agent Mode (click for Chat Mode)' : 'Chat Mode (click for Agent Mode)'}
+            style={{
+              background: agentMode ? 'rgba(78, 142, 168, 0.2)' : 'transparent',
+            }}
+          >
+            <Zap size={14} />
           </button>
 
           {/* Overflow menu: Memory, Skills, Search */}
@@ -219,12 +235,13 @@ export default function Chat({
               .join('')
             fullText = text + attText
           }
-          sendMessage(fullText)
+          const modePrefix = agentMode ? '' : '[CHAT_MODE_ONLY] '
+          sendMessage(modePrefix + fullText)
         }}
         onStop={stopAgent}
         isRunning={isRunning}
         disabled={!hasApiKey}
-        placeholder={hasApiKey ? 'Ask Harbor anything…' : 'Configure your API key first'}
+        placeholder={hasApiKey ? (agentMode ? 'Ask Harbor anything…' : 'Chat with Harbor…') : 'Configure your API key first'}
       />
     </div>
   )

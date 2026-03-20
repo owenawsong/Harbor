@@ -10,7 +10,6 @@ import { buildSystemPrompt } from './prompt'
 import { getToolByName, getToolDefinitions } from '../tools/index'
 import { MAX_TOOL_ITERATIONS } from '../../shared/constants'
 import { RateLimitManager, sleep, isRateLimitError } from './rateLimitManager'
-import { ToolLoopDetector } from './toolLoopDetector'
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 11)
@@ -64,9 +63,6 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
   // Initialize rate limit manager with settings config
   const rateLimitManager = new RateLimitManager(settings.rateLimitConfig)
-
-  // Initialize tool loop detector
-  const loopDetector = new ToolLoopDetector()
 
   // Build browser context
   const browserContext: BrowserContext = {
@@ -238,15 +234,6 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       const toolResults: Array<ToolResultPart> = []
       const executionMode = settings.toolExecutionMode ?? 'parallel'
 
-      // Check for tool loops before executing
-      for (const tc of completedToolCalls) {
-        if (loopDetector.wouldCreateLoop(tc.name, tc.input)) {
-          const loopInfo = loopDetector.getLoopInfo()
-          const errorMsg = `Tool loop detected: "${tc.name}" called ${loopInfo?.callCount || 0} times with identical inputs. Breaking loop.`
-          onEvent({ type: 'error', error: errorMsg })
-          return
-        }
-      }
 
       if (executionMode === 'sequential') {
         // Sequential: Execute tools one at a time (safer for interdependent tools)

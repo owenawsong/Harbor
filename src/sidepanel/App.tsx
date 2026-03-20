@@ -26,6 +26,7 @@ export default function App() {
   const [chatKey, setChatKey]                   = useState(0)
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
   const [cmdShortcut, setCmdShortcut] = useState('Ctrl+Alt+H')
+  const [agentMode, setAgentMode]               = useState(true) // true = Agent mode, false = Chat mode
   // Pending message to send when switching to chat
   const [pendingMessage, setPendingMessage]     = useState<string | null>(null)
 
@@ -338,6 +339,8 @@ export default function App() {
           onOpenSkills={() => setView('skills')}
           onOpenDashboard={() => setView('dashboard')}
           onOpenCommandPalette={() => setCommandPaletteOpen(true)}
+          agentMode={agentMode}
+          onToggleAgentMode={() => setAgentMode(!agentMode)}
         />
       )}
 
