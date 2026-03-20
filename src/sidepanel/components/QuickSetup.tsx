@@ -56,7 +56,8 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
             </div>
             <button
               onClick={onDismiss}
-              className="text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text))]"
+              className="text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text))] focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] rounded p-1"
+              title="Close"
             >
               <X size={18} />
             </button>
@@ -74,7 +75,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
                 <button
                   key={id}
                   onClick={() => setSelectedProvider(id)}
-                  className={`p-3 rounded-lg border-2 transition-all ${
+                  className={`p-3 rounded-lg border-2 transition-all focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] ${
                     selectedProvider === id
                       ? 'border-blue-500 scale-105'
                       : 'border-transparent hover:border-[rgb(var(--harbor-border))]'
@@ -86,6 +87,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
                         : 'rgb(var(--harbor-surface))'
                     })`,
                   }}
+                  title={`Select ${label}`}
                 >
                   <div className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>
                     {label}
@@ -109,7 +111,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
           >
             <button
               onClick={onDismiss}
-              className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+              className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
               style={{
                 color: 'rgb(var(--harbor-text-muted))',
                 borderColor: 'rgb(var(--harbor-border))',
@@ -121,7 +123,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
             </button>
             <button
               disabled
-              className="flex-1 px-3 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 transition-colors"
+              className="flex-1 px-3 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
               style={{ background: 'rgb(var(--harbor-accent))' }}
             >
               Continue
@@ -156,7 +158,8 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
           </div>
           <button
             onClick={onDismiss}
-            className="text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text))]"
+            className="text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text))] focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] rounded p-1"
+            title="Close"
           >
             <X size={18} />
           </button>
@@ -175,7 +178,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="sk-..."
-                className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none"
+                className="w-full px-3 py-2.5 rounded-lg border text-sm outline-none focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
                 style={{
                   background: 'rgb(var(--harbor-surface))',
                   borderColor: 'rgb(var(--harbor-border))',
@@ -184,8 +187,9 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
               />
               <button
                 onClick={() => setShowKey(!showKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2"
+                className="absolute right-3 top-1/2 -translate-y-1/2 focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] rounded p-0.5"
                 style={{ color: 'rgb(var(--harbor-text-faint))' }}
+                title={showKey ? 'Hide' : 'Show'}
               >
                 {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -198,11 +202,12 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
               href={keyLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-colors"
+              className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
               style={{
                 color: 'rgb(var(--harbor-accent))',
                 background: 'rgb(var(--harbor-surface-2))',
               }}
+              title="Open API key page in new tab"
             >
               Get API Key <ExternalLink size={12} />
             </a>
@@ -223,7 +228,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
               setSelectedProvider(null)
               setApiKey('')
             }}
-            className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
             style={{
               color: 'rgb(var(--harbor-text-muted))',
               borderColor: 'rgb(var(--harbor-border))',
@@ -236,7 +241,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
           <button
             onClick={handleSetup}
             disabled={!apiKey.trim()}
-            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
             style={{ background: 'rgb(var(--harbor-accent))' }}
           >
             <Check size={14} /> Set Up
