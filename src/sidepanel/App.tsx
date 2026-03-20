@@ -282,6 +282,18 @@ export default function App() {
     })
   }
 
+  const handlePinSession = (id: string, pinned: boolean) => {
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, isPinned: pinned } : s)),
+    )
+    // Persist pinned state to storage
+    chrome.storage.local.get('harbor_sessions', (data) => {
+      const stored: StoredSession[] = data.harbor_sessions ?? []
+      const updated = stored.map((s) => (s.id === id ? { ...s, isPinned: pinned } : s))
+      chrome.storage.local.set({ harbor_sessions: updated })
+    })
+  }
+
   const handleSendMessage = (text: string) => {
     setPendingMessage(text)
     setView('chat')
@@ -369,6 +381,7 @@ export default function App() {
           onSelectSession={handleSelectSession}
           onNewConversation={handleNewConversation}
           onDeleteSession={handleDeleteSession}
+          onPinSession={handlePinSession}
           onBack={() => setView('chat')}
         />
       )}

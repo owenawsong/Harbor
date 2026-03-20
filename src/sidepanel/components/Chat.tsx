@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react'
 import {
   Settings as SettingsIcon, Clock, SquarePen,
-  Brain, Zap, Search, MoreVertical,
+  Brain, Zap, Search, MoreVertical, Wifi, WifiOff,
 } from 'lucide-react'
 import type { AgentSettings, IdentitySettings } from '../../shared/types'
 import { useChat } from '../hooks/useChat'
@@ -43,11 +43,26 @@ export default function Chat({
   agentMode = true,
   onToggleAgentMode,
 }: Props) {
-  const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock } =
+  const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock, editMessage } =
     useChat(settings, currentSessionId)
 
   const [showNotifications, setShowNotifications] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [isConnected, setIsConnected] = useState(true)
+
+  // Track connection via chrome.runtime availability
+  useEffect(() => {
+    const checkConnection = () => {
+      try {
+        setIsConnected(Boolean(chrome?.runtime?.id))
+      } catch {
+        setIsConnected(false)
+      }
+    }
+    checkConnection()
+    const interval = setInterval(checkConnection, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   const hasApiKey =
     Boolean(settings.provider.apiKey) ||
@@ -71,16 +86,30 @@ export default function Chat({
         className="flex items-center justify-between px-3 py-2.5 border-b"
         style={{ borderColor: 'rgb(var(--harbor-border))' }}
       >
-        {/* Logo + name */}
+        {/* Logo + name + status */}
         <button
           onClick={onOpenDashboard}
           className="flex items-center gap-2 min-w-0 group"
         >
-          <img
-            src="/icons/logo.png"
-            alt="Harbor"
-            className="w-6 h-6 rounded-lg flex-shrink-0"
-          />
+          <div className="relative flex-shrink-0">
+            <img
+              src="/icons/logo.png"
+              alt="Harbor"
+              className="w-6 h-6 rounded-lg"
+            />
+            {/* Connection status dot */}
+            <span
+              className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[rgb(var(--harbor-bg))]"
+              style={{
+                background: isRunning
+                  ? 'rgb(var(--harbor-accent))'
+                  : isConnected
+                    ? '#22c55e'
+                    : '#ef4444',
+              }}
+              title={isRunning ? 'Agent running' : isConnected ? 'Connected' : 'Disconnected'}
+            />
+          </div>
           <span
             className="harbor-serif text-base font-medium header-logo-text"
             style={{ color: 'rgb(var(--harbor-text))' }}
@@ -209,6 +238,7 @@ export default function Chat({
             messages={messages}
             isRunning={isRunning}
             onToggleThinking={toggleThinkingBlock}
+            onEditMessage={editMessage}
           />
         )}
       </div>

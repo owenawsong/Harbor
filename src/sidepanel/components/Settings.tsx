@@ -8,6 +8,7 @@ import type {
   AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel,
 } from '../../shared/types'
 import { DEFAULT_MODELS, PROVIDER_LABELS } from '../../shared/constants'
+import ConfirmDialog from './ConfirmDialog'
 
 interface Props {
   settings: AgentSettings
@@ -720,6 +721,7 @@ function SectionModels({ provider, model, customModel, apiKey, baseUrl, showKey,
 
 function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: boolean; onEnableMemoryChange: (v: boolean) => void }) {
   const [memoryCount, setMemoryCount] = useState(0)
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
 
   useEffect(() => {
     chrome.storage.local.get('harbor_memory_entries', (data) => {
@@ -728,9 +730,10 @@ function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: b
   }, [])
 
   const clearMemory = () => {
-    if (confirm('Clear all memory entries? This cannot be undone.')) {
-      chrome.storage.local.remove('harbor_memory_entries', () => setMemoryCount(0))
-    }
+    chrome.storage.local.remove('harbor_memory_entries', () => {
+      setMemoryCount(0)
+      setShowClearConfirm(false)
+    })
   }
 
   return (
@@ -756,7 +759,7 @@ function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: b
         </div>
         {memoryCount > 0 && (
           <button
-            onClick={clearMemory}
+            onClick={() => setShowClearConfirm(true)}
             className="text-xs px-2.5 py-1 rounded-lg"
             style={{ color: '#ef4444', border: '1px solid rgb(239 68 68 / 0.3)' }}
           >
@@ -764,6 +767,16 @@ function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: b
           </button>
         )}
       </div>
+      {showClearConfirm && (
+        <ConfirmDialog
+          title="Clear all memories"
+          description="All stored memories will be permanently deleted. This cannot be undone."
+          confirmText="Clear memories"
+          isDangerous
+          onConfirm={clearMemory}
+          onCancel={() => setShowClearConfirm(false)}
+        />
+      )}
     </div>
   )
 }
@@ -788,11 +801,12 @@ function SectionNotifications({ enabled, agentComplete, errors, onEnabledChange,
 // ─── Section: Privacy ─────────────────────────────────────────────────────────
 
 function SectionPrivacy() {
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
+
   const clearAll = () => {
-    if (confirm('Reset all Harbor data? This clears settings, memory, and conversations. Cannot be undone.')) {
-      chrome.storage.local.clear(() => window.location.reload())
-    }
+    chrome.storage.local.clear(() => window.location.reload())
   }
+
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
       <SectionHeader title="Privacy" />
@@ -802,13 +816,23 @@ function SectionPrivacy() {
       </InfoBox>
       <div className="flex flex-col gap-2">
         <button
-          onClick={clearAll}
+          onClick={() => setShowResetConfirm(true)}
           className="text-xs px-3 py-2.5 rounded-xl border font-medium"
           style={{ color: '#ef4444', borderColor: 'rgb(239 68 68 / 0.3)', background: 'rgb(239 68 68 / 0.05)' }}
         >
           Reset all data
         </button>
       </div>
+      {showResetConfirm && (
+        <ConfirmDialog
+          title="Reset all Harbor data"
+          description="This will permanently erase your settings, memory entries, and all conversations. This cannot be undone."
+          confirmText="Reset everything"
+          isDangerous
+          onConfirm={clearAll}
+          onCancel={() => setShowResetConfirm(false)}
+        />
+      )}
     </div>
   )
 }

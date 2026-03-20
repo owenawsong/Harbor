@@ -445,8 +445,16 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
     )
   }, [])
 
+  const editMessage = useCallback((messageId: string, newText: string) => {
+    setMessages((prev) =>
+      prev.map((msg) =>
+        msg.id === messageId ? { ...msg, text: newText } : msg,
+      ),
+    )
+  }, [])
+
   return {
     messages, isRunning, error, sessionId,
-    sendMessage, stopAgent, clearMessages, toggleThinkingBlock,
+    sendMessage, stopAgent, clearMessages, toggleThinkingBlock, editMessage,
   }
 }

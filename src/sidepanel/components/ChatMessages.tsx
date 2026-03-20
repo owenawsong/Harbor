@@ -6,9 +6,10 @@ interface Props {
   messages: UIMessage[]
   isRunning: boolean
   onToggleThinking?: (messageId: string, blockId: string) => void
+  onEditMessage?: (messageId: string, newText: string) => void
 }
 
-export default function ChatMessages({ messages, isRunning, onToggleThinking }: Props) {
+export default function ChatMessages({ messages, isRunning, onToggleThinking, onEditMessage }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -22,7 +23,12 @@ export default function ChatMessages({ messages, isRunning, onToggleThinking }: 
     <div className="h-full overflow-y-auto harbor-scroll">
       <div className="flex flex-col gap-4 px-3 py-4">
         {messages.map((msg) => (
-          <ChatMessage key={msg.id} message={msg} onToggleThinking={onToggleThinking} />
+          <ChatMessage
+            key={msg.id}
+            message={msg}
+            onToggleThinking={onToggleThinking}
+            onEditMessage={!isRunning ? onEditMessage : undefined}
+          />
         ))}
 
         {showTyping && (

@@ -92,7 +92,10 @@
            text-[rgb(var(--harbor-text-muted))]
            hover:text-[rgb(var(--harbor-text))]
            hover:bg-[rgb(var(--harbor-surface-2))];
-    transition: color 120ms ease, background-color 120ms ease;
+    transition: color 120ms ease, background-color 120ms ease, transform 100ms ease;
+  }
+  .icon-btn:active {
+    transform: scale(0.88);
   }
 
   /* Thin custom scrollbar — shows on hover */
@@ -153,7 +156,7 @@
     transform: translateY(-1px);
   }
   .harbor-btn-primary:active {
-    transform: translateY(0);
+    transform: scale(0.97);
     box-shadow: none;
   }
   .harbor-btn-primary:disabled {
@@ -174,6 +177,11 @@
   .harbor-btn-ghost:hover {
     color: rgb(var(--harbor-text));
     border-color: rgb(var(--harbor-border-2));
+    background: rgb(var(--harbor-surface-2));
+    transform: translateY(-1px);
+  }
+  .harbor-btn-ghost:active {
+    transform: scale(0.97);
     background: rgb(var(--harbor-surface-2));
   }
 

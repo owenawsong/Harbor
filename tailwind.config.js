@@ -112,6 +112,22 @@ export default {
           '0%':   { opacity: '1', transform: 'translateX(0)' },
           '100%': { opacity: '0', transform: 'translateX(-24px)' },
         },
+        popIn: {
+          '0%':   { opacity: '0', transform: 'scale(0.6)' },
+          '70%':  { transform: 'scale(1.08)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        shake: {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '20%':      { transform: 'translateX(-4px)' },
+          '40%':      { transform: 'translateX(4px)' },
+          '60%':      { transform: 'translateX(-3px)' },
+          '80%':      { transform: 'translateX(3px)' },
+        },
+        fadeOut: {
+          '0%':   { opacity: '1', transform: 'translateY(0)' },
+          '100%': { opacity: '0', transform: 'translateY(-4px)' },
+        },
       },
       animation: {
         'fade-up':        'fadeUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) both',
@@ -130,6 +146,9 @@ export default {
         'onboard-reveal': 'onboardReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both',
         'step-in':        'stepIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) both',
         'step-out':       'stepOut 0.25s cubic-bezier(0.4, 0, 1, 1) both',
+        'pop-in':         'popIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
+        'shake':          'shake 0.4s ease-in-out',
+        'fade-out':       'fadeOut 0.2s ease-in both',
       },
       transitionTimingFunction: {
         'spring': 'cubic-bezier(0.16, 1, 0.3, 1)',

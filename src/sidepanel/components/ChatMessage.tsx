@@ -1,9 +1,9 @@
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
-import { ChevronDown, ChevronRight, Brain } from 'lucide-react'
+import { ChevronDown, Brain, Pencil, Check, X } from 'lucide-react'
 import 'katex/dist/katex.min.css'
 import type { UIMessage, UIThinkingBlock } from '../hooks/useChat'
 import ToolCallDisplay from './ToolCallDisplay'
@@ -57,19 +57,124 @@ function ThinkingBlock({
 interface Props {
   message: UIMessage
   onToggleThinking?: (messageId: string, blockId: string) => void
+  onEditMessage?: (messageId: string, newText: string) => void
 }
 
-export default function ChatMessage({ message, onToggleThinking }: Props) {
+export default function ChatMessage({ message, onToggleThinking, onEditMessage }: Props) {
   const isUser = message.role === 'user'
+  const [isHovered, setIsHovered] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editValue, setEditValue] = useState(message.text || '')
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Auto-resize textarea on edit
+  useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+      textareaRef.current.focus()
+      // Move cursor to end
+      const len = textareaRef.current.value.length
+      textareaRef.current.setSelectionRange(len, len)
+    }
+  }, [isEditing])
+
+  const handleSave = () => {
+    const trimmed = editValue.trim()
+    if (trimmed && trimmed !== message.text) {
+      onEditMessage?.(message.id, trimmed)
+    }
+    setIsEditing(false)
+  }
+
+  const handleCancel = () => {
+    setEditValue(message.text || '')
+    setIsEditing(false)
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSave()
+    } else if (e.key === 'Escape') {
+      handleCancel()
+    }
+  }
 
   if (isUser) {
     return (
-      <div className="flex justify-end animate-fade-up">
-        <div
-          className="max-w-[82%] px-3 py-2 rounded-2xl rounded-tr-sm text-sm leading-relaxed text-white select-text"
-          style={{ background: 'rgb(79 95 232)' }}
-        >
-          {message.text}
+      <div
+        className="flex justify-end animate-fade-up"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className="flex items-end gap-1.5 max-w-[85%]">
+          {/* Edit button — visible on hover */}
+          {!isEditing && onEditMessage && isHovered && (
+            <button
+              onClick={() => {
+                setEditValue(message.text || '')
+                setIsEditing(true)
+              }}
+              className="flex-shrink-0 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150"
+              style={{
+                color: 'rgb(var(--harbor-text-faint))',
+                opacity: isHovered ? 1 : 0,
+              }}
+              title="Edit message"
+            >
+              <Pencil size={11} />
+            </button>
+          )}
+
+          {isEditing ? (
+            <div className="flex flex-col gap-1.5 w-full">
+              <textarea
+                ref={textareaRef}
+                value={editValue}
+                onChange={(e) => {
+                  setEditValue(e.target.value)
+                  e.currentTarget.style.height = 'auto'
+                  e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`
+                }}
+                onKeyDown={handleKeyDown}
+                className="w-full px-3 py-2 rounded-2xl rounded-tr-sm text-sm leading-relaxed text-white resize-none outline-none"
+                style={{
+                  background: 'rgb(79 95 232)',
+                  minHeight: '40px',
+                  maxHeight: '200px',
+                  overflow: 'hidden',
+                }}
+                rows={1}
+              />
+              <div className="flex items-center gap-1 justify-end">
+                <button
+                  onClick={handleCancel}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium transition-colors"
+                  style={{
+                    color: 'rgb(var(--harbor-text-faint))',
+                    background: 'rgb(var(--harbor-surface-2))',
+                  }}
+                >
+                  <X size={10} /> Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-white transition-colors"
+                  style={{ background: 'rgb(var(--harbor-accent))' }}
+                >
+                  <Check size={10} /> Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div
+              className="px-3 py-2 rounded-2xl rounded-tr-sm text-sm leading-relaxed text-white select-text"
+              style={{ background: 'rgb(79 95 232)' }}
+            >
+              {message.text}
+            </div>
+          )}
         </div>
       </div>
     )
