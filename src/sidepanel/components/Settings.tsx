@@ -831,7 +831,7 @@ function SectionAbout() {
           </div>
         </div>
         <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-          Inspired by BrowserOS. Licensed under AGPL-3.0.
+          An open-source AI browser agent. Licensed under AGPL-3.0.
         </p>
         <a
           href="https://github.com/owenawsong/Harbor-Extension"

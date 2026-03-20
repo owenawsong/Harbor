@@ -63,5 +63,6 @@
       "suggested_key": "Ctrl+K",
       "description": "Toggle Harbor command palette"
     }
-  }
+  },
+  "incognito": "split"
 }

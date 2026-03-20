@@ -1,6 +1,6 @@
 /**
  * Harbor Agent System Prompt
- * Modeled after BrowserOS's prompt structure with adaptation for Chrome extension context.
+ * Defines the core behavior and capabilities of the AI agent in the browser extension context.
  */
 
 export interface BuildPromptOptions {
