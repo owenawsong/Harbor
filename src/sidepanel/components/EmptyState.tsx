@@ -96,12 +96,20 @@ export default function EmptyState({ onSuggestionClick, userName, agentMode = tr
         </div>
 
         {/* Footer hint */}
-        <p
-          className="text-[10px] text-center"
-          style={{ color: 'rgb(var(--harbor-text-faint))' }}
-        >
-          Claude · GPT · Gemini · Ollama · OpenRouter · more
-        </p>
+        <div className="space-y-1.5">
+          <p
+            className="text-[10px] text-center"
+            style={{ color: 'rgb(var(--harbor-text-faint))' }}
+          >
+            Powered by: Claude · GPT · Gemini · Ollama · OpenRouter
+          </p>
+          <p
+            className="text-[10px] text-center italic"
+            style={{ color: 'rgb(var(--harbor-text-faint))' }}
+          >
+            💡 Use Shift+Enter for multi-line messages
+          </p>
+        </div>
       </div>
     </div>
   )
