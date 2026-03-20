@@ -45,7 +45,8 @@ export default function KeyboardShortcuts({ isOpen, onClose }: Props) {
           </h2>
           <button
             onClick={onClose}
-            className="text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text))] transition"
+            className="text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text))] transition focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] rounded p-0.5"
+            title="Close"
           >
             <X size={16} />
           </button>
