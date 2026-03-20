@@ -225,8 +225,9 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
           <button
             onClick={send}
             disabled={!canSend}
-            title="Send"
-            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed transition-colors"
+            title="Send (Enter)"
+            className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed transition-all ${canSend ? 'shadow-lg shadow-harbor-600/60 animate-pulse' : ''}`}
+            style={canSend ? { animationDuration: '3s' } : {}}
           >
             <ArrowUp size={16} className="text-white" />
           </button>

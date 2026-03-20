@@ -168,11 +168,15 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
               </div>
             </div>
           ) : (
-            <div
-              className="px-3 py-2 rounded-2xl rounded-tr-sm text-sm leading-relaxed text-white select-text"
-              style={{ background: 'rgb(79 95 232)' }}
-            >
-              {message.text}
+            <div className="flex items-end gap-1.5">
+              <div
+                className="px-3 py-2 rounded-2xl rounded-tr-sm text-sm leading-relaxed text-white select-text"
+                style={{ background: 'rgb(79 95 232)' }}
+              >
+                {message.text}
+              </div>
+              {/* Status indicator */}
+              <div className="text-[10px] mb-0.5 opacity-60">✓</div>
             </div>
           )}
         </div>
