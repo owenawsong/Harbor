@@ -173,7 +173,9 @@
   /* Secondary ghost button */
   .harbor-btn-ghost {
     @apply flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm
-           cursor-pointer select-none;
+           cursor-pointer select-none
+           focus-visible:outline-2 focus-visible:outline-offset-2
+           focus-visible:outline-[rgb(var(--harbor-text-muted))];
     color: rgb(var(--harbor-text-muted));
     border: 1px solid rgb(var(--harbor-border));
     transition: all 150ms ease;
@@ -187,6 +189,11 @@
   .harbor-btn-ghost:active {
     transform: scale(0.97);
     background: rgb(var(--harbor-surface-2));
+  }
+  .harbor-btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
   }
 
   /* Card surface */
