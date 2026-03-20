@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2 } from 'lucide-react'
+import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
+import ModelPresets from './ModelPresets'
 
 interface Attachment {
   name: string
@@ -23,8 +24,10 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [enablePlanning, setEnablePlanning] = useState(false)
+  const [showPresets, setShowPresets] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const modelButtonRef = useRef<HTMLDivElement>(null)
 
   const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && !isRunning
 
@@ -114,13 +117,13 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
       </div>
 
       {/* Bottom line: Controls */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 relative">
         {/* File upload button */}
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || isRunning}
           title="Attach file"
-          className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40"
+          className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-colors"
         >
           <Paperclip size={16} />
         </button>
@@ -133,45 +136,67 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
           accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,text/*,.pdf,.csv,.json,.md"
         />
 
-        {/* Mode Pill Button */}
-        <button
-          onClick={onToggleAgentMode}
-          disabled={disabled || isRunning}
-          title={agentMode ? 'Switch to Chat Mode' : 'Switch to Agent Mode'}
-          className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-[rgb(var(--harbor-text))] hover:bg-[rgb(var(--harbor-surface))] disabled:opacity-40"
-        >
-          <Zap size={14} />
-          <span>{agentMode ? 'Agent' : 'Chat'}</span>
-        </button>
-
-        {/* Model Name Display */}
-        {settings?.provider && (
-          <div className="flex-shrink-0 px-2.5 py-1.5 rounded-lg bg-[rgb(var(--harbor-surface-2))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[140px] truncate">
-            {settings.provider.model}
-          </div>
-        )}
-
-        {/* Plan Toggle (Agent Mode only) */}
+        {/* Plan Toggle (Agent Mode only) - MOVED LEFT */}
         {agentMode && (
           <button
             onClick={() => setEnablePlanning(!enablePlanning)}
             disabled={disabled || isRunning}
             title={enablePlanning ? 'Planning enabled' : 'Enable planning'}
-            className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40"
+            className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-colors"
             style={enablePlanning ? { color: 'rgb(34, 197, 94)' } : {}}
           >
             <CheckCircle2 size={16} />
           </button>
         )}
 
+        {/* Mode Pill Button */}
+        <button
+          onClick={onToggleAgentMode}
+          disabled={disabled || isRunning}
+          title={agentMode ? 'Switch to Chat Mode' : 'Switch to Agent Mode'}
+          className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-[rgb(var(--harbor-text))] hover:bg-[rgb(var(--harbor-surface))] disabled:opacity-40 transition-colors"
+        >
+          <Zap size={14} />
+          <span>{agentMode ? 'Agent' : 'Chat'}</span>
+        </button>
+
         <div className="flex-1" />
+
+        {/* Model Selector Button - NOW CLICKABLE & RIGHT ALIGNED */}
+        {settings?.provider && (
+          <div ref={modelButtonRef} className="relative">
+            <button
+              onClick={() => setShowPresets(!showPresets)}
+              disabled={disabled || isRunning}
+              className="flex-shrink-0 px-2.5 py-1.5 rounded-lg bg-[rgb(var(--harbor-surface-2))] hover:bg-[rgb(var(--harbor-surface))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[140px] truncate flex items-center gap-1.5 disabled:opacity-40 transition-colors"
+              title="Switch model preset"
+            >
+              <span className="truncate">{settings.provider.model}</span>
+              <ChevronDown size={12} className={`flex-shrink-0 transition-transform ${showPresets ? 'rotate-180' : ''}`} />
+            </button>
+            {showPresets && (
+              <ModelPresets
+                currentSettings={settings}
+                onSelectPreset={(newSettings) => {
+                  // Send message to background to save new settings
+                  chrome.runtime.sendMessage({
+                    type: 'save_settings',
+                    settings: newSettings,
+                    theme: 'system',
+                  })
+                }}
+                onClose={() => setShowPresets(false)}
+              />
+            )}
+          </div>
+        )}
 
         {/* Send / Stop button */}
         {isRunning ? (
           <button
             onClick={onStop}
             title="Stop"
-            className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center"
+            className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
           >
             <Square size={14} className="text-white fill-white" />
           </button>
@@ -180,7 +205,7 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
             onClick={send}
             disabled={!canSend}
             title="Send"
-            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed"
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed transition-colors"
           >
             <ArrowUp size={16} className="text-white" />
           </button>
