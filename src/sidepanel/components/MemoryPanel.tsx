@@ -119,7 +119,7 @@ export default function MemoryPanel({ onBack }: Props) {
       {/* Search */}
       <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
         <div
-          className="flex items-center gap-2 px-2.5 py-2 rounded-lg border"
+          className="flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-colors focus-within:border-[rgb(var(--harbor-accent))] focus-within:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)]"
           style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
         >
           <Search size={13} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
@@ -243,7 +243,7 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onTogglePin}
-            className="p-1 rounded hover:bg-[rgb(var(--harbor-surface-2))]"
+            className="p-1 rounded hover:bg-[rgb(var(--harbor-surface-2))] focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
             title={entry.isPinned ? 'Unpin' : 'Pin'}
           >
             <Pin
@@ -256,7 +256,7 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
           </button>
           <button
             onClick={onDelete}
-            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20"
+            className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-red-500"
             title="Delete"
           >
             <Trash2 size={11} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
@@ -269,7 +269,7 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full text-xs rounded-lg p-2 border outline-none resize-none min-h-[60px]"
+            className="w-full text-xs rounded-lg p-2 border outline-none resize-none min-h-[60px] focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
             style={{
               background: 'rgb(var(--harbor-surface-2))',
               borderColor: 'rgb(var(--harbor-border))',
@@ -280,14 +280,14 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
           <div className="flex gap-1.5">
             <button
               onClick={() => onSave(editContent)}
-              className="text-[11px] px-2.5 py-1 rounded-lg font-medium"
+              className="text-[11px] px-2.5 py-1 rounded-lg font-medium focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
               style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
             >
               Save
             </button>
             <button
               onClick={onCancelEdit}
-              className="text-[11px] px-2.5 py-1 rounded-lg"
+              className="text-[11px] px-2.5 py-1 rounded-lg focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
               style={{ color: 'rgb(var(--harbor-text-muted))' }}
             >
               Cancel
@@ -351,7 +351,7 @@ function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: 
         value={content}
         onChange={(e) => setContent(e.target.value)}
         placeholder="What should Harbor remember?"
-        className="w-full text-xs rounded-lg p-2 border outline-none resize-none min-h-[60px]"
+        className="w-full text-xs rounded-lg p-2 border outline-none resize-none min-h-[60px] focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
         style={{
           background: 'rgb(var(--harbor-surface-2))',
           borderColor: 'rgb(var(--harbor-border))',
@@ -363,7 +363,7 @@ function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: 
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as MemoryCategory)}
-          className="text-xs rounded-lg px-2 py-1.5 border outline-none"
+          className="text-xs rounded-lg px-2 py-1.5 border outline-none focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
           style={{
             background: 'rgb(var(--harbor-surface))',
             borderColor: 'rgb(var(--harbor-border))',
@@ -379,7 +379,7 @@ function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: 
           value={tagsInput}
           onChange={(e) => setTagsInput(e.target.value)}
           placeholder="Tags (comma-separated)"
-          className="text-xs rounded-lg px-2 py-1.5 border outline-none"
+          className="text-xs rounded-lg px-2 py-1.5 border outline-none focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
           style={{
             background: 'rgb(var(--harbor-surface))',
             borderColor: 'rgb(var(--harbor-border))',
@@ -391,14 +391,14 @@ function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: 
         <button
           onClick={handleAdd}
           disabled={!content.trim()}
-          className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-40"
+          className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
         >
           Save
         </button>
         <button
           onClick={onCancel}
-          className="text-xs px-3 py-1.5 rounded-lg"
+          className="text-xs px-3 py-1.5 rounded-lg focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           style={{ color: 'rgb(var(--harbor-text-muted))' }}
         >
           Cancel
