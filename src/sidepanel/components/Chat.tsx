@@ -215,7 +215,7 @@ export default function Chat({
 
       {/* ── Input ──────────────────────────────────────────────────────────── */}
       <ChatInput
-        onSend={(text, attachments) => {
+        onSend={(text, attachments, options) => {
           let fullText = text
           if (attachments && attachments.length > 0) {
             const attText = attachments
@@ -223,8 +223,7 @@ export default function Chat({
               .join('')
             fullText = text + attText
           }
-          const modePrefix = agentMode ? '' : '[CHAT_MODE_ONLY] '
-          sendMessage(modePrefix + fullText)
+          sendMessage(fullText, undefined, options)
         }}
         onStop={stopAgent}
         isRunning={isRunning}
@@ -232,6 +231,7 @@ export default function Chat({
         placeholder={hasApiKey ? (agentMode ? 'Ask Harbor anything…' : 'Chat with Harbor…') : 'Configure your API key first'}
         agentMode={agentMode}
         onToggleAgentMode={onToggleAgentMode}
+        settings={settings}
       />
     </div>
   )

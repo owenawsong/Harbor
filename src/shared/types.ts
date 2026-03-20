@@ -53,6 +53,12 @@ export interface ProviderConfig {
   secretAccessKey?: string
 }
 
+export interface ModelPreset {
+  id: string
+  name: string // e.g., "Claude Sonnet 4.6", "Work model", "Secure", "OpenRouter API"
+  provider: ProviderConfig
+}
+
 export interface RateLimitConfig {
   maxRetries?: number
   initialBackoffMs?: number
@@ -71,6 +77,8 @@ export interface AgentSettings {
   toolExecutionMode?: 'parallel' | 'sequential' // Default: parallel for speed
   rateLimitConfig?: RateLimitConfig
   toolTimeouts?: Record<string, number> // Per-tool timeout overrides (in ms)
+  modelPresets?: ModelPreset[] // User-created model presets
+  enablePlanning?: boolean // When true, agent creates a plan first before executing
 }
 
 // ─── Tool Types ───────────────────────────────────────────────────────────────

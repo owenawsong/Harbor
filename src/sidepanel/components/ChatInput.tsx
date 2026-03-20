@@ -1,5 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react'
-import { ArrowUp, Square, Paperclip, X, Zap } from 'lucide-react'
+import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2 } from 'lucide-react'
+import type { AgentSettings } from '../../shared/types'
 
 interface Attachment {
   name: string
@@ -8,18 +9,20 @@ interface Attachment {
 }
 
 interface Props {
-  onSend: (text: string, attachments?: Attachment[]) => void
+  onSend: (text: string, attachments?: Attachment[], options?: { enablePlanning?: boolean; chatModeOnly?: boolean }) => void
   onStop: () => void
   isRunning: boolean
   disabled?: boolean
   placeholder?: string
   agentMode?: boolean
   onToggleAgentMode?: () => void
+  settings?: AgentSettings
 }
 
-export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode }: Props) {
+export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode, settings }: Props) {
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
+  const [enablePlanning, setEnablePlanning] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -31,8 +34,11 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
     setValue('')
     setAttachments([])
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
-    onSend(text, attachments.length > 0 ? attachments : undefined)
-  }, [value, attachments, canSend, onSend])
+    onSend(text, attachments.length > 0 ? attachments : undefined, {
+      enablePlanning: agentMode && enablePlanning,
+      chatModeOnly: !agentMode,
+    })
+  }, [value, attachments, canSend, onSend, agentMode, enablePlanning])
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -127,16 +133,36 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
           accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,text/*,.pdf,.csv,.json,.md"
         />
 
-        {/* Agent Mode / Chat Mode Toggle */}
+        {/* Mode Pill Button */}
         <button
           onClick={onToggleAgentMode}
           disabled={disabled || isRunning}
-          title={agentMode ? 'Agent Mode (click for Chat Mode)' : 'Chat Mode (click for Agent Mode)'}
-          className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] disabled:opacity-40"
-          style={agentMode ? { background: 'rgba(78, 142, 168, 0.15)' } : {}}
+          title={agentMode ? 'Switch to Chat Mode' : 'Switch to Agent Mode'}
+          className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-[rgb(var(--harbor-text))] hover:bg-[rgb(var(--harbor-surface))] disabled:opacity-40"
         >
-          <Zap size={16} />
+          <Zap size={14} />
+          <span>{agentMode ? 'Agent' : 'Chat'}</span>
         </button>
+
+        {/* Model Name Display */}
+        {settings?.provider && (
+          <div className="flex-shrink-0 px-2.5 py-1.5 rounded-lg bg-[rgb(var(--harbor-surface-2))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[140px] truncate">
+            {settings.provider.model}
+          </div>
+        )}
+
+        {/* Plan Toggle (Agent Mode only) */}
+        {agentMode && (
+          <button
+            onClick={() => setEnablePlanning(!enablePlanning)}
+            disabled={disabled || isRunning}
+            title={enablePlanning ? 'Planning enabled' : 'Enable planning'}
+            className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40"
+            style={enablePlanning ? { color: 'rgb(34, 197, 94)' } : {}}
+          >
+            <CheckCircle2 size={16} />
+          </button>
+        )}
 
         <div className="flex-1" />
 

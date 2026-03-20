@@ -355,9 +355,9 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   // ─── Actions ───────────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
-    (text: string, attachedTabId?: number) => {
+    (text: string, attachedTabId?: number, options?: { enablePlanning?: boolean; chatModeOnly?: boolean }) => {
       try {
-        console.log('🚀 useChat.sendMessage called with:', { textLength: text.length, attachedTabId, isRunning, sessionId })
+        console.log('🚀 useChat.sendMessage called with:', { textLength: text.length, attachedTabId, options, isRunning, sessionId })
 
         if (isRunning) {
           console.log('⚠️ Already running, ignoring message')
@@ -400,8 +400,8 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           return
         }
 
-        console.log('📤 Posting message to background:', { type: 'chat', sessionId, textLength: text.length, attachedTabId })
-        portRef.current.postMessage({ type: 'chat', sessionId, message: text, attachedTabId })
+        console.log('📤 Posting message to background:', { type: 'chat', sessionId, textLength: text.length, attachedTabId, options })
+        portRef.current.postMessage({ type: 'chat', sessionId, message: text, attachedTabId, ...options })
         console.log('✅ Message posted successfully')
       } catch (err) {
         console.error('💥 ERROR in sendMessage:', err instanceof Error ? err.message : String(err), err)
