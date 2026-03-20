@@ -135,7 +135,7 @@ export default function ConversationList({
       {sessions.length > 4 && (
         <div className="px-3 py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
           <div
-            className="flex items-center gap-2 px-2.5 py-2 rounded-lg border"
+            className="flex items-center gap-2 px-2.5 py-2 rounded-lg border transition-colors focus-within:border-[rgb(var(--harbor-accent))] focus-within:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)]"
             style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
           >
             <Search size={12} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
@@ -246,11 +246,9 @@ export default function ConversationList({
                               e.stopPropagation()
                               onPinSession(session.id, !isPinned)
                             }}
-                            className="p-1 rounded-lg transition-colors"
+                            className="p-1 rounded-lg transition-colors focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
                             title={isPinned ? 'Unpin' : 'Pin'}
                             style={{ color: isPinned ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-faint))' }}
-                            onMouseEnter={(e) => { e.currentTarget.style.color = 'rgb(var(--harbor-accent))' }}
-                            onMouseLeave={(e) => { e.currentTarget.style.color = isPinned ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-faint))' }}
                           >
                             {isPinned ? <PinOff size={11} /> : <Pin size={11} />}
                           </button>
@@ -263,11 +261,9 @@ export default function ConversationList({
                             exportSessionToMarkdown(session)
                             onExport?.()
                           }}
-                          className="p-1 rounded-lg transition-colors"
+                          className="p-1 rounded-lg transition-colors focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
                           title="Export as Markdown"
                           style={{ color: 'rgb(var(--harbor-text-faint))' }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = 'rgb(var(--harbor-text-muted))' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgb(var(--harbor-text-faint))' }}
                         >
                           <Download size={11} />
                         </button>
@@ -278,11 +274,9 @@ export default function ConversationList({
                             e.stopPropagation()
                             setDeleteTarget(session)
                           }}
-                          className="p-1 rounded-lg transition-colors"
+                          className="p-1 rounded-lg transition-colors focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-red-500"
                           title="Delete"
                           style={{ color: 'rgb(var(--harbor-text-faint))' }}
-                          onMouseEnter={(e) => { e.currentTarget.style.color = '#ef4444' }}
-                          onMouseLeave={(e) => { e.currentTarget.style.color = 'rgb(var(--harbor-text-faint))' }}
                         >
                           <Trash2 size={11} />
                         </button>
