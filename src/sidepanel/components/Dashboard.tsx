@@ -77,18 +77,10 @@ export default function Dashboard({
               <button
                 key={label}
                 onClick={() => handleQuickAction(text)}
-                className="flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-all duration-150"
+                className="suggestion-chip flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
                 style={{
                   background: 'rgb(var(--harbor-surface))',
                   borderColor: 'rgb(var(--harbor-border))',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(var(--harbor-accent) / 0.4)'
-                  e.currentTarget.style.background = 'rgb(var(--harbor-surface-2))'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(var(--harbor-border))'
-                  e.currentTarget.style.background = 'rgb(var(--harbor-surface))'
                 }}
               >
                 <Icon size={13} style={{ color: 'rgb(var(--harbor-accent))', flexShrink: 0 }} />
@@ -112,16 +104,10 @@ export default function Dashboard({
               <button
                 key={label}
                 onClick={onClick}
-                className="flex flex-col items-center gap-2 px-2 py-3 rounded-xl border transition-all duration-150"
+                className="skill-card flex flex-col items-center gap-2 px-2 py-3 rounded-xl border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
                 style={{
                   background: 'rgb(var(--harbor-surface))',
                   borderColor: 'rgb(var(--harbor-border))',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(var(--harbor-accent) / 0.4)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'rgb(var(--harbor-border))'
                 }}
               >
                 <Icon size={18} style={{ color: 'rgb(var(--harbor-accent))' }} />
@@ -140,8 +126,9 @@ export default function Dashboard({
               <p className="harbor-section-label">Recent</p>
               <button
                 onClick={onOpenHistory}
-                className="text-[10px] flex items-center gap-0.5"
+                className="text-[10px] flex items-center gap-0.5 focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] rounded px-1 py-0.5"
                 style={{ color: 'rgb(var(--harbor-accent))' }}
+                title="View all conversations"
               >
                 View all <ArrowRight size={10} />
               </button>
@@ -154,16 +141,10 @@ export default function Dashboard({
                     // Navigate to session - handled by parent
                     onOpenHistory()
                   }}
-                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-all duration-150"
+                  className="suggestion-chip flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
                   style={{
                     background: 'rgb(var(--harbor-surface))',
                     borderColor: 'rgb(var(--harbor-border))',
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = 'rgb(var(--harbor-surface-2))'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'rgb(var(--harbor-surface))'
                   }}
                 >
                   <MessageSquare size={13} style={{ color: 'rgb(var(--harbor-text-faint))', flexShrink: 0 }} />
@@ -185,8 +166,9 @@ export default function Dashboard({
         {/* Settings link */}
         <button
           onClick={onOpenSettings}
-          className="flex items-center gap-2 text-xs"
+          className="flex items-center gap-2 text-xs focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] rounded px-1 py-0.5 hover:text-[rgb(var(--harbor-text-muted))] transition-colors"
           style={{ color: 'rgb(var(--harbor-text-faint))' }}
+          title="Settings & configuration"
         >
           <Settings size={12} />
           Settings & configuration
