@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check,
   Palette, User, Brain, Cpu,
-  Shield, HelpCircle, Keyboard, ChevronLeft, ChevronRight, Save,
+  Shield, HelpCircle, Keyboard, ChevronLeft, ChevronRight, Save, Command, Plus,
 } from 'lucide-react'
 import type {
   AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel,
@@ -25,6 +25,7 @@ type SettingsSection =
   | 'identity'
   | 'memory'
   | 'privacy'
+  | 'help'
   | 'about'
 
 const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
@@ -33,7 +34,8 @@ const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ComponentType
   { id: 'identity',   label: 'Identity',    icon: User },
   { id: 'memory',     label: 'Memory',      icon: Brain },
   { id: 'privacy',    label: 'Privacy',     icon: Shield },
-  { id: 'about',      label: 'About',       icon: HelpCircle },
+  { id: 'help',       label: 'Help',        icon: HelpCircle },
+  { id: 'about',      label: 'About',       icon: Info },
 ]
 
 const KEY_LINKS: Partial<Record<ProviderName, string>> = {
@@ -253,6 +255,8 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         return <SectionMemory enableMemory={enableMemory} onEnableMemoryChange={setEnableMemory} />
       case 'privacy':
         return <SectionPrivacy />
+      case 'help':
+        return <SectionHelp />
       case 'about':
         return <SectionAbout />
       default:
@@ -876,6 +880,92 @@ function SectionPrivacy() {
           onCancel={() => setShowResetConfirm(false)}
         />
       )}
+    </div>
+  )
+}
+
+// ─── Section: Help ────────────────────────────────────────────────────────────
+
+function SectionHelp() {
+  const shortcuts = [
+    { keys: ['Ctrl', 'Shift', 'Y'], mac: ['Cmd', 'Shift', 'Y'], action: 'Open Harbor' },
+    { keys: ['Enter'], mac: ['Enter'], action: 'Send message' },
+    { keys: ['Shift', 'Enter'], mac: ['Shift', 'Enter'], action: 'New line' },
+    { keys: ['Escape'], mac: ['Escape'], action: 'Close dialog' },
+  ]
+
+  const tips = [
+    { title: 'Agent vs Chat', desc: 'Use Agent mode to automate tasks, Chat mode for discussions.' },
+    { title: 'Memory System', desc: 'Link conversations to your memory for better context across chats.' },
+    { title: 'Model Presets', desc: 'Save your favorite model configs for instant switching in Settings.' },
+    { title: 'Pin Important Chats', desc: 'Keep important conversations at the top for quick access.' },
+    { title: 'Export Conversations', desc: 'Download any chat as Markdown for archiving or sharing.' },
+  ]
+
+  return (
+    <div className="px-4 py-4 flex flex-col gap-6">
+      <SectionHeader title="Help & Tips" description="Keyboard shortcuts and usage tips" />
+
+      {/* Keyboard Shortcuts */}
+      <div>
+        <p className="text-xs font-semibold mb-3" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+          Keyboard Shortcuts
+        </p>
+        <div className="space-y-2">
+          {shortcuts.map(({ keys, mac, action }) => (
+            <div key={action} className="flex items-center justify-between p-2.5 rounded-lg" style={{ background: 'rgb(var(--harbor-surface))' }}>
+              <span className="text-xs" style={{ color: 'rgb(var(--harbor-text))' }}>{action}</span>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  {keys.map((k) => (
+                    <kbd
+                      key={k}
+                      className="px-1.5 py-0.5 rounded text-[10px] font-mono border"
+                      style={{
+                        borderColor: 'rgb(var(--harbor-border))',
+                        background: 'rgb(var(--harbor-surface-2))',
+                        color: 'rgb(var(--harbor-text-faint))',
+                      }}
+                    >
+                      {k}
+                    </kbd>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tips */}
+      <div>
+        <p className="text-xs font-semibold mb-3" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+          Pro Tips
+        </p>
+        <div className="space-y-2">
+          {tips.map(({ title, desc }) => (
+            <div key={title} className="p-3 rounded-lg border" style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}>
+              <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{title}</p>
+              <p className="text-[11px] mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Documentation Link */}
+      <a
+        href="https://docs.harborbrowser.dev"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border text-xs font-medium transition-colors"
+        style={{
+          borderColor: 'rgb(var(--harbor-border))',
+          color: 'rgb(var(--harbor-accent))',
+          background: 'rgb(var(--harbor-surface-2))',
+        }}
+      >
+        <Info size={13} /> Read Full Documentation
+      </a>
     </div>
   )
 }
