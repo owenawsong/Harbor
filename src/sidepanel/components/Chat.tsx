@@ -188,14 +188,18 @@ export default function Chat({
       {/* ── Runtime error banner ─────────────────────────────────────────────── */}
       {error && (
         <div
-          className="mx-3 mt-2.5 px-3 py-2 rounded-xl text-xs border"
+          className="mx-3 mt-2.5 px-4 py-2.5 rounded-xl text-xs border flex items-start gap-2 animate-pop-in"
           style={{
-            borderColor: 'rgb(239 68 68 / 0.3)',
-            background: 'rgb(239 68 68 / 0.08)',
-            color: '#b91c1c',
+            borderColor: 'rgb(239 68 68 / 0.4)',
+            background: 'rgb(239 68 68 / 0.1)',
+            color: '#dc2626',
           }}
         >
-          {error}
+          <span className="flex-shrink-0 text-base leading-none">⚠️</span>
+          <div className="flex-1">
+            <p className="font-medium mb-0.5">Something went wrong</p>
+            <p style={{ color: 'rgb(220 38 38 / 0.8)' }}>{error}</p>
+          </div>
         </div>
       )}
 

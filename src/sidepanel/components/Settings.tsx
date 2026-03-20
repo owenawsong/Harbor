@@ -286,7 +286,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
       <SettingsTabBar activeSection={activeSection} onSectionChange={setActiveSection} />
 
       {/* Section content */}
-      <div className="flex-1 overflow-y-auto harbor-scroll">
+      <div className="flex-1 overflow-y-auto harbor-scroll animate-fade-in">
         {renderSection()}
       </div>
     </div>
