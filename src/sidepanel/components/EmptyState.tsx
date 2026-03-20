@@ -9,7 +9,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: 
   Globe, Search, ShoppingCart, Table, Shuffle, Layers, BookOpen, Camera,
 }
 
-const SUGGESTIONS = [
+const AGENT_SUGGESTIONS = [
   { icon: 'Globe',        text: 'Summarize this page' },
   { icon: 'Search',       text: 'Research a topic' },
   { icon: 'ShoppingCart', text: 'Compare prices' },
@@ -18,13 +18,27 @@ const SUGGESTIONS = [
   { icon: 'Layers',       text: 'Organize my tabs' },
 ]
 
+const CHAT_SUGGESTIONS = [
+  { icon: 'Search',       text: 'Research a topic' },
+  { icon: 'BookOpen',     text: 'Explain a concept' },
+  { icon: 'ShoppingCart', text: 'Get recommendations' },
+  { icon: 'Shuffle',      text: 'Brainstorm ideas' },
+  { icon: 'Camera',       text: 'Analyze an image' },
+  { icon: 'Layers',       text: 'Organize information' },
+]
+
 interface Props {
   onSuggestionClick: (text: string) => void
   userName?: string
+  agentMode?: boolean
 }
 
-export default function EmptyState({ onSuggestionClick, userName }: Props) {
+export default function EmptyState({ onSuggestionClick, userName, agentMode = true }: Props) {
   const [greeting] = useState(() => getGreeting(userName))
+  const suggestions = agentMode ? AGENT_SUGGESTIONS : CHAT_SUGGESTIONS
+  const description = agentMode
+    ? 'Automate tasks, navigate pages, and browse smarter.'
+    : 'Ask anything, get answers, explore ideas.'
 
   return (
     <div className="flex flex-col h-full overflow-y-auto harbor-scroll justify-center items-center">
@@ -41,7 +55,7 @@ export default function EmptyState({ onSuggestionClick, userName }: Props) {
             className="text-xs leading-relaxed"
             style={{ color: 'rgb(var(--harbor-text-faint))' }}
           >
-            Ask anything, automate tasks, browse smarter.
+            {description}
           </p>
         </div>
 
@@ -49,7 +63,7 @@ export default function EmptyState({ onSuggestionClick, userName }: Props) {
         <div>
           <p className="harbor-section-label mb-2 text-xs text-center">Try asking</p>
           <div className="grid grid-cols-2 gap-1.5 suggestions-grid">
-            {SUGGESTIONS.map(({ icon, text }, i) => {
+            {suggestions.map(({ icon, text }, i) => {
               const Icon = ICON_MAP[icon]
               return (
                 <button

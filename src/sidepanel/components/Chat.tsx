@@ -48,21 +48,11 @@ export default function Chat({
 
   const [showNotifications, setShowNotifications] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [isConnected, setIsConnected] = useState(true)
 
-  // Track connection via chrome.runtime availability
-  useEffect(() => {
-    const checkConnection = () => {
-      try {
-        setIsConnected(Boolean(chrome?.runtime?.id))
-      } catch {
-        setIsConnected(false)
-      }
-    }
-    checkConnection()
-    const interval = setInterval(checkConnection, 5000)
-    return () => clearInterval(interval)
-  }, [])
+  // Only show agent border when there are active tool calls, not just thinking
+  const hasActiveToolCalls = messages.some((msg) =>
+    msg.toolCalls.some((tc) => tc.status === 'running' || tc.status === 'pending'),
+  )
 
   const hasApiKey =
     Boolean(settings.provider.apiKey) ||
@@ -80,36 +70,22 @@ export default function Chat({
   }, [pendingMessage, hasApiKey, sendMessage, onPendingMessageSent])
 
   return (
-    <div className={`flex flex-col h-full relative ${isRunning ? 'agent-active-border' : ''}`}>
+    <div className={`flex flex-col h-full relative ${hasActiveToolCalls ? 'agent-active-border' : ''}`}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div
         className="flex items-center justify-between px-3 py-2.5 border-b"
         style={{ borderColor: 'rgb(var(--harbor-border))' }}
       >
-        {/* Logo + name + status */}
+        {/* Logo + name */}
         <button
           onClick={onOpenDashboard}
           className="flex items-center gap-2 min-w-0 group"
         >
-          <div className="relative flex-shrink-0">
-            <img
-              src="/icons/logo.png"
-              alt="Harbor"
-              className="w-6 h-6 rounded-lg"
-            />
-            {/* Connection status dot */}
-            <span
-              className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-[rgb(var(--harbor-bg))]"
-              style={{
-                background: isRunning
-                  ? 'rgb(var(--harbor-accent))'
-                  : isConnected
-                    ? '#22c55e'
-                    : '#ef4444',
-              }}
-              title={isRunning ? 'Agent running' : isConnected ? 'Connected' : 'Disconnected'}
-            />
-          </div>
+          <img
+            src="/icons/logo.png"
+            alt="Harbor"
+            className="w-6 h-6 rounded-lg flex-shrink-0"
+          />
           <span
             className="harbor-serif text-base font-medium header-logo-text"
             style={{ color: 'rgb(var(--harbor-text))' }}
@@ -228,6 +204,7 @@ export default function Chat({
         {messages.length === 0 ? (
           <EmptyState
             userName={identity?.userName}
+            agentMode={agentMode}
             onSuggestionClick={(text) => {
               if (hasApiKey) sendMessage(text)
               else onOpenSettings()

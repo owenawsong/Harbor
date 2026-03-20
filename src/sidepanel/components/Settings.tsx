@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import {
   ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check,
   Palette, User, Brain, Cpu,
-  Shield, HelpCircle, Keyboard, ChevronLeft, ChevronRight,
+  Shield, HelpCircle, Keyboard, ChevronLeft, ChevronRight, Save,
 } from 'lucide-react'
 import type {
   AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel,
 } from '../../shared/types'
 import { DEFAULT_MODELS, PROVIDER_LABELS } from '../../shared/constants'
 import ConfirmDialog from './ConfirmDialog'
+import ModelPresets from './ModelPresets'
 
 interface Props {
   settings: AgentSettings
@@ -79,6 +80,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('provider')
   const [savedIndicator, setSavedIndicator] = useState(false)
+  const [showPresets, setShowPresets] = useState(false)
 
   // Provider / Models - with per-provider model storage
   const [provider, setProvider]       = useState<ProviderName>(settings.provider.provider as ProviderName)
@@ -204,6 +206,18 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     }, 500)
   }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, identity, model, onSave])
 
+  const handleApplyPreset = (presetSettings: AgentSettings) => {
+    // Apply preset settings to current state
+    setProvider(presetSettings.provider.provider as ProviderName)
+    setModelsByProvider((prev) => ({
+      ...prev,
+      [presetSettings.provider.provider]: presetSettings.provider.model,
+    }))
+    if (presetSettings.provider.apiKey) setApiKey(presetSettings.provider.apiKey)
+    if (presetSettings.provider.baseUrl) setBaseUrl(presetSettings.provider.baseUrl)
+    if (presetSettings.enableMemory !== undefined) setEnableMemory(presetSettings.enableMemory)
+  }
+
   const renderSection = () => {
     console.log('📭 Settings: About to render section, current state:', { provider, apiKey: apiKey ? '***' : 'EMPTY', userName, tone })
     switch (activeSection) {
@@ -217,6 +231,13 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           onApiKeyChange={setApiKey} onBaseUrlChange={setBaseUrl}
           onEnableMemoryChange={setEnableMemory}
           onShowKeyToggle={() => setShowKey((v) => !v)}
+          showPresets={showPresets} setShowPresets={setShowPresets}
+          currentSettings={{
+            provider: { provider, model: provider === 'harbor-free' ? 'minimaxai/minimax-m2.5' : model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
+            enableMemory,
+            enableScreenshots: true,
+          }}
+          onApplyPreset={handleApplyPreset}
         />
       case 'appearance':
         return <SectionAppearance currentTheme={currentTheme} onThemeChange={setCurrentTheme} />
@@ -360,23 +381,36 @@ function SectionGeneral({
   needsKey, needsUrl, keyLink,
   onProviderChange, onModelChange, onApiKeyChange, onBaseUrlChange,
   onEnableMemoryChange, onShowKeyToggle,
+  showPresets, setShowPresets, currentSettings, onApplyPreset,
 }: any) {
   return (
-    <div className="px-4 py-4 flex flex-col gap-4">
+    <div className="px-4 py-4 flex flex-col gap-4 relative">
       <SectionHeader title="General" />
 
-      {/* Provider */}
-      <FormField label="Provider">
-        <select
-          value={provider}
-          onChange={(e) => onProviderChange(e.target.value as ProviderName)}
-          className="harbor-input text-xs"
+      {/* Provider + Presets button */}
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <FormField label="Provider">
+            <select
+              value={provider}
+              onChange={(e) => onProviderChange(e.target.value as ProviderName)}
+              className="harbor-input text-xs"
+            >
+              {Object.entries(PROVIDER_LABELS).map(([id, label]) => (
+                <option key={id} value={id}>{label}</option>
+              ))}
+            </select>
+          </FormField>
+        </div>
+        <button
+          onClick={() => setShowPresets(!showPresets)}
+          className="px-2.5 py-2 rounded-lg border border-[rgb(var(--harbor-border))] hover:bg-[rgb(var(--harbor-surface-2))] transition relative"
+          title="Load preset"
+          style={{ color: 'rgb(var(--harbor-text-muted))' }}
         >
-          {Object.entries(PROVIDER_LABELS).map(([id, label]) => (
-            <option key={id} value={id}>{label}</option>
-          ))}
-        </select>
-      </FormField>
+          <Save size={13} />
+        </button>
+      </div>
 
       {/* Model - hidden in Harbor Free */}
       {provider !== 'harbor-free' && (
@@ -461,6 +495,15 @@ function SectionGeneral({
         value={enableMemory}
         onChange={onEnableMemoryChange}
       />
+
+      {/* Model Presets Dropdown */}
+      {showPresets && currentSettings && (
+        <ModelPresets
+          currentSettings={currentSettings}
+          onSelectPreset={onApplyPreset}
+          onClose={() => setShowPresets(false)}
+        />
+      )}
     </div>
   )
 }
