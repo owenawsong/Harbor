@@ -224,6 +224,22 @@
     box-shadow: 0 0 0 3px rgb(var(--harbor-accent) / 0.12);
   }
 
+  /* Textarea field */
+  .harbor-textarea {
+    @apply w-full px-3 py-2.5 rounded-xl text-sm outline-none resize-none;
+    background: rgb(var(--harbor-surface));
+    border: 1px solid rgb(var(--harbor-border));
+    color: rgb(var(--harbor-text));
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .harbor-textarea::placeholder {
+    color: rgb(var(--harbor-text-faint));
+  }
+  .harbor-textarea:focus {
+    border-color: rgb(var(--harbor-accent));
+    box-shadow: 0 0 0 3px rgb(var(--harbor-accent) / 0.12);
+  }
+
   /* Toggle switch */
   .harbor-toggle {
     @apply relative w-9 h-5 rounded-full cursor-pointer;
