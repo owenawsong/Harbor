@@ -29,6 +29,10 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
   const fileInputRef = useRef<HTMLInputElement>(null)
   const modelButtonRef = useRef<HTMLDivElement>(null)
 
+  useImperativeHandle(ref, () => ({
+    focus: () => textareaRef.current?.focus(),
+  }))
+
   const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && !isRunning
 
   const send = useCallback(() => {
@@ -235,4 +239,6 @@ export default function ChatInput({ onSend, onStop, isRunning, disabled, placeho
       </div>
     </div>
   )
-}
+})
+
+export default ChatInput

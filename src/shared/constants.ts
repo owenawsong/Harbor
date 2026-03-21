@@ -63,6 +63,7 @@ export const DEFAULT_MODELS: Record<string, string[]> = {
 }
 
 export const PROVIDER_LABELS: Record<string, string> = {
+  'harbor-free': 'Harbor Free ✦',
   anthropic: 'Anthropic (Claude)',
   openai: 'OpenAI (GPT)',
   google: 'Google (Gemini)',

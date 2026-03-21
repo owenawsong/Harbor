@@ -6,7 +6,7 @@ import {
 import type { AgentSettings, IdentitySettings } from '../../shared/types'
 import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
-import ChatInput from './ChatInput'
+import ChatInput, { type ChatInputHandle } from './ChatInput'
 import EmptyState from './EmptyState'
 
 

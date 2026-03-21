@@ -415,6 +415,18 @@
   40%           { opacity: 1; }
 }
 
+/* ─── Thinking Block Expand/Collapse ────────────────────────────────────────── */
+
+.thinking-content {
+  animation: thinkingReveal 0.2s ease-out both;
+  overflow: hidden;
+}
+
+@keyframes thinkingReveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ─── Streaming Cursor ──────────────────────────────────────────────────────── */
 
 .streaming-cursor::after {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import Chat from './components/Chat'
 import Settings from './components/Settings'
 import ConversationList from './components/ConversationList'
