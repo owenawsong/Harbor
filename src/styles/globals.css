@@ -1,3 +1,6 @@
+/* ─── Google Fonts ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -5,30 +8,40 @@
 /* ─── Design Tokens ────────────────────────────────────────────────────────── */
 
 @layer base {
+  /* Light mode — warm cream */
   :root {
-    --harbor-bg:          250 250 250;
-    --harbor-surface:     255 255 255;
-    --harbor-surface-2:   245 245 245;
-    --harbor-border:      229 229 229;
-    --harbor-border-2:    212 212 212;
-    --harbor-text:         23  23  23;
-    --harbor-text-muted:  115 115 115;
-    --harbor-text-faint:  163 163 163;
-    --harbor-accent:       79  95 232;
-    --harbor-accent-hover: 61  75 214;
+    --harbor-bg:           249 248 244;   /* cream-100 */
+    --harbor-surface:      255 255 255;   /* pure white */
+    --harbor-surface-2:    244 243 239;   /* slightly warm gray */
+    --harbor-surface-3:    237 235 230;   /* card background */
+    --harbor-border:       224 221 214;   /* cream-300 */
+    --harbor-border-2:     205 200 191;   /* cream-400 */
+    --harbor-text:          26  26  46;   /* navy-ish dark */
+    --harbor-text-muted:    90  88  95;   /* medium gray */
+    --harbor-text-faint:   130 125 115;   /* improved contrast faint */
+    --harbor-accent:        78 142 168;   /* teal harbor-500 */
+    --harbor-accent-hover:  61 122 148;   /* teal harbor-600 */
+    --harbor-accent-light: 221 240 246;   /* teal tint */
+    --harbor-glow:    78 142 168;         /* for glow effects */
+    --harbor-navy:         26  26  46;    /* navy dark */
   }
 
+  /* Dark mode — deep navy */
   .dark {
-    --harbor-bg:           10  10  10;
-    --harbor-surface:      18  18  18;
-    --harbor-surface-2:    24  24  24;
-    --harbor-border:       38  38  38;
-    --harbor-border-2:     52  52  52;
-    --harbor-text:        250 250 250;
-    --harbor-text-muted:  163 163 163;
-    --harbor-text-faint:  115 115 115;
-    --harbor-accent:      107 127 243;
-    --harbor-accent-hover:133 150 248;
+    --harbor-bg:             7   7  14;   /* navy-900 */
+    --harbor-surface:       13  13  26;   /* navy-800 */
+    --harbor-surface-2:     18  18  35;   /* slightly lighter */
+    --harbor-surface-3:     24  24  45;   /* card */
+    --harbor-border:        38  38  64;   /* subtle border */
+    --harbor-border-2:      55  55  88;   /* more visible */
+    --harbor-text:         236 233 226;   /* cream-200 */
+    --harbor-text-muted:   160 157 152;   /* medium */
+    --harbor-text-faint:   100  98  95;   /* faint */
+    --harbor-accent:       106 180 204;   /* harbor-400 lighter in dark */
+    --harbor-accent-hover: 127 197 218;   /* even lighter */
+    --harbor-accent-light:  18  45  58;   /* dark teal tint */
+    --harbor-glow:    106 180 204;        /* for glow effects */
+    --harbor-navy:           7   7  14;
   }
 
   *, *::before, *::after {
@@ -43,7 +56,7 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     font-size: 14px;
     line-height: 1.5;
     background: rgb(var(--harbor-bg));
@@ -56,84 +69,255 @@
     display: flex;
     flex-direction: column;
   }
+}
 
-  /* Smooth color transitions everywhere */
-  * {
-    transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;
-    transition-duration: 150ms;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  }
+/* ─── Global Transitions ────────────────────────────────────────────────────── */
 
-  /* But NOT for transforms/layout (would kill animations) */
-  *[class*='translate'], *[class*='scale'], *[class*='rotate'] {
-    transition-property: transform, opacity;
-  }
+* {
+  transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+*[class*='translate'], *[class*='scale'], *[class*='rotate'] {
+  transition-property: transform, opacity;
 }
 
 /* ─── Component Classes ─────────────────────────────────────────────────────── */
 
 @layer components {
-  /* Icon button — used throughout the header */
+  /* Icon button */
   .icon-btn {
-    @apply p-1.5 rounded-md cursor-pointer
+    @apply p-1.5 rounded-lg cursor-pointer
            text-[rgb(var(--harbor-text-muted))]
            hover:text-[rgb(var(--harbor-text))]
-           hover:bg-[rgb(var(--harbor-surface-2))];
-    transition: color 150ms, background-color 150ms;
+           hover:bg-[rgb(var(--harbor-surface-2))]
+           focus-visible:outline-2 focus-visible:outline-offset-2
+           focus-visible:outline-[rgb(var(--harbor-accent))];
+    transition: color 120ms ease, background-color 120ms ease, transform 100ms ease;
+  }
+  .icon-btn:hover {
+    transform: translateY(-1px);
+  }
+  .icon-btn:active {
+    transform: scale(0.88);
   }
 
-  /* Scrollbar — thin and subtle */
+  /* Thin custom scrollbar — shows on hover */
   .harbor-scroll {
     overflow-y: auto;
     scrollbar-width: thin;
+    scrollbar-color: transparent transparent;
+    transition: scrollbar-color 0.2s ease;
+  }
+  .harbor-scroll:hover {
     scrollbar-color: rgb(var(--harbor-border-2)) transparent;
   }
-
   .harbor-scroll::-webkit-scrollbar        { width: 4px; }
   .harbor-scroll::-webkit-scrollbar-track  { background: transparent; }
   .harbor-scroll::-webkit-scrollbar-thumb  {
-    background: rgb(var(--harbor-border-2));
+    background: transparent;
     border-radius: 9999px;
+    transition: background 0.2s ease;
   }
+  .harbor-scroll:hover::-webkit-scrollbar-thumb {
+    background: rgb(var(--harbor-border-2));
+  }
+
+  /* No scrollbar — scrollable but hidden */
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 
   /* Legacy alias */
   .harbor-scrollbar { @apply harbor-scroll; }
+
+  /* Serif heading class */
+  .harbor-serif {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+
+  /* Accent pill badge */
+  .harbor-badge {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium tracking-wide;
+    background: rgb(var(--harbor-accent-light));
+    color: rgb(var(--harbor-accent));
+    border: 1px solid rgb(var(--harbor-accent) / 0.25);
+  }
+
+  /* Primary action button */
+  .harbor-btn-primary {
+    @apply flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm
+           text-white cursor-pointer select-none
+           focus-visible:outline-2 focus-visible:outline-offset-2
+           focus-visible:outline-white;
+    background: rgb(var(--harbor-accent));
+    transition: background 150ms ease, transform 100ms ease, box-shadow 150ms ease;
+  }
+  .harbor-btn-primary:hover {
+    background: rgb(var(--harbor-accent-hover));
+    box-shadow: 0 4px 16px rgb(var(--harbor-accent) / 0.35);
+    transform: translateY(-1px);
+  }
+  .harbor-btn-primary:active {
+    transform: scale(0.97);
+    box-shadow: none;
+  }
+  .harbor-btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Secondary ghost button */
+  .harbor-btn-ghost {
+    @apply flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm
+           cursor-pointer select-none
+           focus-visible:outline-2 focus-visible:outline-offset-2
+           focus-visible:outline-[rgb(var(--harbor-text-muted))];
+    color: rgb(var(--harbor-text-muted));
+    border: 1px solid rgb(var(--harbor-border));
+    transition: all 150ms ease;
+  }
+  .harbor-btn-ghost:hover {
+    color: rgb(var(--harbor-text));
+    border-color: rgb(var(--harbor-border-2));
+    background: rgb(var(--harbor-surface-2));
+    transform: translateY(-1px);
+  }
+  .harbor-btn-ghost:active {
+    transform: scale(0.97);
+    background: rgb(var(--harbor-surface-2));
+  }
+  .harbor-btn-ghost:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Card surface */
+  .harbor-card {
+    @apply rounded-2xl border;
+    background: rgb(var(--harbor-surface));
+    border-color: rgb(var(--harbor-border));
+    transition: border-color 150ms ease, box-shadow 150ms ease, transform 100ms ease;
+  }
+  .harbor-card:hover {
+    border-color: rgb(var(--harbor-border-2));
+    box-shadow: 0 2px 12px rgb(0 0 0 / 0.06);
+    transform: translateY(-1px);
+  }
+
+  /* Input field */
+  .harbor-input {
+    @apply w-full px-3 py-2.5 rounded-xl text-sm outline-none;
+    background: rgb(var(--harbor-surface));
+    border: 1px solid rgb(var(--harbor-border));
+    color: rgb(var(--harbor-text));
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .harbor-input::placeholder {
+    color: rgb(var(--harbor-text-faint));
+  }
+  .harbor-input:focus {
+    border-color: rgb(var(--harbor-accent));
+    box-shadow: 0 0 0 3px rgb(var(--harbor-accent) / 0.12);
+  }
+
+  /* Textarea field */
+  .harbor-textarea {
+    @apply w-full px-3 py-2.5 rounded-xl text-sm outline-none resize-none;
+    background: rgb(var(--harbor-surface));
+    border: 1px solid rgb(var(--harbor-border));
+    color: rgb(var(--harbor-text));
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .harbor-textarea::placeholder {
+    color: rgb(var(--harbor-text-faint));
+  }
+  .harbor-textarea:focus {
+    border-color: rgb(var(--harbor-accent));
+    box-shadow: 0 0 0 3px rgb(var(--harbor-accent) / 0.12);
+  }
+
+  /* Toggle switch */
+  .harbor-toggle {
+    @apply relative w-9 h-5 rounded-full cursor-pointer;
+    transition: background 200ms ease;
+  }
+  .harbor-toggle-thumb {
+    @apply absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm;
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Section heading */
+  .harbor-section-label {
+    @apply text-[10px] font-semibold uppercase tracking-widest;
+    color: rgb(var(--harbor-text-faint));
+  }
+
+  /* Frosted glass surface */
+  .harbor-glass {
+    backdrop-filter: blur(12px) saturate(1.6);
+    -webkit-backdrop-filter: blur(12px) saturate(1.6);
+    background: rgb(var(--harbor-surface) / 0.85);
+    border: 1px solid rgb(var(--harbor-border) / 0.6);
+  }
+
+  /* Agent running overlay border glow */
+  .agent-active-border {
+    box-shadow: inset 0 0 0 2px rgb(var(--harbor-accent) / 0.5), 0 0 20px rgb(var(--harbor-accent) / 0.2);
+    animation: glow 2s ease-in-out infinite;
+  }
 }
 
 /* ─── Markdown Rendering ────────────────────────────────────────────────────── */
 
 .md {
-  line-height: 1.65;
+  line-height: 1.7;
   color: rgb(var(--harbor-text));
 }
 
 .md > *:first-child { margin-top: 0 !important; }
 .md > *:last-child  { margin-bottom: 0 !important; }
 
-.md p { margin: 0.6em 0; }
+.md p { margin: 0.55em 0; }
 
 .md h1, .md h2, .md h3, .md h4, .md h5, .md h6 {
   margin: 1.1em 0 0.4em;
   font-weight: 600;
   line-height: 1.3;
   color: rgb(var(--harbor-text));
+  font-family: 'DM Sans', sans-serif;
 }
-.md h1 { font-size: 1.25em; }
-.md h2 { font-size: 1.1em; }
+.md h1 { font-size: 1.2em; }
+.md h2 { font-size: 1.08em; }
 .md h3 { font-size: 1em; }
 
-.md ul, .md ol {
+.md ul {
+  list-style-type: disc;
+  padding-left: 1.4em;
+  margin: 0.4em 0;
+}
+.md ol {
+  list-style-type: decimal;
   padding-left: 1.4em;
   margin: 0.4em 0;
 }
 .md li { margin: 0.2em 0; }
+.md li > ul { list-style-type: circle; margin: 0.1em 0; }
+.md li > ol { margin: 0.1em 0; }
 
 .md strong { font-weight: 600; }
 .md em     { font-style: italic; }
 
 .md code {
   font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', ui-monospace, monospace;
-  font-size: 0.85em;
+  font-size: 0.83em;
   background: rgb(var(--harbor-surface-2));
   border: 1px solid rgb(var(--harbor-border));
   padding: 0.1em 0.35em;
@@ -142,29 +326,31 @@
 
 .md pre {
   margin: 0.75em 0;
-  border-radius: 8px;
-  background: rgb(var(--harbor-surface));
+  border-radius: 12px;
+  background: rgb(var(--harbor-surface-2));
   border: 1px solid rgb(var(--harbor-border));
   overflow-x: auto;
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.1);
 }
 .dark .md pre {
-  background: rgb(15 15 15);
-  border-color: rgb(38 38 38);
+  background: rgb(12 12 24);
+  border-color: rgb(40 40 70);
 }
 .md pre code {
   display: block;
-  padding: 0.85em 1em;
+  padding: 1em;
   background: none;
   border: none;
   font-size: 0.82em;
-  line-height: 1.6;
+  line-height: 1.7;
   color: rgb(var(--harbor-text));
+  letter-spacing: 0.3px;
 }
 
 .md blockquote {
   margin: 0.6em 0;
   padding: 0.3em 0 0.3em 1em;
-  border-left: 3px solid rgb(var(--harbor-border-2));
+  border-left: 3px solid rgb(var(--harbor-accent) / 0.4);
   color: rgb(var(--harbor-text-muted));
 }
 
@@ -197,10 +383,16 @@
   margin: 1em 0;
 }
 
-/* ─── KaTeX (LaTeX math) ────────────────────────────────────────────────────── */
+.md img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin: 0.5em 0;
+  display: block;
+}
+
+/* ─── KaTeX ─────────────────────────────────────────────────────────────────── */
 
 .md .katex { font-size: 1em; }
-
 .md .katex-display {
   margin: 0.75em 0;
   padding: 0.75em 1em;
@@ -252,4 +444,178 @@
 @keyframes cursorBlink {
   0%, 100% { opacity: 1; }
   50%      { opacity: 0; }
+}
+
+/* ─── Onboarding Animations ──────────────────────────────────────────────────── */
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 8px 2px rgb(var(--harbor-glow) / 0.25); }
+  50%      { box-shadow: 0 0 20px 6px rgb(var(--harbor-glow) / 0.45); }
+}
+
+.logo-glow {
+  animation: logoGlow 3s ease-in-out infinite;
+}
+
+@keyframes logoGlow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgb(var(--harbor-accent) / 0.35)); }
+  50%      { filter: drop-shadow(0 0 20px rgb(var(--harbor-accent) / 0.6)); }
+}
+
+/* ─── Shimmer Loading ────────────────────────────────────────────────────────── */
+
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgb(var(--harbor-surface-2)) 25%,
+    rgb(var(--harbor-surface-3)) 50%,
+    rgb(var(--harbor-surface-2)) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ─── Skill Card Hover ───────────────────────────────────────────────────────── */
+
+.skill-card {
+  @apply rounded-2xl border p-3 cursor-pointer;
+  background: rgb(var(--harbor-surface));
+  border-color: rgb(var(--harbor-border));
+  transition: all 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.skill-card:hover {
+  border-color: rgb(var(--harbor-accent) / 0.5);
+  background: rgb(var(--harbor-surface-2));
+  box-shadow: 0 4px 20px rgb(var(--harbor-accent) / 0.12);
+  transform: translateY(-2px);
+}
+.skill-card.active {
+  border-color: rgb(var(--harbor-accent));
+  background: rgb(var(--harbor-accent-light));
+}
+
+/* ─── Command Palette ────────────────────────────────────────────────────────── */
+
+.command-palette-overlay {
+  background: rgb(0 0 0 / 0.55);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.command-palette-item {
+  @apply flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer;
+  transition: background 100ms ease;
+}
+.command-palette-item:hover,
+.command-palette-item.focused {
+  background: rgb(var(--harbor-surface-2));
+}
+.command-palette-item.focused .command-palette-icon {
+  color: rgb(var(--harbor-accent));
+}
+
+/* ─── Notification dot ───────────────────────────────────────────────────────── */
+
+.notif-dot {
+  @apply absolute top-0.5 right-0.5 w-1.5 h-1.5 rounded-full;
+  background: rgb(var(--harbor-accent));
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.7; transform: scale(1.15); }
+}
+
+/* ─── Settings sidebar ───────────────────────────────────────────────────────── */
+
+.settings-nav-item {
+  @apply flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium cursor-pointer w-full text-left;
+  color: rgb(var(--harbor-text-muted));
+  transition: all 120ms ease;
+}
+.settings-nav-item:hover {
+  background: rgb(var(--harbor-surface-2));
+  color: rgb(var(--harbor-text));
+}
+.settings-nav-item.active {
+  background: rgb(var(--harbor-accent-light));
+  color: rgb(var(--harbor-accent));
+}
+
+/* ─── Memory category chips ──────────────────────────────────────────────────── */
+
+.memory-cat-chip {
+  @apply px-2.5 py-1 rounded-full text-xs font-medium cursor-pointer;
+  background: rgb(var(--harbor-surface-2));
+  color: rgb(var(--harbor-text-muted));
+  border: 1px solid rgb(var(--harbor-border));
+  transition: all 150ms ease;
+}
+.memory-cat-chip:hover {
+  transform: translateY(-1px);
+}
+.memory-cat-chip:hover,
+.memory-cat-chip.active {
+  background: rgb(var(--harbor-accent-light));
+  color: rgb(var(--harbor-accent));
+  border-color: rgb(var(--harbor-accent) / 0.3);
+}
+
+/* ─── Onboarding progress dots ───────────────────────────────────────────────── */
+
+.onboard-dot {
+  @apply rounded-full;
+  background: rgb(var(--harbor-border-2));
+  transition: all 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.onboard-dot.active {
+  background: rgb(var(--harbor-accent));
+}
+
+/* ─── Agent running indicator pill ──────────────────────────────────────────── */
+
+.agent-pill {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  background: rgb(var(--harbor-surface) / 0.9);
+  border: 1px solid rgb(var(--harbor-accent) / 0.4);
+  box-shadow: 0 4px 20px rgb(var(--harbor-accent) / 0.2);
+}
+
+/* ─── Suggestion chips ───────────────────────────────────────────────────────── */
+
+.suggestion-chip {
+  transition: border-color 150ms ease, background-color 150ms ease, transform 150ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 150ms ease;
+}
+.suggestion-chip:hover {
+  border-color: rgb(var(--harbor-accent) / 0.45) !important;
+  background: rgb(var(--harbor-surface-2)) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgb(var(--harbor-accent) / 0.1);
+}
+.suggestion-chip:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+/* ─── Responsive layout — adapts to panel/viewport width ────────────────────── */
+
+/* Very narrow panels (< 300px) */
+@media (max-width: 299px) {
+  .empty-greeting { font-size: 1.75rem !important; }
+  .suggestions-grid { grid-template-columns: 1fr !important; }
+  .header-logo-text { display: none !important; }
+  .settings-tab-label { display: none !important; }
+}
+
+/* Wide panels (> 480px) — show 3-col suggestions */
+@media (min-width: 481px) {
+  .suggestions-grid { grid-template-columns: repeat(3, 1fr) !important; }
+  .empty-greeting { font-size: 4rem !important; }
 }

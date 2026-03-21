@@ -49,6 +49,7 @@ export interface ToolResultPart {
 
 export type CompletionEvent =
   | { type: 'text_delta'; text: string }
+  | { type: 'thinking'; text: string }
   | { type: 'tool_call_start'; id: string; name: string }
   | { type: 'tool_call_input_delta'; id: string; delta: string }
   | { type: 'tool_call_complete'; id: string; name: string; input: Record<string, unknown> }

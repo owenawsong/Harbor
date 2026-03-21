@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Harbor - AI Browser Agent",
-  "version": "1.23.0",
+  "version": "1.22.0",
   "description": "AI-powered browser agent - bring any AI to control your browser. Supports Claude, GPT, Gemini, Ollama & more.",
   "icons": {
     "16": "icons/icon16.png",
@@ -46,7 +46,8 @@
     "unlimitedStorage",
     "clipboardWrite",
     "clipboardRead",
-    "notifications"
+    "notifications",
+    "contextMenus"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -56,5 +57,12 @@
       "resources": ["icons/*", "assets/*", "*.html"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  "commands": {
+    "toggle-command-palette": {
+      "suggested_key": "Ctrl+K",
+      "description": "Toggle Harbor command palette"
+    }
+  },
+  "incognito": "split"
 }

@@ -6,9 +6,10 @@ interface Props {
   messages: UIMessage[]
   isRunning: boolean
   onToggleThinking?: (messageId: string, blockId: string) => void
+  onEditMessage?: (messageId: string, newText: string) => void
 }
 
-export default function ChatMessages({ messages, isRunning, onToggleThinking }: Props) {
+export default function ChatMessages({ messages, isRunning, onToggleThinking, onEditMessage }: Props) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -22,12 +23,17 @@ export default function ChatMessages({ messages, isRunning, onToggleThinking }: 
     <div className="h-full overflow-y-auto harbor-scroll">
       <div className="flex flex-col gap-4 px-3 py-4">
         {messages.map((msg) => (
-          <ChatMessage key={msg.id} message={msg} onToggleThinking={onToggleThinking} />
+          <ChatMessage
+            key={msg.id}
+            message={msg}
+            onToggleThinking={onToggleThinking}
+            onEditMessage={!isRunning ? onEditMessage : undefined}
+          />
         ))}
 
         {showTyping && (
           <div className="flex items-start gap-2.5 animate-fade-up">
-            <img src="/icons/harbor-logo.svg" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0" />
+            <img src="/icons/logo.png" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0 mt-0.5" />
             <div className="flex items-center gap-1 pt-1.5">
               <div className="w-1.5 h-1.5 rounded-full bg-harbor-500 typing-dot" />
               <div className="w-1.5 h-1.5 rounded-full bg-harbor-500 typing-dot" />

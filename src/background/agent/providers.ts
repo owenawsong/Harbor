@@ -6,29 +6,38 @@
 
 import type { ProviderAdapter, CompletionOptions, CompletionEvent, NormalizedMessage } from './types'
 import type { ToolDefinition } from '../../shared/types'
+import { HARBOR_FREE_CONFIG } from '../../shared/constants'
 
 // ─── SSE Parser ───────────────────────────────────────────────────────────────
 
-async function* parseSSE(response: Response): AsyncGenerator<string> {
+async function* parseSSE(response: Response, signal?: AbortSignal): AsyncGenerator<string> {
   const reader = response.body!.getReader()
   const decoder = new TextDecoder()
   let buffer = ''
 
-  while (true) {
-    const { done, value } = await reader.read()
-    if (done) break
+  // Cancel reader when signal aborts
+  signal?.addEventListener('abort', () => { reader.cancel() }, { once: true })
 
-    buffer += decoder.decode(value, { stream: true })
-    const lines = buffer.split('\n')
-    buffer = lines.pop() ?? ''
+  try {
+    while (true) {
+      if (signal?.aborted) break
+      const { done, value } = await reader.read()
+      if (done) break
 
-    for (const line of lines) {
-      if (line.startsWith('data: ')) {
-        const data = line.slice(6).trim()
-        if (data === '[DONE]') return
-        if (data) yield data
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? ''
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6).trim()
+          if (data === '[DONE]') return
+          if (data) yield data
+        }
       }
     }
+  } finally {
+    reader.cancel().catch(() => {})
   }
 }
 
@@ -97,6 +106,7 @@ export const anthropicProvider: ProviderAdapter = {
         'Content-Type': 'application/json',
         'x-api-key': provider.apiKey ?? '',
         'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-only-api': 'true',
       },
       body: JSON.stringify({
         model: provider.model,
@@ -111,7 +121,17 @@ export const anthropicProvider: ProviderAdapter = {
 
     if (!response.ok) {
       const errorText = await response.text()
-      yield { type: 'error', error: `Anthropic API error ${response.status}: ${errorText}` }
+      const errorMessage = `Anthropic API error ${response.status}: ${errorText}`
+
+      // Check for rate limit (429) or service unavailable (503)
+      if (response.status === 429 || response.status === 503) {
+        // Preserve the original error info but mark it as rate limited for agent handling
+        const error = new Error(errorMessage)
+        ;(error as any).__isRateLimited = true
+        throw error
+      }
+
+      yield { type: 'error', error: errorMessage }
       return
     }
 
@@ -119,8 +139,10 @@ export const anthropicProvider: ProviderAdapter = {
     const toolNames: Record<string, string> = {}
     // Maps content block index → tool ID (fixes index mismatch when text/thinking blocks precede tool blocks)
     const toolIdByIndex: Record<number, string> = {}
+    // Thinking block buffers: index → accumulated thinking text
+    const thinkingBuffers: Record<number, string> = {}
 
-    for await (const data of parseSSE(response)) {
+    for await (const data of parseSSE(response, signal)) {
       let event: Record<string, unknown>
       try {
         event = JSON.parse(data)
@@ -132,19 +154,25 @@ export const anthropicProvider: ProviderAdapter = {
 
       if (eventType === 'content_block_start') {
         const block = event.content_block as Record<string, unknown>
+        const blockIndex = event.index as number
         if (block.type === 'tool_use') {
           const id = block.id as string
           const name = block.name as string
-          const blockIndex = event.index as number
           toolInputBuffers[id] = ''
           toolNames[id] = name
           toolIdByIndex[blockIndex] = id
           yield { type: 'tool_call_start', id, name }
+        } else if (block.type === 'thinking') {
+          thinkingBuffers[blockIndex] = ''
         }
       } else if (eventType === 'content_block_delta') {
         const delta = event.delta as Record<string, unknown>
         if (delta.type === 'text_delta') {
           yield { type: 'text_delta', text: delta.text as string }
+        } else if (delta.type === 'thinking_delta') {
+          const idx = event.index as number
+          thinkingBuffers[idx] = (thinkingBuffers[idx] ?? '') + (delta.thinking as string)
+          yield { type: 'thinking', text: delta.thinking as string }
         } else if (delta.type === 'input_json_delta') {
           const toolId = toolIdByIndex[event.index as number]
           if (toolId) {
@@ -180,9 +208,95 @@ export const anthropicProvider: ProviderAdapter = {
   },
 }
 
+// ─── Streaming <think> tag parser ─────────────────────────────────────────────
+// Splits incoming text chunks into 'text' and 'thinking' segments in real-time.
+// Handles partial tags split across chunks by buffering up to 12 trailing chars.
+
+interface ThinkParseState {
+  inThink: boolean
+  buf: string // pending chars that might be a partial tag
+}
+
+function* parseThinkChunk(
+  state: ThinkParseState,
+  chunk: string,
+): Generator<{ type: 'text' | 'thinking'; text: string }> {
+  let remaining = state.buf + chunk
+  state.buf = ''
+
+  while (remaining.length > 0) {
+    if (state.inThink) {
+      const closeIdx = remaining.search(/<\/think(?:ing)?>/i)
+      if (closeIdx !== -1) {
+        const before = remaining.slice(0, closeIdx)
+        if (before) yield { type: 'thinking', text: before }
+        const closeTag = remaining.slice(closeIdx).match(/<\/think(?:ing)?>/i)!
+        remaining = remaining.slice(closeIdx + closeTag[0].length)
+        state.inThink = false
+      } else {
+        // Buffer trailing chars that might be a partial close tag
+        const ltIdx = remaining.lastIndexOf('<')
+        if (ltIdx !== -1 && ltIdx > remaining.length - 12) {
+          if (ltIdx > 0) yield { type: 'thinking', text: remaining.slice(0, ltIdx) }
+          state.buf = remaining.slice(ltIdx)
+        } else {
+          yield { type: 'thinking', text: remaining }
+        }
+        remaining = ''
+      }
+    } else {
+      const openIdx = remaining.search(/<think(?:ing)?>/i)
+      if (openIdx !== -1) {
+        const before = remaining.slice(0, openIdx)
+        if (before) yield { type: 'text', text: before }
+        const openTag = remaining.slice(openIdx).match(/<think(?:ing)?>/i)!
+        remaining = remaining.slice(openIdx + openTag[0].length)
+        state.inThink = true
+      } else {
+        // Buffer trailing chars that might be a partial open tag
+        const ltIdx = remaining.lastIndexOf('<')
+        if (ltIdx !== -1 && ltIdx > remaining.length - 12) {
+          if (ltIdx > 0) yield { type: 'text', text: remaining.slice(0, ltIdx) }
+          state.buf = remaining.slice(ltIdx)
+        } else {
+          yield { type: 'text', text: remaining }
+        }
+        remaining = ''
+      }
+    }
+  }
+}
+
 // ─── OpenAI Provider ──────────────────────────────────────────────────────────
 
-function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string): unknown[] {
+// Strip base64 media data to avoid token blowups for text-only providers.
+// Also strips the [Attached file: ...] markers added by the chat UI.
+function stripBase64Images(content: string): string {
+  let s = content
+  // Remove full attachment blocks: \n\n[Attached file: name]\ndata:image/... or data:video/...
+  s = s.replace(/\n\n\[Attached file: [^\]]+\]\ndata:(?:image|video)\/[^\s]+/g, '')
+  // Remove bare data URLs (e.g. from tool results / screenshots)
+  s = s.replace(/data:(?:image|video)\/[^;]+;base64,[A-Za-z0-9+/=]+/g, '[media]')
+  return s
+}
+
+// Extract [Attached file: name]\ndata:image/... and data:video/... blocks from user text.
+// Returns cleaned text and typed media items.
+function extractAttachments(text: string): {
+  cleanText: string
+  media: Array<{ kind: 'image' | 'video'; url: string }>
+} {
+  const media: Array<{ kind: 'image' | 'video'; url: string }> = []
+  const cleanText = text
+    .replace(/\n\n\[Attached file: [^\]]+\]\n(data:(?:image|video)\/[^\s]+)/g, (_, url) => {
+      media.push({ kind: url.startsWith('data:video/') ? 'video' : 'image', url })
+      return ''
+    })
+    .trim()
+  return { cleanText, media }
+}
+
+function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string, imageSupport = false): unknown[] {
   const result: unknown[] = [{ role: 'system', content: systemPrompt }]
 
   for (const msg of messages) {
@@ -191,10 +305,27 @@ function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string): 
       const toolResults = msg.content.filter((p) => p.type === 'tool_result')
 
       if (textParts.length > 0) {
-        result.push({
-          role: 'user',
-          content: textParts.map((p) => (p.type === 'text' ? p.text : '')).join('\n'),
-        })
+        const combined = textParts.map((p) => (p.type === 'text' ? p.text : '')).join('\n')
+
+        if (imageSupport) {
+          const { cleanText, media } = extractAttachments(combined)
+          if (media.length > 0) {
+            const parts: unknown[] = []
+            if (cleanText) parts.push({ type: 'text', text: cleanText })
+            for (const m of media) {
+              if (m.kind === 'video') {
+                parts.push({ type: 'video_url', video_url: { url: m.url } })
+              } else {
+                parts.push({ type: 'image_url', image_url: { url: m.url } })
+              }
+            }
+            result.push({ role: 'user', content: parts })
+          } else {
+            result.push({ role: 'user', content: combined })
+          }
+        } else {
+          result.push({ role: 'user', content: stripBase64Images(combined) })
+        }
       }
 
       for (const tr of toolResults) {
@@ -202,7 +333,7 @@ function toOpenAIMessages(messages: NormalizedMessage[], systemPrompt: string): 
           result.push({
             role: 'tool',
             tool_call_id: tr.toolCallId,
-            content: tr.content,
+            content: stripBase64Images(tr.content),
           })
         }
       }
@@ -247,12 +378,14 @@ function toOpenAITools(tools: ToolDefinition[]): unknown[] {
 async function* openAICompatibleComplete(
   baseUrl: string,
   apiKey: string,
-  options: CompletionOptions
+  options: CompletionOptions,
+  extraBody?: { temperature?: number; top_p?: number; max_tokens?: number; chat_template_kwargs?: Record<string, unknown> },
+  imageSupport = false,
 ): AsyncGenerator<CompletionEvent> {
   const { settings, messages, tools, systemPrompt, signal } = options
   const providerName = settings.provider.provider
 
-  if (!apiKey && providerName !== 'ollama') {
+  if (!apiKey && providerName !== 'ollama' && providerName !== 'harbor-free') {
     yield { type: 'error', error: `${providerName} API key is not set. Please add your key in Settings.` }
     return
   }
@@ -268,11 +401,14 @@ async function* openAICompatibleComplete(
     },
     body: JSON.stringify({
       model: settings.provider.model,
-      messages: toOpenAIMessages(messages, systemPrompt),
+      messages: toOpenAIMessages(messages, systemPrompt, imageSupport),
       tools: tools.length > 0 ? toOpenAITools(tools) : undefined,
       tool_choice: tools.length > 0 ? 'auto' : undefined,
-      max_tokens: settings.maxTokens ?? 8192,
+      max_tokens: extraBody?.max_tokens ?? settings.maxTokens ?? 8192,
       stream: true,
+      ...(extraBody?.temperature !== undefined ? { temperature: extraBody.temperature } : {}),
+      ...(extraBody?.top_p !== undefined ? { top_p: extraBody.top_p } : {}),
+      ...(extraBody?.chat_template_kwargs !== undefined ? { chat_template_kwargs: extraBody.chat_template_kwargs } : {}),
     }),
     signal,
   })
@@ -284,8 +420,9 @@ async function* openAICompatibleComplete(
   }
 
   const toolCallBuffers: Record<number, { id: string; name: string; args: string }> = {}
+  const thinkState: ThinkParseState = { inThink: false, buf: '' }
 
-  for await (const data of parseSSE(response)) {
+  for await (const data of parseSSE(response, signal)) {
     let chunk: Record<string, unknown>
     try {
       chunk = JSON.parse(data)
@@ -300,8 +437,20 @@ async function* openAICompatibleComplete(
     const delta = choice.delta as Record<string, unknown>
     if (!delta) continue
 
+    // reasoning_content: used by DeepSeek R1, Poe reasoning models, and others
+    if (delta.reasoning_content) {
+      yield { type: 'thinking', text: delta.reasoning_content as string }
+    }
+
+    // Parse text content, extracting <think> tags in real-time
     if (delta.content) {
-      yield { type: 'text_delta', text: delta.content as string }
+      for (const seg of parseThinkChunk(thinkState, delta.content as string)) {
+        if (seg.type === 'thinking') {
+          yield { type: 'thinking', text: seg.text }
+        } else {
+          yield { type: 'text_delta', text: seg.text }
+        }
+      }
     }
 
     if (delta.tool_calls) {
@@ -453,7 +602,7 @@ export const googleProvider: ProviderAdapter = {
       return
     }
 
-    for await (const data of parseSSE(response)) {
+    for await (const data of parseSSE(response, signal)) {
       let chunk: Record<string, unknown>
       try {
         chunk = JSON.parse(data)
@@ -489,76 +638,109 @@ export const googleProvider: ProviderAdapter = {
   },
 }
 
-// ─── Harbor Free Provider (MiniMax → Qwen fallback via OpenRouter) ────────────
+// ─── Harbor Free Provider ─────────────────────────────────────────────────────
+// Uses NVIDIA NIM with two models:
+// - MiniMax-m2.5: Fast, text-only model (default)
+// - Qwen3.5-122B: Supports text, images (png/jpg/jpeg/webp, up to 5), and video (mp4/mov/webm, 1)
+// Automatically switches to Qwen if message contains image/video attachments.
 
-const HARBOR_FREE_OR_URL = 'https://openrouter.ai/api/v1'
-const HARBOR_FREE_API_KEY = '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'
-const MINIMAX_MODEL = 'minimax/minimax-m2'
-const FALLBACK_MODEL = 'qwen/qwen3.5-72b:free'
-const FIRST_TOKEN_TIMEOUT_MS = 1500
+// Use constants from shared/constants.ts to centralize API configuration
+const { apiKey: HARBOR_FREE_KEY, baseUrl: HARBOR_FREE_NVIDIA_URL, textModel: HARBOR_FREE_TEXT_MODEL, imageModel: HARBOR_FREE_IMAGE_MODEL } = HARBOR_FREE_CONFIG
+
+function hasAttachments(messages: NormalizedMessage[]): boolean {
+  for (const msg of messages) {
+    if (msg.role === 'user') {
+      const textParts = msg.content.filter((p) => p.type === 'text')
+      for (const part of textParts) {
+        if (part.type === 'text' && /\[Attached file:.*\]\n(data:(image|video)\/[^\s]+)/.test(part.text)) {
+          return true
+        }
+      }
+    }
+  }
+  return false
+}
+
+async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
+  const hasImages = hasAttachments(options.messages)
+  // Harbor Free ALWAYS uses the shared API key, never user-provided keys
+  const apiKey = HARBOR_FREE_KEY
+
+  // If images detected, use Qwen (image-capable model)
+  if (hasImages) {
+    yield* openAICompatibleComplete(
+      HARBOR_FREE_NVIDIA_URL, apiKey,
+      { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model: HARBOR_FREE_IMAGE_MODEL } } },
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768) },
+      true,
+    )
+    return
+  }
+
+  // Try MiniMax-m2.5 with 1.5s first-token timeout
+  const minimaxAbort = new AbortController()
+  const minimaxOptions = {
+    ...options,
+    signal: minimaxAbort.signal,
+    settings: { ...options.settings, provider: { ...options.settings.provider, model: HARBOR_FREE_TEXT_MODEL } },
+  }
+
+  let gotFirstToken = false
+  const fallbackTimer = setTimeout(() => {
+    if (!gotFirstToken) minimaxAbort.abort()
+  }, 1500)
+
+  const buffered: CompletionEvent[] = []
+  let shouldFallback = false
+
+  try {
+    for await (const event of openAICompatibleComplete(
+      HARBOR_FREE_NVIDIA_URL, apiKey, minimaxOptions,
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768) },
+      false,
+    )) {
+      if (event.type === 'text_delta' || event.type === 'thinking') gotFirstToken = true
+      clearTimeout(fallbackTimer)
+      yield event
+      if (event.type === 'message_complete') return
+    }
+    clearTimeout(fallbackTimer)
+    return
+  } catch (err) {
+    clearTimeout(fallbackTimer)
+    if (!gotFirstToken) {
+      shouldFallback = true
+    } else {
+      yield { type: 'error', error: err instanceof Error ? err.message : String(err) }
+      return
+    }
+  }
+
+  // Fallback to Qwen
+  if (shouldFallback) {
+    yield* openAICompatibleComplete(
+      HARBOR_FREE_NVIDIA_URL, apiKey,
+      { ...options, settings: { ...options.settings, provider: { ...options.settings.provider, model: HARBOR_FREE_IMAGE_MODEL } } },
+      { temperature: 0.45, top_p: 0.95, max_tokens: Math.min(options.settings.maxTokens ?? 32768, 32768) },
+      true,
+    )
+  }
+}
 
 export const harborFreeProvider: ProviderAdapter = {
   name: 'harbor-free',
-  async *complete(options: CompletionOptions): AsyncGenerator<CompletionEvent> {
-    const { messages, signal } = options
+  complete: harborFreeComplete,
+}
 
-    // Check if any message contains images (use Qwen directly)
-    const hasImages = messages.some((m) =>
-      m.content.some((c) => c.type === 'image'),
-    )
+// ─── Poe Provider ─────────────────────────────────────────────────────────────
+// Poe exposes an OpenAI-compatible API at api.poe.com/v1.
+// Model name = the Poe bot handle (e.g. "Claude-3-7-Sonnet", "GPT-4o").
+// Thinking is embedded in the response text as *Thinking...*\n> ... (extracted by frontend).
 
-    const primaryModel = hasImages ? FALLBACK_MODEL : MINIMAX_MODEL
-
-    // Try primary model with first-token timeout (only for MiniMax)
-    if (!hasImages) {
-      const controller = new AbortController()
-      const combined = signal
-        ? new AbortController()
-        : controller
-
-      // If caller aborts, propagate
-      signal?.addEventListener('abort', () => controller.abort())
-
-      const timeoutId = setTimeout(() => controller.abort(), FIRST_TOKEN_TIMEOUT_MS)
-      let gotFirstToken = false
-
-      try {
-        const fakeSettings = {
-          ...options.settings,
-          provider: { ...options.settings.provider, model: MINIMAX_MODEL },
-        }
-        const gen = openAICompatibleComplete(HARBOR_FREE_OR_URL, HARBOR_FREE_API_KEY, {
-          ...options,
-          settings: fakeSettings,
-          signal: controller.signal,
-        })
-
-        for await (const event of gen) {
-          if (!gotFirstToken) {
-            clearTimeout(timeoutId)
-            gotFirstToken = true
-          }
-          yield event
-        }
-        return
-      } catch (err) {
-        clearTimeout(timeoutId)
-        // If we timed out (no first token) and caller didn't abort, fall through to Qwen
-        if (gotFirstToken || signal?.aborted) throw err
-        // else: fall through to Qwen silently
-      }
-    }
-
-    // Fallback to Qwen
-    const fallbackSettings = {
-      ...options.settings,
-      provider: { ...options.settings.provider, model: FALLBACK_MODEL },
-    }
-    yield* openAICompatibleComplete(HARBOR_FREE_OR_URL, HARBOR_FREE_API_KEY, {
-      ...options,
-      settings: fallbackSettings,
-    })
-  },
+export const poeProvider: ProviderAdapter = {
+  name: 'poe',
+  complete: (options) =>
+    openAICompatibleComplete('https://api.poe.com/v1', options.settings.provider.apiKey ?? '', options),
 }
 
 // ─── Provider Registry ────────────────────────────────────────────────────────
@@ -570,6 +752,7 @@ const providers: Record<string, ProviderAdapter> = {
   ollama: ollamaProvider,
   openrouter: openrouterProvider,
   'openai-compatible': openaiCompatibleProvider,
+  poe: poeProvider,
   'harbor-free': harborFreeProvider,
 }
 

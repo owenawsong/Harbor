@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import {
-  ChevronRight, ChevronDown,
+  ChevronDown,
   Loader2, CheckCircle2, XCircle,
   Globe, RefreshCw, Plus, X, ArrowLeftRight, List, FileText,
   Eye, Camera, Link2, Zap, MousePointer2, Type, Trash2,
@@ -92,7 +92,7 @@ export default function ToolCallDisplay({ toolCall }: { toolCall: UIToolCall }) 
   const hasDetails = toolCall.input !== undefined || toolCall.result !== undefined
 
   return (
-    <div className="rounded-lg border border-[rgb(var(--harbor-border))] overflow-hidden text-xs animate-fade-in">
+    <div className="rounded-lg border border-[rgb(var(--harbor-border))] overflow-hidden text-xs transition-shadow duration-150 hover:shadow-sm">
       {/* Header row */}
       <button
         onClick={() => hasDetails && setOpen((v) => !v)}
@@ -122,15 +122,20 @@ export default function ToolCallDisplay({ toolCall }: { toolCall: UIToolCall }) 
 
         {/* Expand chevron */}
         {hasDetails && (
-          <span className="flex-shrink-0 ml-auto text-[rgb(var(--harbor-text-faint))]">
-            {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-          </span>
+          <ChevronDown
+            size={12}
+            className="flex-shrink-0 ml-auto text-[rgb(var(--harbor-text-faint))]"
+            style={{
+              transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+              transition: 'transform 180ms cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          />
         )}
       </button>
 
-      {/* Expanded details */}
+      {/* Expanded details — animated */}
       {open && hasDetails && (
-        <div className="border-t border-[rgb(var(--harbor-border))] divide-y divide-[rgb(var(--harbor-border))] animate-slide-down">
+        <div className="border-t border-[rgb(var(--harbor-border))] divide-y divide-[rgb(var(--harbor-border))] animate-fade-in">
           {/* Screenshot */}
           {toolCall.result?.screenshot && (
             <div className="p-2">

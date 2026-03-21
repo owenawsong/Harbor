@@ -51,29 +51,47 @@ export async function waitForNavigation(tabId: number, timeoutMs = 10000): Promi
   })
 }
 
-export async function ensureContentScript(tabId: number): Promise<void> {
+export async function ensureContentScript(tabId: number): Promise<boolean> {
+  // Check if already loaded
   try {
-    // Try to ping the content script
     await chrome.tabs.sendMessage(tabId, { type: 'harbor_ping' })
+    return true
   } catch {
-    // Content script not loaded, inject it
+    // Not loaded, inject it
+  }
+
+  try {
+    await chrome.scripting.executeScript({ target: { tabId }, files: ['content.js'] })
+  } catch {
+    // Page may not allow injection (chrome:// pages, PDFs, etc.)
+    return false
+  }
+
+  // Retry ping up to 5 times (300ms each) to wait for content script to initialize
+  for (let i = 0; i < 5; i++) {
+    await new Promise((r) => setTimeout(r, 300))
     try {
-      await chrome.scripting.executeScript({
-        target: { tabId },
-        files: ['content.js'],
-      })
-      // Wait a bit for it to initialize
-      await new Promise((r) => setTimeout(r, 200))
+      await chrome.tabs.sendMessage(tabId, { type: 'harbor_ping' })
+      return true
     } catch {
-      // May already be injected or page doesn't allow injection
+      continue
     }
   }
+  return false
 }
 
 export async function sendToContentScript(tabId: number, message: unknown): Promise<{ success: boolean; data?: unknown; error?: string }> {
-  await ensureContentScript(tabId)
+  const ready = await ensureContentScript(tabId)
+  if (!ready) {
+    return { success: false, error: 'Content script unavailable on this page. Try refreshing the tab or navigating to a regular webpage.' }
+  }
   try {
-    const result = await chrome.tabs.sendMessage(tabId, message)
+    const result = await Promise.race([
+      chrome.tabs.sendMessage(tabId, message) as Promise<{ success: boolean; data?: unknown; error?: string }>,
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Content script did not respond in time (10s)')), 10_000),
+      ),
+    ])
     return result
   } catch (err) {
     return { success: false, error: err instanceof Error ? err.message : String(err) }

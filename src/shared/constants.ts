@@ -1,9 +1,11 @@
 export const EXTENSION_NAME = 'Harbor'
+export const VERSION = '1.24'
 export const PORT_NAME = 'harbor-agent'
 export const STORAGE_KEYS = {
   SETTINGS: 'harbor_settings',
   SESSIONS: 'harbor_sessions',
   CURRENT_SESSION: 'harbor_current_session',
+  LAST_SESSION: 'harbor_last_session',
   MEMORY: 'harbor_memory',
 } as const
 
@@ -46,7 +48,18 @@ export const DEFAULT_MODELS: Record<string, string[]> = {
     'mistralai/mistral-large',
   ],
   'openai-compatible': [],
-  'harbor-free': ['minimax/minimax-m2', 'qwen/qwen3.5-72b:free'],
+  poe: [
+    'Claude-3-7-Sonnet',
+    'GPT-4o',
+    'Gemini-1.5-Pro',
+    'Claude-3-5-Sonnet',
+    'Llama-3.1-405B-T',
+    'Gemini-2.0-Flash-Thinking',
+    'DeepSeek-R1',
+    'o3-mini',
+    'Grok-2',
+  ],
+  'harbor-free': ['minimaxai/minimax-m2.5', 'qwen/qwen3.5-122b-a10b'],
 }
 
 export const PROVIDER_LABELS: Record<string, string> = {
@@ -57,6 +70,8 @@ export const PROVIDER_LABELS: Record<string, string> = {
   ollama: 'Ollama (Local)',
   openrouter: 'OpenRouter',
   'openai-compatible': 'OpenAI-Compatible',
+  poe: 'Poe',
+  'harbor-free': 'Harbor Free ✦',
 }
 
 export const API_ENDPOINTS: Record<string, string> = {
@@ -65,6 +80,16 @@ export const API_ENDPOINTS: Record<string, string> = {
   google: 'https://generativelanguage.googleapis.com/v1beta/models',
   ollama: 'http://localhost:11434/api/chat',
   openrouter: 'https://openrouter.ai/api/v1/chat/completions',
+}
+
+// ─── Harbor Free Configuration (NVIDIA NIM) ───────────────────────────────
+// Default public demo credentials for Harbor Free service
+// Users can override with their own NVIDIA API keys in settings
+export const HARBOR_FREE_CONFIG = {
+  apiKey: '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',
+  baseUrl: 'https://integrate.api.nvidia.com/v1',
+  textModel: 'minimaxai/minimax-m2.5',
+  imageModel: 'qwen/qwen3.5-122b-a10b',
 }
 
 export const MAX_TOOL_ITERATIONS = 50

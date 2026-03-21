@@ -38,7 +38,7 @@ export interface ChatMessage {
 
 // ─── Provider Types ───────────────────────────────────────────────────────────
 
-export type ProviderName = 'anthropic' | 'openai' | 'google' | 'ollama' | 'openrouter' | 'openai-compatible' | 'harbor-free'
+export type ProviderName = 'anthropic' | 'openai' | 'google' | 'ollama' | 'openrouter' | 'openai-compatible' | 'poe' | 'harbor-free'
 
 export interface ProviderConfig {
   provider: ProviderName
@@ -53,6 +53,20 @@ export interface ProviderConfig {
   secretAccessKey?: string
 }
 
+export interface ModelPreset {
+  id: string
+  name: string // e.g., "Claude Sonnet 4.6", "Work model", "Secure", "OpenRouter API"
+  provider: ProviderConfig
+}
+
+export interface RateLimitConfig {
+  maxRetries?: number
+  initialBackoffMs?: number
+  maxBackoffMs?: number
+  backoffMultiplier?: number
+  jitterFactor?: number
+}
+
 export interface AgentSettings {
   provider: ProviderConfig
   systemPrompt?: string
@@ -60,7 +74,11 @@ export interface AgentSettings {
   temperature?: number
   enableMemory?: boolean
   enableScreenshots?: boolean
-  commandPaletteShortcut?: string
+  toolExecutionMode?: 'parallel' | 'sequential' // Default: parallel for speed
+  rateLimitConfig?: RateLimitConfig
+  toolTimeouts?: Record<string, number> // Per-tool timeout overrides (in ms)
+  modelPresets?: ModelPreset[] // User-created model presets
+  enablePlanning?: boolean // When true, agent creates a plan first before executing
 }
 
 // ─── Tool Types ───────────────────────────────────────────────────────────────
@@ -85,6 +103,7 @@ export interface ToolDefinition {
     properties: Record<string, ToolParameter>
     required?: string[]
   }
+  timeoutMs?: number // Optional per-tool timeout (defaults to 30s)
 }
 
 export interface ToolResult {
@@ -136,6 +155,18 @@ export interface AgentEventError {
 export interface AgentEventThinking {
   type: 'thinking'
   text: string
+  messageId: string
+}
+
+export interface AgentEventAgentComplete {
+  type: 'agent_complete'
+}
+
+export interface AgentEventRateLimited {
+  type: 'rate_limited'
+  waitTimeMs: number
+  attemptCount: number
+  messageId?: string
 }
 
 export type AgentEvent =
@@ -146,6 +177,8 @@ export type AgentEvent =
   | AgentEventMessageComplete
   | AgentEventError
   | AgentEventThinking
+  | AgentEventAgentComplete
+  | AgentEventRateLimited
 
 // ─── Port Message Types ───────────────────────────────────────────────────────
 
@@ -168,11 +201,123 @@ export interface PortMessageClearSession {
 
 export type PortMessage = PortMessageChat | PortMessageStop | PortMessageClearSession
 
+// ─── Identity / Personality ───────────────────────────────────────────────────
+
+export type ToneStyle = 'professional' | 'friendly' | 'concise' | 'detailed' | 'playful'
+export type VerbosityLevel = 'brief' | 'balanced' | 'thorough'
+
+export interface IdentitySettings {
+  userName?: string
+  useCases: string[]           // e.g. ['work', 'coding', 'research']
+  tone: ToneStyle
+  verbosity: VerbosityLevel
+  useEmoji: boolean
+  language: string             // BCP-47 e.g. 'en', 'zh', 'es'
+  customPersonality?: string   // free text instructions
+}
+
+// ─── Memory System ────────────────────────────────────────────────────────────
+
+export type MemoryCategory =
+  | 'identity'
+  | 'preferences'
+  | 'projects'
+  | 'tools'
+  | 'habits'
+  | 'people'
+  | 'general'
+
+export interface MemoryEntry {
+  id: string
+  category: MemoryCategory
+  content: string
+  tags?: string[]
+  createdAt: number
+  updatedAt: number
+  isPinned?: boolean
+}
+
+// ─── Skills System ────────────────────────────────────────────────────────────
+
+export interface Skill {
+  id: string
+  name: string
+  description: string
+  icon: string              // lucide icon name
+  category: SkillCategory
+  instructions: string      // system prompt / instructions to agent
+  isBuiltIn: boolean
+  isEnabled: boolean
+  createdAt?: number
+  updatedAt?: number
+  usageCount?: number
+}
+
+export type SkillCategory =
+  | 'research'
+  | 'productivity'
+  | 'data'
+  | 'shopping'
+  | 'navigation'
+  | 'content'
+  | 'custom'
+
+// ─── ModelBlend ───────────────────────────────────────────────────────────────
+
+export type TaskType = 'coding' | 'research' | 'writing' | 'analysis' | 'chat' | 'vision' | 'math'
+
+export interface ModelBlendRoute {
+  taskType: TaskType
+  provider: string
+  model: string
+}
+
+export interface ModelBlendConfig {
+  enabled: boolean
+  routes: ModelBlendRoute[]
+  classifierModel?: string    // model to classify task type
+}
+
+// ─── Notifications ────────────────────────────────────────────────────────────
+
+export type NotificationLevel = 'info' | 'success' | 'warning' | 'error'
+
+export interface HarborNotification {
+  id: string
+  level: NotificationLevel
+  title: string
+  body?: string
+  timestamp: number
+  isRead: boolean
+  actionLabel?: string
+  actionUrl?: string
+}
+
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+
+export interface OnboardingData {
+  completed: boolean
+  userName?: string
+  useCases: string[]
+  tone: ToneStyle
+  theme: 'light' | 'dark' | 'system'
+  language: string
+  completedAt?: number
+}
+
 // ─── Storage Types ────────────────────────────────────────────────────────────
 
 export interface StoredSettings {
   agentSettings: AgentSettings
   theme: 'light' | 'dark' | 'system'
+  identity?: IdentitySettings
+  modelBlend?: ModelBlendConfig
+  notifications?: {
+    enabled: boolean
+    agentComplete: boolean
+    errors: boolean
+  }
+  keybindings?: Record<string, string>
 }
 
 export interface StoredSession {
@@ -181,6 +326,8 @@ export interface StoredSession {
   createdAt: number
   updatedAt: number
   title?: string
+  isPinned?: boolean
+  tags?: string[]
 }
 
 // ─── Browser Context ──────────────────────────────────────────────────────────
