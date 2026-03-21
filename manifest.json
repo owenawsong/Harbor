@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Harbor - AI Browser Agent",
-  "version": "1.0.0",
+  "version": "1.23.0",
   "description": "AI-powered browser agent - bring any AI to control your browser. Supports Claude, GPT, Gemini, Ollama & more.",
   "icons": {
     "16": "icons/icon16.png",
