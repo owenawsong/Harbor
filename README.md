@@ -1,129 +1,197 @@
 
-
 <div align="center">
-  <img src="https://pfst.cf2.poecdn.net/base/image/1bbec1a053e374f75145a00b5044e4852d0e5876ce1d2eb0491232ec4281b900?w=1384&h=768&pmaid=591031806" alt="Harbor Banner" width="800" />
+  <img src="https://pfst.cf2.poecdn.net/base/image/1bbec1a053e374f75145a00b5044e4852d0e5876ce1d2eb0491232ec4281b900?w=1384&h=768&pmaid=591031806" alt="Harbor — Open Source AI Agent Browser Extension" width="680" />
 </div>
 
 <br />
 
+<p align="center">
+  The open-source Chrome extension that gives your browser real AI agent powers.<br />
+  Automate tasks, navigate websites, and complete workflows — powered by any AI model you choose.
+</p>
+
 <div align="center">
-  <img src="https://img.shields.io/badge/BUILD-PASSING-44cc11?style=for-the-badge" alt="Build" /><img src="https://img.shields.io/badge/RELEASE-V2026.3.13--1-007ec6?style=for-the-badge" alt="Release" /><img src="https://img.shields.io/badge/DISCORD-27K%20ONLINE-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /><img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" />
+  <!-- Status Badges -->
+  <table style="border-collapse: collapse; border: none;">
+    <tr style="border: none;">
+      <td style="border: none; padding: 0 2px;">
+        <a href="https://github.com/owenawsong/Harbor/actions">
+          <img src="https://img.shields.io/badge/BUILD-PASSING-44cc11?style=for-the-badge&logo=github" alt="Build Status" />
+        </a>
+      </td>
+      <td style="border: none; padding: 0 2px;">
+        <a href="https://github.com/owenawsong/Harbor/releases">
+          <img src="https://img.shields.io/badge/RELEASE-V2026.3.13--1-007ec6?style=for-the-badge" alt="Release Version" />
+        </a>
+      </td>
+      <td style="border: none; padding: 0 2px;">
+        <a href="https://discord.gg/panb3J2xe2">
+          <img src="https://img.shields.io/badge/DISCORD-27K%20ONLINE-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
+        </a>
+      </td>
+      <td style="border: none; padding: 0 2px;">
+        <a href="LICENSE">
+          <img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" />
+        </a>
+      </td>
+    </tr>
+  </table>
+  <br />
+  <!-- Tech Stack Badges -->
+  <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/Vite-5.0-646CFF?style=flat-square&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white" />
 </div>
 
 <p align="center">
-  <b>The open-source AI agent browser extension.</b><br />
-  Harbor gives your browser a brain, allowing AI to navigate, interact, and complete complex workflows on any website.
-</p>
-
-<p align="center">
-  <a href="#quick-start">Get Started</a> &nbsp;•&nbsp;
-  <a href="#features">Features</a> &nbsp;•&nbsp;
-  <a href="#supported-models">Supported Models</a> &nbsp;•&nbsp;
-  <a href="https://harbor-extension.pages.dev/docs">Documentation</a>
+  <a href="#quick-start"><b>Get Started</b></a> &nbsp;·&nbsp;
+  <a href="#features"><b>Features</b></a> &nbsp;·&nbsp;
+  <a href="#architecture"><b>Architecture</b></a> &nbsp;·&nbsp;
+  <a href="https://harbor-extension.pages.dev/docs"><b>Docs</b></a> &nbsp;·&nbsp;
+  <a href="https://discord.gg/panb3J2xe2"><b>Discord</b></a>
 </p>
 
 ---
 
-## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/info.svg" width="22" height="22" /> What is Harbor?
+## What is Harbor?
 
-Harbor is a powerful Chrome extension designed to transform your browser into an autonomous agent workspace. Unlike standard LLM interfaces, Harbor doesn't just talk about the web—it lives in it. By combining visual perception with direct DOM access, Harbor can perform tasks that previously required human manual labor.
+Harbor is a **Chrome extension that runs AI agents natively in your browser**. Unlike chatbots that only describe what to do, Harbor actually **controls your browser** to complete tasks on your behalf.
 
----
+Give it a natural language instruction and Harbor handles the rest:
 
-## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/layers.svg" width="22" height="22" /> Core Capabilities
+| Capability | Description |
+|---|---|
+| 🌐 **Navigate** | Browses websites intelligently on your behalf |
+| 🖱️ **Interact** | Clicks buttons, fills forms, interacts with any page element |
+| 📋 **Extract** | Summarizes and pulls information from live pages |
+| 🗂️ **Manage** | Controls tabs, bookmarks, history, and downloads |
+| ⚡ **Automate** | Executes complex multi-step workflows end-to-end |
+| 🤖 **Model-agnostic** | Works with Claude, GPT-4o, Gemini, Ollama, and more |
 
-| Icon | Feature | Capability Description |
-| :--- | :--- | :--- |
-| <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/mouse-pointer-2.svg" width="18" height="18" /> | **Autonomous Action** | Clicks, types, scrolls, and navigates through complex web flows. |
-| <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/eye.svg" width="18" height="18" /> | **Visual Perception** | Uses GPT-4o or Claude 3.5 Vision to "see" the page layout. |
-| <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/terminal.svg" width="18" height="18" /> | **DOM Intelligence** | Parses the underlying code to find buttons and inputs accurately. |
-| <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/shield-check.svg" width="18" height="18" /> | **Privacy First** | All keys are stored locally; no data is sent to Harbor servers. |
-
----
-
-## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/zap.svg" width="22" height="22" /> Key Features
-
-### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/layout.svg" width="18" height="18" /> Comprehensive Browser Tools
-Harbor comes packed with **57 built-in tools** that allow the AI to interact with the Chrome environment:
-- **Tab Management:** Open, close, switch, and organize tabs dynamically.
-- **History & Bookmarks:** Search through your past activity to find relevant context.
-- **Downloads:** Manage and trigger file downloads based on agent tasks.
-- **Clipboard Access:** Seamlessly move data between the browser and the AI.
-
-### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/cpu.svg" width="18" height="18" /> Multi-Model Support
-Don't be locked into one provider. Harbor supports a wide range of AI backends:
-- **Claude 3.5 Sonnet:** The gold standard for web navigation and reasoning.
-- **GPT-4o:** High-speed performance with excellent visual understanding.
-- **Gemini 1.5 Pro:** Massive context windows for deep research tasks.
-- **Ollama:** Run your agents entirely locally for maximum privacy.
-- **OpenRouter:** Access hundreds of models through a single unified API.
-
-### <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/settings-2.svg" width="18" height="18" /> Advanced Configuration
-- **System Prompts:** Customize exactly how your agent behaves and responds.
-- **Context Persistence:** Keep the conversation going across different websites.
-- **Custom Toolsets:** Enable or disable specific browser permissions on the fly.
-- **Developer Console:** Monitor the agent's thought process and tool calls in real-time.
+> [!NOTE]  
+> Harbor is a privacy-first, open-source alternative to Perplexity Comet, ChatGPT Atlas, and Dia — with full control over your data and your AI model.
 
 ---
 
-## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/rocket.svg" width="22" height="22" /> Quick Start
+## Features
 
-### 1. Installation
-Currently, Harbor is available via manual installation for developers:
+### Browser Control
+- **57 Browser Tools** — Full control over tabs, bookmarks, downloads, and clipboard
+- **Visual Perception** — The AI analyzes real-time screenshots of your active tab
+- **DOM Intelligence** — Understands page structure and adapts to dynamic layouts
+- **Smart Forms** — Automatically detects input types and maps data accurately
+- **Self-Healing** — Automatically retries and recovers when web elements change
+
+### AI & Interface
+- **Real-time Streaming** — Watch the agent's thought process and actions as they happen
+- **Context Persistence** — Optional conversation memory that stays with you
+- **Provider Switching** — Swap between AI backends instantly via the settings panel
+- **Command Center** — Use `Ctrl+K` to trigger actions and searches instantly
+- **Custom Profiles** — Save specific model configurations for different workflows
+
+### Privacy & Security
+- **Local-First** — Your conversations and data never leave your local environment
+- **Zero Tracking** — No telemetry, no usage analytics, and no data collection
+- **Secure Vault** — API keys are encrypted and stored only on your machine
+- **Audit-Ready** — Fully open-source codebase for complete transparency
+- **Granular Permissions** — You decide exactly what the AI is allowed to see and do
+
+---
+
+## Quick Start
+
+### 1. Install
+
+**From GitHub** *(Recommended)*
 
 ```bash
-# Clone the repository
-git clone https://github.com/owenawsong/Harbor.git
-
-# Install dependencies
+git clone https://github.com/owenawsong/Harbor
 cd Harbor-Extension
 npm install
-
-# Build the extension
 npm run build
 ```
 
-1. Open Chrome and navigate to `chrome://extensions/`.
-2. Enable **Developer Mode** (top right toggle).
-3. Click **Load unpacked** and select the `dist` folder in the project directory.
+Then load into Chrome:
+1. Go to `chrome://extensions/`
+2. Enable **Developer Mode** (top-right toggle)
+3. Click **Load unpacked** → select the `dist/` folder
 
-### 2. Configuration
-1. Click the Harbor icon in your extension bar.
-2. Open **Settings** (<img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/settings.svg" width="14" height="14" />).
-3. Enter your API Key for your preferred provider (Anthropic, OpenAI, or Google).
-4. Start a conversation and ask the agent to perform a task!
+**From a Release**
 
----
-
-## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/code-2.svg" width="22" height="22" /> Tech Stack
-
-Harbor is built with modern, scalable technologies:
-- **Framework:** [React 18](https://reactjs.org/)
-- **Language:** [TypeScript](https://www.typescriptlang.org/)
-- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-- **Build Tool:** [Vite](https://vitejs.dev/)
-- **State Management:** [Zustand](https://github.com/pmndrs/zustand)
+[Download the latest release →]  
+Extract the ZIP, then follow the "Load unpacked" steps above.
 
 ---
 
-## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/heart.svg" width="22" height="22" /> Contributing
+### 2. Connect an AI Provider
 
-We welcome contributions! Whether it's adding new tools, improving the UI, or fixing bugs:
-1. Fork the Project.
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`).
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`).
-4. Push to the Branch (`git push origin feature/AmazingFeature`).
-5. Open a Pull Request.
+Click the **Harbor** icon → **Settings** → select your provider:
+
+| Provider | Best For | API Source |
+|---|---|---|
+| **Claude** | Complex reasoning & analysis | [console.anthropic.com] |
+| **GPT-4o** | Speed & creative tasks | [platform.openai.com] |
+| **Gemini** | Multimodal, free tier | [aistudio.google.com] |
+| **Ollama** | Full privacy, local execution | [ollama.com] |
+| **OpenRouter** | 100+ models, easy switching | [openrouter.ai] |
 
 ---
 
-## <img src="https://raw.githubusercontent.com/lucide-icons/lucide/main/icons/scale.svg" width="22" height="22" /> License
+### 3. Try It Out
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Open the Harbor side panel and give it a task:
+
+```text
+"Find the top 3 coffee makers on Amazon with 5-star reviews under $50"
+"Compare flight prices NYC to London in March across Google Flights"
+"Fill this registration form using my info from my LinkedIn profile"
+```
+
+---
+
+## Architecture
+
+Harbor is built as a **Chrome Manifest V3 extension** using a decoupled architecture.
+
+```text
+┌──────────────────────────────────────┐
+│         React Side Panel             │  ←  UI, Settings, Chat Interface
+└──────────────────┬───────────────────┘
+                   │  Chrome Runtime Messages
+┌──────────────────┴───────────────────┐
+│      Service Worker (Background)     │  ←  Agent Logic, API Orchestration
+└──────────────────┬───────────────────┘
+                   │  Content Bridge
+┌──────────────────┴───────────────────┐
+│           Content Script             │  ←  DOM Manipulation, Screenshots
+└──────────────────────────────────────┘
+```
+
+---
+
+## Contributing
+
+All contributions are welcome — bugs, features, docs, and ideas.
+
+1. Check [existing issues] first
+2. Open a [new issue] or [pull request]
+3. Follow the [CONTRIBUTING.md](CONTRIBUTING.md) guidelines
+
+---
+
+## License
+
+**MIT** — Free for personal and commercial use. See [LICENSE](LICENSE) for details.
+
+---
 
 <div align="center">
   <br />
-  <p>Built with passion for the open-source AI community.</p>
-  <a href="https://github.com/owenawsong/Harbor"><b>Star this repo</b></a>
+  Built with React 18, TypeScript 5.6, Vite, and Tailwind CSS.
+  <br /><br />
+  <a href="https://github.com/owenawsong/Harbor"><b>Star on GitHub</b></a> &nbsp;·&nbsp;
+  <a href="#quick-start"><b>Get Started</b></a> &nbsp;·&nbsp;
+  <a href="https://discord.gg/panb3J2xe2"><b>Join the Community</b></a>
+  <br /><br />
 </div>
-
