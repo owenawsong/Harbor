@@ -1,6 +1,6 @@
 
 <div align="center">
-  <img src="./assets/banner.png" alt="Harbor — Open Source AI Agent Browser Extension" width="680" />
+  <img src="https://pfst.cf2.poecdn.net/base/image/1bbec1a053e374f75145a00b5044e4852d0e5876ce1d2eb0491232ec4281b900?w=1384&h=768&pmaid=591031806" alt="Harbor — Open Source AI Agent Browser Extension" width="680" />
 </div>
 
 <br />
