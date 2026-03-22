@@ -6,38 +6,17 @@
 <br />
 
 <p align="center">
-  The open-source Chrome extension that gives your browser real AI agent powers.<br />
+  <b>The open-source Chrome extension that gives your browser real AI agent powers.</b><br />
   Automate tasks, navigate websites, and complete workflows — powered by any AI model you choose.
 </p>
 
 <div align="center">
-  <!-- Status Badges -->
-  <table style="border-collapse: collapse; border: none;">
-    <tr style="border: none;">
-      <td style="border: none; padding: 0 2px;">
-        <a href="https://github.com/owenawsong/Harbor/actions">
-          <img src="https://img.shields.io/badge/BUILD-PASSING-44cc11?style=for-the-badge&logo=github" alt="Build Status" />
-        </a>
-      </td>
-      <td style="border: none; padding: 0 2px;">
-        <a href="https://github.com/owenawsong/Harbor/releases">
-          <img src="https://img.shields.io/badge/RELEASE-V2026.3.13--1-007ec6?style=for-the-badge" alt="Release Version" />
-        </a>
-      </td>
-      <td style="border: none; padding: 0 2px;">
-        <a href="https://discord.gg/panb3J2xe2">
-          <img src="https://img.shields.io/badge/DISCORD-27K%20ONLINE-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
-        </a>
-      </td>
-      <td style="border: none; padding: 0 2px;">
-        <a href="LICENSE">
-          <img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" />
-        </a>
-      </td>
-    </tr>
-  </table>
+  <!-- Primary Status Row (Matching your image layout) -->
+  <a href="#"><img src="https://img.shields.io/badge/BUILD-PASSING-44cc11?style=for-the-badge" alt="Build" /></a><a href="#"><img src="https://img.shields.io/badge/RELEASE-V2026.3.13--1-007ec6?style=for-the-badge" alt="Release" /></a><a href="https://discord.gg/panb3J2xe2"><img src="https://img.shields.io/badge/DISCORD-27K%20ONLINE-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a><a href="LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" /></a>
+  
   <br />
-  <!-- Tech Stack Badges -->
+  
+  <!-- Tech Stack Row -->
   <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white" />
   <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" />
   <img src="https://img.shields.io/badge/Vite-5.0-646CFF?style=flat-square&logo=vite&logoColor=white" />
@@ -58,44 +37,42 @@
 
 Harbor is a **Chrome extension that runs AI agents natively in your browser**. Unlike chatbots that only describe what to do, Harbor actually **controls your browser** to complete tasks on your behalf.
 
-Give it a natural language instruction and Harbor handles the rest:
-
-| Capability | Description |
-|---|---|
-| 🌐 **Navigate** | Browses websites intelligently on your behalf |
-| 🖱️ **Interact** | Clicks buttons, fills forms, interacts with any page element |
-| 📋 **Extract** | Summarizes and pulls information from live pages |
-| 🗂️ **Manage** | Controls tabs, bookmarks, history, and downloads |
-| ⚡ **Automate** | Executes complex multi-step workflows end-to-end |
-| 🤖 **Model-agnostic** | Works with Claude, GPT-4o, Gemini, Ollama, and more |
+| Icon | Capability | Description |
+| :---: | :--- | :--- |
+| <img src="https://img.shields.io/badge/-%20-black?style=flat&logo=globe&logoColor=white" /> | **Navigate** | Browses websites intelligently on your behalf |
+| <img src="https://img.shields.io/badge/-%20-black?style=flat&logo=mouse-pointer&logoColor=white" /> | **Interact** | Clicks buttons, fills forms, interacts with page elements |
+| <img src="https://img.shields.io/badge/-%20-black?style=flat&logo=clipboard&logoColor=white" /> | **Extract** | Summarizes and pulls information from live pages |
+| <img src="https://img.shields.io/badge/-%20-black?style=flat&logo=layers&logoColor=white" /> | **Manage** | Controls tabs, bookmarks, history, and downloads |
+| <img src="https://img.shields.io/badge/-%20-black?style=flat&logo=zap&logoColor=white" /> | **Automate** | Executes complex multi-step workflows end-to-end |
+| <img src="https://img.shields.io/badge/-%20-black?style=flat&logo=bot&logoColor=white" /> | **Agnostic** | Works with Claude, GPT-4o, Gemini, and Ollama |
 
 > [!NOTE]  
-> Harbor is a privacy-first, open-source alternative to Perplexity Comet, ChatGPT Atlas, and Dia — with full control over your data and your AI model.
+> Harbor is a privacy-first, open-source alternative to Perplexity Comet and ChatGPT Atlas — providing full control over your data.
 
 ---
 
 ## Features
 
-### Browser Control
-- **57 Browser Tools** — Full control over tabs, bookmarks, downloads, and clipboard
-- **Visual Perception** — The AI analyzes real-time screenshots of your active tab
-- **DOM Intelligence** — Understands page structure and adapts to dynamic layouts
+### <img src="https://img.shields.io/badge/-%20-3178C6?style=flat&logo=monitor&logoColor=white" /> Browser Control
+- **57 Browser Tools** — Full control over tabs, bookmarks, and clipboard
+- **Visual Perception** — AI analyzes real-time screenshots of your active tab
+- **DOM Intelligence** — Understands page structure and adapts to layouts
 - **Smart Forms** — Automatically detects input types and maps data accurately
-- **Self-Healing** — Automatically retries and recovers when web elements change
+- **Self-Healing** — Automatically retries when web elements change
 
-### AI & Interface
-- **Real-time Streaming** — Watch the agent's thought process and actions as they happen
+### <img src="https://img.shields.io/badge/-%20-3178C6?style=flat&logo=cpu&logoColor=white" /> AI & Interface
+- **Real-time Streaming** — Watch the agent's thought process as it happens
 - **Context Persistence** — Optional conversation memory that stays with you
-- **Provider Switching** — Swap between AI backends instantly via the settings panel
-- **Command Center** — Use `Ctrl+K` to trigger actions and searches instantly
-- **Custom Profiles** — Save specific model configurations for different workflows
+- **Provider Switching** — Swap between AI backends instantly via settings
+- **Command Center** — Use `Ctrl+K` to trigger actions and searches
+- **Custom Profiles** — Save specific model configurations for workflows
 
-### Privacy & Security
-- **Local-First** — Your conversations and data never leave your local environment
-- **Zero Tracking** — No telemetry, no usage analytics, and no data collection
+### <img src="https://img.shields.io/badge/-%20-3178C6?style=flat&logo=shield-check&logoColor=white" /> Privacy & Security
+- **Local-First** — Conversations and data never leave your local environment
+- **Zero Tracking** — No telemetry, no analytics, and no data collection
 - **Secure Vault** — API keys are encrypted and stored only on your machine
 - **Audit-Ready** — Fully open-source codebase for complete transparency
-- **Granular Permissions** — You decide exactly what the AI is allowed to see and do
+- **Granular Permissions** — You control exactly what the AI can see
 
 ---
 
@@ -103,7 +80,7 @@ Give it a natural language instruction and Harbor handles the rest:
 
 ### 1. Install
 
-**From GitHub** *(Recommended)*
+**From GitHub**
 
 ```bash
 git clone https://github.com/owenawsong/Harbor
@@ -114,13 +91,8 @@ npm run build
 
 Then load into Chrome:
 1. Go to `chrome://extensions/`
-2. Enable **Developer Mode** (top-right toggle)
+2. Enable **Developer Mode**
 3. Click **Load unpacked** → select the `dist/` folder
-
-**From a Release**
-
-[Download the latest release →]  
-Extract the ZIP, then follow the "Load unpacked" steps above.
 
 ---
 
@@ -129,24 +101,12 @@ Extract the ZIP, then follow the "Load unpacked" steps above.
 Click the **Harbor** icon → **Settings** → select your provider:
 
 | Provider | Best For | API Source |
-|---|---|---|
-| **Claude** | Complex reasoning & analysis | [console.anthropic.com] |
-| **GPT-4o** | Speed & creative tasks | [platform.openai.com] |
-| **Gemini** | Multimodal, free tier | [aistudio.google.com] |
-| **Ollama** | Full privacy, local execution | [ollama.com] |
-| **OpenRouter** | 100+ models, easy switching | [openrouter.ai] |
-
----
-
-### 3. Try It Out
-
-Open the Harbor side panel and give it a task:
-
-```text
-"Find the top 3 coffee makers on Amazon with 5-star reviews under $50"
-"Compare flight prices NYC to London in March across Google Flights"
-"Fill this registration form using my info from my LinkedIn profile"
-```
+| :--- | :--- | :--- |
+| **Claude** | Complex reasoning | [console.anthropic.com] |
+| **GPT-4o** | Speed & creativity | [platform.openai.com] |
+| **Gemini** | Multimodal tasks | [aistudio.google.com] |
+| **Ollama** | Local privacy | [ollama.com] |
+| **OpenRouter** | Model variety | [openrouter.ai] |
 
 ---
 
@@ -167,16 +127,6 @@ Harbor is built as a **Chrome Manifest V3 extension** using a decoupled architec
 │           Content Script             │  ←  DOM Manipulation, Screenshots
 └──────────────────────────────────────┘
 ```
-
----
-
-## Contributing
-
-All contributions are welcome — bugs, features, docs, and ideas.
-
-1. Check [existing issues] first
-2. Open a [new issue] or [pull request]
-3. Follow the [CONTRIBUTING.md](CONTRIBUTING.md) guidelines
 
 ---
 
