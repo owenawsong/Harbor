@@ -9,8 +9,8 @@
 <br />
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-black?logo=github)](https://github.com/owenawsong/Harbor-Extension)
-[![Chrome Web Store](https://img.shields.io/badge/Chrome-Extension%20Coming-4285F4?logo=google-chrome&logoColor=white)]()
+[![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-black?logo=github)](https://github.com/owenawsong/Harbor)
+[![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/panb3J2xe2)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)]()
 [![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)]()
 
@@ -74,7 +74,7 @@ Give Harbor a natural language instruction, and it:
 
 **Option A: From GitHub (Recommended)**
 ```bash
-git clone https://github.com/owenawsong/Harbor-Extension
+git clone https://github.com/owenawsong/Harbor
 cd Harbor-Extension
 npm install
 npm run build
@@ -86,7 +86,7 @@ Then:
 4. Select the `dist/` folder
 
 **Option B: Download Release**
-- [Download latest release](https://github.com/owenawsong/Harbor-Extension/releases)
+- [Download latest release](https://github.com/owenawsong/Harbor/releases)
 - Extract the ZIP
 - Follow "Load unpacked" steps above
 
@@ -207,7 +207,7 @@ Harbor uses a **Chrome Manifest V3 extension** architecture with React & TypeScr
 
 ```bash
 # Clone and install
-git clone https://github.com/owenawsong/Harbor-Extension
+git clone https://github.com/owenawsong/Harbor
 cd Harbor-Extension
 npm install
 
@@ -292,8 +292,8 @@ After editing files:
 
 Found a bug? Want a feature? We'd love your help!
 
-1. **[Check existing issues](https://github.com/owenawsong/Harbor-Extension/issues)**
-2. **[Open a new issue](https://github.com/owenawsong/Harbor-Extension/issues/new)** or **[PR](https://github.com/owenawsong/Harbor-Extension/pulls)**
+1. **[Check existing issues](https://github.com/owenawsong/Harbor/issues)**
+2. **[Open a new issue](https://github.com/owenawsong/Harbor/issues/new)** or **[PR](https://github.com/owenawsong/Harbor/pulls)**
 3. Follow the **[CONTRIBUTING.md](CONTRIBUTING.md)** guidelines
 4. Make sure tests pass: `npm run type-check && npm run build`
 
@@ -312,16 +312,16 @@ See **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** for community standards.
 - [ ] **Cloud Sync** — Optional cross-device sync (privacy-preserving)
 - [ ] **Visual Builder** — No-code workflow creation
 
-**[Suggest a feature →](https://github.com/owenawsong/Harbor-Extension/issues/new?template=feature_request.md)**
+**[Suggest a feature →](https://github.com/owenawsong/Harbor/issues/new?template=feature_request.md)**
 
 ---
 
 ## Support & Docs
 
-- 📖 **Full Documentation** — [docs.harborextension.dev](https://docs.harborextension.dev)
-- 💬 **GitHub Discussions** — [Join community](https://github.com/owenawsong/Harbor-Extension/discussions)
-- 🐛 **Report a Bug** — [Create issue](https://github.com/owenawsong/Harbor-Extension/issues)
-- 💡 **Feature Request** — [Suggest idea](https://github.com/owenawsong/Harbor-Extension/issues/new)
+- 📖 **Full Documentation** — [harbor-extension.pages.dev/docs](https://harbor-extension.pages.dev/docs)
+- 💬 **Discord Community** — [Join Discord](https://discord.gg/panb3J2xe2)
+- 🐛 **Report a Bug** — [Create issue](https://github.com/owenawsong/Harbor/issues)
+- 💡 **Feature Request** — [Suggest idea](https://github.com/owenawsong/Harbor/issues/new)
 
 ---
 
@@ -350,6 +350,6 @@ Harbor is open source. You're free to use, modify, and distribute it in your own
 
 Harbor brings AI agents into your browser. Automate anything, control everything, keep your privacy.
 
-**[⭐ Star on GitHub](https://github.com/owenawsong/Harbor-Extension)** • **[🚀 Get Started](#quick-start)** • **[💬 Join Community](#support--docs)**
+**[⭐ Star on GitHub](https://github.com/owenawsong/Harbor)** • **[🚀 Get Started](#quick-start)** • **[💬 Join Community](#support--docs)**
 
 </div>
