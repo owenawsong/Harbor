@@ -265,9 +265,9 @@ Found a bug or have an idea?
 
 ## 📄 License
 
-**AGPL-3.0** — Free and open-source. See [LICENSE](LICENSE) for details.
+**MIT** — Free and open-source. See [LICENSE](LICENSE) for details.
 
-If you build on Harbor, we ask that you also release your modifications as open-source.
+You're free to use, modify, and distribute Harbor in your own projects.
 
 ---
 

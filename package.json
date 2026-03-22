@@ -1,7 +1,13 @@
 {
   "name": "harbor-extension",
-  "version": "1.0.0",
+  "version": "1.22.0",
   "description": "AI-powered browser agent extension",
+  "license": "MIT",
+  "author": "Owen Song & Harbor Contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/owenawsong/Harbor-Extension.git"
+  },
   "private": true,
   "type": "module",
   "scripts": {

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react'
+import React, { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
 import ModelPresets from './ModelPresets'
@@ -20,7 +20,11 @@ interface Props {
   settings?: AgentSettings
 }
 
-export default function ChatInput({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode, settings }: Props) {
+interface ChatInputHandle {
+  focus: () => void
+}
+
+const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode, settings }, ref) => {
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [enablePlanning, setEnablePlanning] = useState(false)
