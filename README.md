@@ -70,56 +70,218 @@ Give Harbor a natural language instruction, and it:
 
 ## Quick Start
 
+### Prerequisites
+
+Before you begin, ensure you have:
+
+- **Node.js 18.0+** — [Download here](https://nodejs.org/)
+  - Check: `node --version`
+- **npm 9.0+** — Comes with Node.js
+  - Check: `npm --version`
+- **Git** — [Download here](https://git-scm.com/)
+  - Check: `git --version`
+- **Chrome, Brave, Edge, or any Chromium-based browser** (Firefox support coming soon)
+
+**Don't have Node.js?** Follow this quick guide to install:
+
+<details>
+<summary><b>📦 Install Node.js by OS</b></summary>
+
+#### Windows
+1. Go to [nodejs.org](https://nodejs.org/)
+2. Download the **LTS (Recommended)** version
+3. Run the installer, accept defaults, click **Install**
+4. Restart your computer
+5. Open PowerShell and verify: `node --version`
+
+#### macOS
+```bash
+# Option 1: Using Homebrew (easiest)
+brew install node
+
+# Option 2: Download from nodejs.org
+# Download LTS, run the installer, follow the prompts
+
+# Verify:
+node --version
+```
+
+#### Linux
+```bash
+# Ubuntu/Debian
+sudo apt-get update
+sudo apt-get install nodejs npm
+
+# Fedora/CentOS
+sudo dnf install nodejs npm
+
+# Arch
+sudo pacman -S nodejs npm
+
+# Verify:
+node --version
+```
+
+</details>
+
+---
+
 ### Step 1: Install Harbor
 
-**Option A: From GitHub (Recommended)**
+#### **Option A: From GitHub (Recommended for Development)**
+
+**All Platforms:**
 ```bash
+# Clone the repository
 git clone https://github.com/owenawsong/Harbor
 cd Harbor-Extension
+
+# Install dependencies
 npm install
+
+# Build the extension
 npm run build
 ```
-Then:
-1. Go to `chrome://extensions/`
-2. Enable **"Developer Mode"** (top right)
-3. Click **"Load unpacked"**
-4. Select the `dist/` folder
 
-**Option B: Download Release**
-- [Download latest release](https://github.com/owenawsong/Harbor/releases)
-- Extract the ZIP
-- Follow "Load unpacked" steps above
+**Verification:** You should see a `dist/` folder created with several files inside.
 
-**Option C: Chrome Web Store**
+#### **Option B: Download Release (Easiest for Users)**
+
+1. Go to **[Harbor Releases](https://github.com/owenawsong/Harbor/releases)**
+2. Download the latest **`harbor-extension-vX.X.X.zip`** (where X.X.X is the version)
+3. Extract the ZIP file to your desired location
+4. Skip to **Step 2** below
+
+#### **Option C: Chrome Web Store**
 *Coming soon — currently in development*
 
-### Step 2: Configure Your AI Provider
+---
 
-1. Click the **⛵ Harbor** icon in your Chrome toolbar
-2. Click **Settings** ⚙️
-3. Choose your AI provider:
-   - **Claude** (Anthropic) — Best for complex reasoning
-   - **GPT-4o** (OpenAI) — Fast and creative
-   - **Gemini** (Google) — Free tier available
-   - **Ollama** (Local) — Privacy, zero API costs
-   - **OpenRouter** — 100+ models, easy switching
+### Step 2: Load Harbor into Your Browser
 
-4. Paste your API key → Click **Save**
-5. **Done!** Start using Harbor
+Harbor works on **Chrome, Brave, Edge, and any Chromium-based browser**. Choose your browser below:
 
-### Step 3: Give It a Task
+#### **Chrome / Chromium**
 
-Chat with Harbor in the side panel:
+1. Open `chrome://extensions/` in your address bar
+2. Toggle **Developer Mode** ON (top right corner)
+3. Click **Load unpacked**
+4. Navigate to your `Harbor-Extension/dist/` folder and select it
+5. You should see the **⛵ Harbor** extension appear in your extensions list
+6. Click the **Harbor icon** in your toolbar to open the side panel
+
+#### **Brave Browser**
+
+1. Open `brave://extensions/` in your address bar
+2. Toggle **Developer Mode** ON (top right corner)
+3. Click **Load unpacked**
+4. Navigate to your `Harbor-Extension/dist/` folder and select it
+5. The **⛵ Harbor** extension will appear in your extensions list
+6. Click the **Harbor icon** in your toolbar to open the side panel
+
+#### **Microsoft Edge**
+
+1. Open `edge://extensions/` in your address bar
+2. Toggle **Developer Mode** ON (left sidebar)
+3. Click **Load unpacked**
+4. Navigate to your `Harbor-Extension/dist/` folder and select it
+5. The **⛵ Harbor** extension will appear in your extensions list
+6. Click the **Harbor icon** in your toolbar to open the side panel
+
+#### **Other Chromium-Based Browsers** (Vivaldi, Opera, etc.)
+
+The steps are similar to Chrome:
+1. Open the extensions page: `[browser-name]://extensions/`
+2. Enable **Developer Mode**
+3. Click **Load unpacked**
+4. Select the `dist/` folder
+
+---
+
+### Step 3: Verify Installation
+
+✅ **Harbor is installed correctly if:**
+- The **⛵ Harbor icon** appears in your browser toolbar
+- Clicking it opens a **side panel with "Chat", "Settings", and other tabs**
+- No error messages appear in the browser console
+
+❌ **Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| **"dist/ folder not found"** | Run `npm run build` from the Harbor-Extension directory |
+| **Extension doesn't appear** | Refresh `chrome://extensions/`, try restarting your browser |
+| **"Load unpacked" button missing** | Make sure **Developer Mode** is toggled ON |
+| **Extension crashes** | Check the browser console (F12 → Console tab) for errors |
+| **"Manifest error"** | Ensure you're loading from the `dist/` folder, not `src/` |
+
+---
+
+### Step 4: Configure Your AI Provider
+
+1. **Open Harbor** — Click the ⛵ icon in your toolbar
+2. **Click Settings** ⚙️ (top right of the side panel)
+3. **Select Your AI Provider:**
+
+| Provider | Setup Time | Best For | Free Option? |
+|----------|-----------|----------|------|
+| **Claude** | 2 min | Complex reasoning, analysis | ✅ $5 free credit |
+| **GPT-4o** | 2 min | Speed, creative tasks | ✅ Free tier available |
+| **Gemini** | 2 min | Fast processing, multimodal | ✅ Generous free tier |
+| **Ollama** | 5 min | Privacy, zero API costs | ✅ Completely free (local) |
+| **OpenRouter** | 2 min | 100+ model options | ⚠️ Pay-per-use |
+
+**How to get API keys:**
+- **Claude:** [console.anthropic.com](https://console.anthropic.com) → Click "API" → Create API key
+- **GPT-4:** [platform.openai.com](https://platform.openai.com) → API keys → Create new key
+- **Gemini:** [aistudio.google.com](https://aistudio.google.com) → Click your profile → API keys
+- **Ollama:** [ollama.ai](https://ollama.ai) → Download & run locally (no key needed)
+- **OpenRouter:** [openrouter.ai](https://openrouter.ai) → Sign up → API keys
+
+4. **Paste your API key** into the Harbor Settings panel
+5. **Click Save** — You're ready to go!
+
+---
+
+### Step 5: Try Your First Task
+
+Open the **Chat** tab and try a prompt like:
+
+```text
+"Find the top 3 coffee makers on Amazon with 5+ star reviews under $100"
 ```
-"Find the top 3 products on Amazon with 5-star reviews for coffee makers"
-↓ Harbor searches Amazon, filters by reviews, opens the top 3 in tabs
 
-"Compare prices for flights NYC → London in March across 3 sites"
-↓ Harbor finds flights, compares prices, presents results
+Harbor will:
+1. 🌐 Navigate to Amazon
+2. 🔍 Search for coffee makers
+3. ⭐ Filter by 5+ star reviews and price
+4. 📋 Open the top 3 in new tabs
+5. 💬 Summarize the results for you
 
-"Fill this form with my contact info from my LinkedIn profile"
-↓ Harbor reads your LinkedIn, auto-fills the form perfectly
+**More examples:**
+```text
+"Compare flight prices from NYC to London for March 15-20 across 3 sites"
+"Fill out this registration form with my LinkedIn profile info"
+"Find the best pizza restaurants near me with delivery available"
+"Extract all job postings from this page and save them to a CSV"
 ```
+
+---
+
+### Step 6 (Optional): Development Mode
+
+If you want to modify Harbor and test changes:
+
+```bash
+# Start development server with auto-rebuild
+npm run dev
+
+# Reload the extension after each change:
+# 1. Go to chrome://extensions/
+# 2. Click the ♻️ reload icon on Harbor
+```
+
+Your changes will be live within seconds!
 
 ---
 
