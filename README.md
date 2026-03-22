@@ -13,42 +13,38 @@
 </div>
 
 <div align="center">
+  <div style="margin-top: 10px;">
+
+    <!-- Status Badges (kept in a tight row; no &nbsp; to avoid seams/odd spacing) -->
+    <a href="https://github.com/owenawsong/Harbor/actions">
+      <img src="https://img.shields.io/badge/BUILD-PASSING-44cc11?style=for-the-badge&logo=github" alt="Build Status" />
+    </a>
+    <a href="https://github.com/owenawsong/Harbor/releases">
+      <img src="https://img.shields.io/badge/RELEASE-LATEST-007ec6?style=for-the-badge" alt="Latest Release" />
+    </a>
+    <a href="https://discord.gg/panb3J2xe2">
+      <img src="https://img.shields.io/badge/DISCORD-27K%20ONLINE-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
+    </a>
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" />
+    </a>
+
+  </div>
+
+  <div style="margin-top: 8px;">
+    <!-- Tech Stack Badges -->
+    <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" alt="React" />
+    <img src="https://img.shields.io/badge/Vite-5.0-646CFF?style=flat-square&logo=vite&logoColor=white" alt="Vite" />
+    <img src="https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white" alt="Tailwind" />
+  </div>
+
   <br />
 
-  <!-- Status Badges -->
-  <a href="https://github.com/owenawsong/Harbor/actions">
-    <img src="https://img.shields.io/badge/BUILD-PASSING-44cc11?style=for-the-badge&logo=github" alt="Build Status" />
-  </a>
-  &nbsp;
-  <a href="https://github.com/owenawsong/Harbor/releases">
-    <img src="https://img.shields.io/badge/RELEASE-LATEST-007ec6?style=for-the-badge" alt="Latest Release" />
-  </a>
-  &nbsp;
-  <a href="https://discord.gg/panb3J2xe2">
-    <img src="https://img.shields.io/badge/DISCORD-27K%20ONLINE-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
-  </a>
-  &nbsp;
-  <a href="LICENSE">
-    <img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" />
-  </a>
-
-  <br /><br />
-
-  <!-- Tech Stack Badges -->
-  <img src="https://img.shields.io/badge/TypeScript-5.6-3178C6?style=flat-square&logo=typescript&logoColor=white" />
-  <img src="https://img.shields.io/badge/React-18-61DAFB?style=flat-square&logo=react&logoColor=black" />
-  <img src="https://img.shields.io/badge/Vite-5.0-646CFF?style=flat-square&logo=vite&logoColor=white" />
-  <img src="https://img.shields.io/badge/Tailwind-3.4-06B6D4?style=flat-square&logo=tailwind-css&logoColor=white" />
-</div>
-
-<br />
-
-<div align="center">
   <a href="#quick-start"><b>Get Started</b></a> &nbsp;·&nbsp;
   <a href="#what-is-harbor"><b>What is Harbor?</b></a> &nbsp;·&nbsp;
   <a href="#features"><b>Features</b></a> &nbsp;·&nbsp;
   <a href="#how-it-works"><b>How it works</b></a> &nbsp;·&nbsp;
-  <a href="#ai-providers"><b>AI providers</b></a> &nbsp;·&nbsp;
   <a href="https://harbor-extension.pages.dev/docs"><b>Docs</b></a> &nbsp;·&nbsp;
   <a href="https://discord.gg/panb3J2xe2"><b>Discord</b></a>
 </div>
@@ -58,40 +54,40 @@
 ## What is Harbor?
 
 **Harbor is a Chrome extension that runs AI agents inside your browser.**  
-Instead of only generating text, Harbor can **control your browser** to complete tasks for you.
+Instead of only answering questions, Harbor can **control your browser** to complete tasks end-to-end.
 
-Just give it a goal (in plain language) and it will:
+Tell Harbor what you want to achieve and it will:
 - understand what’s on the page (visual + DOM),
-- decide the next action,
-- click, type, navigate, and extract information,
-- and continue until the workflow is complete.
+- choose the next action,
+- click/type/navigate as needed,
+- extract and summarize results,
+- keep going until the workflow is finished.
 
 > [!NOTE]
-> Harbor is designed to be **privacy-first** and **open-source**, with the option to use different AI models/providers that fit your setup.
+> Harbor is **open-source** and built with a **privacy-first mindset**. You choose the AI model/provider—Harbor doesn’t lock you into one backend.
 
 ---
 
 ## Features
 
 ### Browser control (agent tools)
-- **Browser automation**: tabs, navigation, clipboard, downloads, and more
-- **Visual perception**: understands what’s on the screen using screenshots
-- **DOM intelligence**: recognizes page structure and adapts to dynamic layouts
-- **Smart form handling**: detects inputs and maps your data correctly
-- **Self-healing actions**: retries when page elements change
+- **Browser automation** for real workflows (tabs, downloads, navigation, clipboard, etc.)
+- **Visual perception** using live screenshots of the active tab
+- **DOM intelligence** to understand page structure and handle dynamic layouts
+- **Smart form support** (detects inputs and maps values correctly)
+- **Self-healing** retries when elements change
 
 ### AI + interaction
-- **Real-time streaming** so you can see progress as Harbor acts
-- **Context persistence** (optional memory for smoother multi-step work)
-- **Provider switching** from the settings panel
-- **Command Center** (default **Ctrl+K**) to quickly trigger actions/search
-- **Custom profiles** to save configurations per workflow
+- **Real-time streaming** updates as the agent works
+- **Context persistence** (optional memory)
+- **Provider switching** in settings
+- **Command Center** (default: **Ctrl+K**) to trigger actions quickly
+- **Custom profiles** for different tasks/models
 
 ### Privacy & security
-- **Local-first approach** where possible (and transparent behavior where not)
-- **No telemetry / no usage analytics** (open-source for auditing)
-- **Encrypted API key storage** (stored on your machine)
-- **Granular permissions**: decide what the agent is allowed to access
+- **No telemetry / no usage analytics** (open-source auditability)
+- **Encrypted API key storage** (keys stay on your machine)
+- **Granular permissions**: you decide what the agent can access
 
 ---
 
@@ -107,14 +103,14 @@ npm install
 npm run build
 ```
 
-Then load into Chrome:
+Load into Chrome:
 1. Open `chrome://extensions/`
-2. Turn on **Developer Mode**
+2. Enable **Developer Mode**
 3. Click **Load unpacked**
-4. Select the extension’s `dist/` folder
+4. Select the project’s `dist/` folder
 
 #### From a Release
-1. Download the latest release ZIP
+1. Download the latest release ZIP from the repo
 2. Extract it
 3. Load unpacked (steps above)
 
@@ -122,35 +118,34 @@ Then load into Chrome:
 
 ### 2) Connect an AI Provider
 
-Click the **Harbor** icon → **Settings** → choose your provider.
+Open Harbor → **Settings** → select your provider.
 
-| Provider | What it’s best for | Docs / Console |
-|---|---|---|
-| **OpenAI (ChatGPT-style models)** | Strong general-purpose reasoning + tool use | https://platform.openai.com |
-| **Claude (Anthropic)** | Complex analysis and careful outputs | https://console.anthropic.com |
-| **Gemini (Google AI)** | Multimodal workflows + flexible options | https://aistudio.google.com |
-| **Ollama** | Fully local/private model execution | https://ollama.com |
-| **OpenRouter** | Easy switching across 100+ models | https://openrouter.ai |
+Common options include:
+- **OpenAI (ChatGPT-style models)** via platform.openai.com
+- **Claude (Anthropic)** via console.anthropic.com
+- **Gemini (Google AI)** via aistudio.google.com
+- **Ollama** for local model execution via ollama.com
+- **OpenRouter** for model switching via openrouter.ai
 
-*(If your exact supported models differ, the docs will reflect the current options.)*
+> If your supported providers/models differ from the list above, follow what your current Harbor UI/docs show—those are the source of truth.
 
 ---
 
 ### 3) Try it
 
-Open the Harbor side panel and give it a task like:
+Open Harbor’s side panel and try a task like:
 
 ```text
-"Find the best coffee makers on Amazon under $50 with 4+ star reviews."
+"Find the best coffee makers under $50 with 4+ star reviews."
 "Compare flight prices from NYC to London for March and summarize the best option."
-"Fill this registration form using the info from my LinkedIn profile."
+"Fill this registration form using my LinkedIn details."
 ```
 
 ---
 
-## How it works
+## How it works (architecture)
 
-Harbor is a **Manifest V3** Chrome extension with a decoupled architecture:
+Harbor is a **Chrome Manifest V3** extension with a decoupled architecture:
 
 ```text
 ┌──────────────────────────────────────┐
@@ -168,22 +163,9 @@ Harbor is a **Manifest V3** Chrome extension with a decoupled architecture:
 
 ---
 
-## AI providers
-
-A good way to understand Harbor’s provider support:
-
-1. **You set the model/provider** you want
-2. Harbor sends the task + page context to the selected provider
-3. The provider returns actions/next steps
-4. Harbor executes those actions in the browser environment
-
-This keeps Harbor flexible: you can swap backends without changing your workflow.
-
----
-
 ## Contributing
 
-All contributions are welcome: **bugs, features, documentation, and ideas**.
+Contributions are welcome: **bugs, features, docs, ideas**.
 
 1. Check [existing issues]
 2. Open a [new issue] or [pull request]
@@ -199,7 +181,7 @@ All contributions are welcome: **bugs, features, documentation, and ideas**.
 
 <div align="center">
   <br />
-  Built with React, TypeScript, Vite, and Tailwind CSS.
+  Built with React 18, TypeScript, Vite, and Tailwind CSS.
   <br /><br />
   <a href="https://github.com/owenawsong/Harbor"><b>Star on GitHub</b></a> &nbsp;·&nbsp;
   <a href="#quick-start"><b>Get Started</b></a> &nbsp;·&nbsp;
