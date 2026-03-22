@@ -6,7 +6,7 @@
   "author": "Owen Song & Harbor Contributors",
   "repository": {
     "type": "git",
-    "url": "https://github.com/owenawsong/Harbor-Extension.git"
+    "url": "https://github.com/owenawsong/Harbor.git"
   },
   "private": true,
   "type": "module",

@@ -1,301 +1,355 @@
-# Harbor — AI Browser Agent
+<div align="center">
 
-> **Real AI agent powers for your browser. No new browser, no AI wrapper—just pure automation.**
+# ⛵ Harbor
 
-A Chrome extension that gives you a real AI agent inside your browser. Not a chatbot. Not another browser. An intelligent agent that **reads pages, clicks buttons, fills forms, finds information, and automates tasks** across any website.
+### **Real AI Agent Powers for Your Browser**
+
+> The intelligent browser extension that automates tasks, not just chatting. With any AI model you choose.
+
+<br />
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![GitHub](https://img.shields.io/badge/GitHub-Open%20Source-black?logo=github)](https://github.com/owenawsong/Harbor)
+[![Discord](https://img.shields.io/badge/Discord-Join%20us-5865F2?logo=discord&logoColor=white)](https://discord.gg/panb3J2xe2)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)]()
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)]()
+
+<br />
+
+**[🚀 Get Started](#quick-start)** • **[📖 Features](#features)** • **[🏗️ How It Works](#architecture)** • **[🤝 Contribute](#contributing)** • **[⭐ Support](#license)**
+
+</div>
 
 ---
 
-## 🚀 What It Does
+## What is Harbor?
 
-Harbor uses AI to understand what you want, then **actually controls your browser**. Give it a task in natural language, and it:
+Harbor is a **Chrome extension that runs AI agents natively in your browser**. Unlike traditional chatbots, Harbor doesn't just tell you what to do—it actually **controls your browser** to complete tasks.
 
-- ✅ Navigates to websites
-- ✅ Clicks buttons and fills forms
-- ✅ Extracts and summarizes information
-- ✅ Manages tabs, windows, bookmarks
-- ✅ Downloads files
-- ✅ Executes complex workflows
+Give Harbor a natural language instruction, and it:
+- ✅ **Navigates websites** with intelligence
+- ✅ **Clicks buttons & fills forms** automatically
+- ✅ **Extracts & summarizes** information from pages
+- ✅ **Manages tabs, bookmarks, downloads** seamlessly
+- ✅ **Executes complex workflows** end-to-end
 - ✅ **Works with ANY AI model** you choose
 
-### Real Examples
-
-```
-"Search GitHub for trending AI repos and open the top 3 in new tabs"
-→ Harbor opens GitHub, searches, and opens 3 tabs automatically
-
-"Find the cheapest flight from NYC to London in March and compare prices"
-→ Harbor searches multiple sites and compares prices in real-time
-
-"Fill out this form with my contact info and address from my profile"
-→ Harbor reads your profile and auto-fills the form
-
-"Summarize all content on this page and save it as a PDF bookmark"
-→ Harbor extracts, summarizes, and saves—all in one step
-
-"Monitor this stock price and alert me when it drops 5%"
-→ Harbor runs scheduled checks and notifies you
-```
+### Perfect For:
+- 🔍 **Research & Data Gathering** — Search multiple sites, compare results
+- 📋 **Form Filling & Registration** — Auto-complete with your profile data
+- 💰 **Price Comparison** — Find the best deals across retailers
+- 📰 **Content Curation** — Summarize articles, extract key info
+- 🛒 **Shopping Automation** — Browse, compare, and add to cart
+- 📊 **Business Tasks** — Automate data entry, report generation
+- 🎯 **Custom Workflows** — Build your own browser automations
 
 ---
 
-## 🎯 Why Harbor?
+## Why Harbor? 🎯
 
-### vs. **Perplexity Comet & GPT Atlas**
-- ✅ **Open-source** — Full control, no vendor lock-in
-- ✅ **Your AI choice** — Claude, GPT-4o, Gemini, Ollama, or any model
-- ✅ **Privacy-first** — API keys stay in your browser, nothing sent to servers
-- ✅ **Works everywhere** — Not limited to Perplexity or specific models
-- ❌ Comet may collect browsing data; Atlas is Mac-only with usage limits
-
-### vs. **Standard Chatbots** (ChatGPT, Claude.ai, Gemini)
+### vs. ChatGPT / Claude.ai / Gemini
 - ✅ **Actually controls your browser** — Not just text responses
 - ✅ **Always available** — No tab switching or copy/paste
-- ✅ **Real-time web access** — Sees live prices, updates, content
-- ✅ **Task automation** — Handles complex multi-step workflows
-- ❌ Chatbots can only tell you what to do; Harbor actually does it
+- ✅ **Real-time web access** — Sees live prices, updates, current content
+- ❌ Chatbots can only *describe* what to do; Harbor actually *does it*
 
-### vs. **Regular Browser Extensions**
-- ✅ **Genuinely intelligent** — Understands context and intent
-- ✅ **No repetitive configs** — One setup, works everywhere
-- ✅ **Adaptive** — Handles page changes, finds elements dynamically
-- ❌ Other extensions need specific rules for every site
+### vs. Perplexity Comet / ChatGPT Atlas
+- ✅ **Open source** — Full transparency, no hidden tracking
+- ✅ **Use YOUR AI choice** — Claude, GPT-4o, Gemini, Ollama, or any model
+- ✅ **Privacy first** — Your browser history stays on YOUR machine
+- ✅ **No vendor lock-in** — Fork it, modify it, control it
+- ❌ Comet/Atlas may collect browsing data for their own use
+
+### vs. Traditional Extensions
+- ✅ **Genuinely intelligent** — Understands context & intent
+- ✅ **No site-specific rules** — Works on ANY website
+- ✅ **Adaptive automation** — Handles page changes dynamically
+- ❌ Other extensions need hardcoded rules for every site
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
-### 1. Install
+### Step 1: Install Harbor
 
-**Option A: Latest Release**
-- Download from [GitHub Releases](https://github.com/owenawsong/Harbor-Extension/releases)
-- Extract the ZIP
-- Go to `chrome://extensions/` → Enable "Developer Mode" → Click "Load unpacked" → Select folder
-
-**Option B: Build from Source**
+**Option A: From GitHub (Recommended)**
 ```bash
-git clone https://github.com/owenawsong/Harbor-Extension
+git clone https://github.com/owenawsong/Harbor
 cd Harbor-Extension
 npm install
 npm run build
 ```
-Then follow Option A with the `dist/` folder.
+Then:
+1. Go to `chrome://extensions/`
+2. Enable **"Developer Mode"** (top right)
+3. Click **"Load unpacked"**
+4. Select the `dist/` folder
+
+**Option B: Download Release**
+- [Download latest release](https://github.com/owenawsong/Harbor/releases)
+- Extract the ZIP
+- Follow "Load unpacked" steps above
 
 **Option C: Chrome Web Store**
-*Coming soon* — Currently in development.
+*Coming soon — currently in development*
 
-### 2. Set Up
+### Step 2: Configure Your AI Provider
 
-1. Click the **H** icon in your Chrome toolbar
+1. Click the **⛵ Harbor** icon in your Chrome toolbar
 2. Click **Settings** ⚙️
-3. Choose your AI provider and enter your API key
-4. Done! Start chatting.
+3. Choose your AI provider:
+   - **Claude** (Anthropic) — Best for complex reasoning
+   - **GPT-4o** (OpenAI) — Fast and creative
+   - **Gemini** (Google) — Free tier available
+   - **Ollama** (Local) — Privacy, zero API costs
+   - **OpenRouter** — 100+ models, easy switching
 
-### 3. Use It
+4. Paste your API key → Click **Save**
+5. **Done!** Start using Harbor
 
+### Step 3: Give It a Task
+
+Chat with Harbor in the side panel:
 ```
-Chat with your agent in the side panel. Examples:
+"Find the top 3 products on Amazon with 5-star reviews for coffee makers"
+↓ Harbor searches Amazon, filters by reviews, opens the top 3 in tabs
 
-"What are the top 3 stories on Hacker News?"
-"Find me a 3-star hotel under $150 in NYC for next weekend"
-"Screenshot all these 10 tabs and create a summary document"
+"Compare prices for flights NYC → London in March across 3 sites"
+↓ Harbor finds flights, compares prices, presents results
+
+"Fill this form with my contact info from my LinkedIn profile"
+↓ Harbor reads your LinkedIn, auto-fills the form perfectly
 ```
 
 ---
 
-## 🧠 Supported AI Providers
+## Features 🌟
+
+### Core AI Capabilities
+- **57 Browser Tools** — Everything from tabs to bookmarks to downloads
+- **Real-time Screenshots** — AI can see exactly what's on the page
+- **Intelligent Navigation** — Understands page structure, finds elements adaptively
+- **Form Intelligence** — Auto-detects input types, fills correctly
+- **Tab Management** — Open, close, group, search tabs with AI understanding
+- **File Downloads** — Automated file handling and organization
+- **Clipboard Integration** — Copy/paste data between page and browser
+
+### Intelligence & Control
+- **Streaming Responses** — Watch the AI think in real-time
+- **Optional Memory** — AI remembers conversation context
+- **Multiple AI Models** — Switch between Claude, GPT, Gemini instantly
+- **Command Palette** — Quick-access with `Ctrl+K`
+- **Settings Profiles** — Save favorite model configurations
+- **Error Recovery** — Automatic retries when things go wrong
+
+### Data & Privacy
+- **100% Local** — All conversations stay on your device
+- **No Tracking** — Open source, audit-able code
+- **Secure Storage** — API keys encrypted, never sent to servers
+- **Export/Import** — Backup and restore all your data
+- **Selective Sharing** — You control what data AI sees
+
+---
+
+## Supported AI Providers
 
 | Provider | Setup Time | Best For | Cost |
 |----------|-----------|----------|------|
-| **Claude** (Anthropic) | 2 min | Complex reasoning, long context | $3-15/mo typical |
-| **GPT-4o** (OpenAI) | 2 min | Fast, creative tasks | $5-20/mo typical |
-| **Gemini** (Google) | 2 min | Speed, multimodal | Free tier available |
-| **Ollama** (Local) | 5 min | Privacy, no API costs | Free (runs locally) |
-| **OpenRouter** | 2 min | 100+ models, fallbacks | Pay-per-use |
-| **OpenAI-compatible** | 5 min | LM Studio, Jan, vLLM | Varies |
+| **Claude** | 2 min | Complex reasoning, analysis | $3-15/mo typical |
+| **GPT-4o** | 2 min | Speed, creative tasks | $5-20/mo typical |
+| **Gemini** | 2 min | Fast processing, multimodal | Free tier available |
+| **Ollama** | 5 min | Privacy, no API costs | Free (runs locally) |
+| **OpenRouter** | 2 min | 100+ model options, fallbacks | Pay-per-use |
 
 **How to get API keys:**
-- **Claude**: [console.anthropic.com](https://console.anthropic.com)
-- **GPT-4**: [platform.openai.com](https://platform.openai.com)
-- **Gemini**: [aistudio.google.com](https://aistudio.google.com)
-- **Ollama**: [ollama.ai](https://ollama.ai) (free, runs on your computer)
+- [Claude](https://console.anthropic.com) — Free $5 credit
+- [GPT-4](https://platform.openai.com) — Set your own limits
+- [Gemini](https://aistudio.google.com) — Generous free tier
+- [Ollama](https://ollama.ai) — Free, runs on your computer
 
 ---
 
-## 📋 Features
+## Architecture 🏗️
 
-### Core Capabilities
-- **57 browser tools** — Everything from tabs to bookmarks to downloads
-- **Real-time screenshots** — AI can see what's on the page
-- **Form filling** — Auto-detect and complete input fields
-- **Tab management** — Open, close, group, switch between tabs
-- **History & bookmarks** — Access and organize your browsing
-- **Downloads** — Automated file downloads and management
-- **Clipboard** — Copy/paste data to and from pages
-- **Notifications** — Send alerts when tasks complete
-
-### Intelligence Features
-- **Streaming responses** — See the AI thinking in real-time
-- **Memory** — Optional: AI remembers context between messages
-- **Tone/style settings** — Professional, casual, concise, detailed, creative
-- **Custom presets** — Save favorite model configs for quick switching
-- **Command palette** — `Ctrl+K` — Quick access to common tasks
-
-### Data & Privacy
-- **Local-only storage** — All conversations stay on your device
-- **Export/import** — Backup and restore all your data
-- **API key encryption** — Keys are never sent to servers
-- **No tracking** — Built for privacy, open-source code
-
----
-
-## 🏗️ Architecture
-
-Harbor is a **Chrome Manifest V3 extension** built with React and TypeScript:
+Harbor uses a **Chrome Manifest V3 extension** architecture with React & TypeScript:
 
 ```
-┌─────────────────────────────────────┐
-│   Side Panel UI (React)             │  ← Chat interface, settings, memory
-│   └─ Chat, Settings, History        │
-└──────────────────────────────────────┘
-         ↕ (Messages)
-┌──────────────────────────────────────┐
-│   Service Worker (background.js)    │  ← Agent loop, AI calls, orchestration
-│   └─ Agent loop, tool execution     │
-└──────────────────────────────────────┘
-         ↕ (DOM control)
-┌──────────────────────────────────────┐
-│   Content Script (content.js)       │  ← DOM interaction, page control
-│   └─ Click, type, screenshot        │
-└──────────────────────────────────────┘
+┌─────────────────────────────────┐
+│    React Side Panel UI          │  ← Chat, Settings, Memory
+│    (Chat, Settings, History)    │
+└─────────────┬───────────────────┘
+              ↕ (Chrome Messages)
+┌─────────────────────────────────┐
+│   Service Worker (bg script)    │  ← Agent Loop, AI API Calls
+│   (Orchestration & Agent Loop)  │
+└─────────────┬───────────────────┘
+              ↕ (DOM Commands)
+┌─────────────────────────────────┐
+│   Content Script                │  ← Page Interaction
+│   (Click, Type, Screenshot)     │
+└─────────────────────────────────┘
 ```
 
 **How It Works:**
 1. You type a message in the side panel
-2. Service worker sends it to your chosen AI provider with available tools
-3. AI responds with tool calls (e.g., "click button #submit")
-4. Content script executes tool calls on the page
-5. Screenshots/results are sent back to AI for next step
+2. Service worker sends it to your AI provider with available tools
+3. AI responds with specific tool calls (e.g., "click button #submit")
+4. Content script executes those actions on the page
+5. Screenshots & results sent back to AI for next step
 6. Process repeats until task is complete
-7. Final response is streamed back to you
+7. Final response streamed back to you
 
 ---
 
-## 🛠️ Development
+## Development
 
-### Setup
+### Local Development Setup
+
 ```bash
+# Clone and install
+git clone https://github.com/owenawsong/Harbor
+cd Harbor-Extension
 npm install
-npm run dev        # Watch mode (auto-rebuild on changes)
-npm run build      # Production build
-npm run type-check # TypeScript checking
+
+# Development with auto-rebuild
+npm run dev
+
+# Production build
+npm run build
+
+# Type checking
+npm run type-check
 ```
 
 ### Project Structure
+
 ```
 src/
-├── sidepanel/         # React UI components
-│   ├── components/    # Chat, Settings, Onboarding, etc.
-│   └── App.tsx
-├── background/        # Service worker
-│   ├── agent/         # Core agent logic
-│   ├── tools/         # Browser tool implementations
-│   └── index.ts
-├── content/           # Content script (page interaction)
-└── shared/            # Types, constants, utilities
+├── sidepanel/           # React UI
+│   ├── components/      # Chat, Settings, Dashboard, etc.
+│   └── App.tsx          # Main React app
+├── background/          # Service worker
+│   ├── agent/           # Core agent logic
+│   ├── tools/           # 57 browser tools
+│   └── index.ts         # Main background script
+├── content/             # Content script
+│   ├── index.ts         # Page interaction & clicks
+│   └── overlay.ts       # UI overlays
+├── shared/              # Shared utilities
+│   ├── types.ts         # Type definitions
+│   ├── constants.ts     # Configuration
+│   └── utils/           # Helper functions
+└── styles/              # Global CSS & Tailwind
 ```
 
-### Hot Reload
-After editing source files:
+### Hot Reload During Development
+
+After editing files:
 1. `npm run dev` rebuilds automatically
 2. Go to `chrome://extensions/`
-3. Click the **reload** icon on the Harbor card
+3. Click the **reload** icon on the Harbor extension card
 
 ---
 
-## 🚨 Privacy & Security
+## Privacy & Security 🔒
 
-- **No telemetry** — We don't track your usage
-- **No data collection** — Conversations stay local
-- **Open source** — Audit the code yourself
-- **API keys secure** — Never sent to our servers
-- **Content script sandboxing** — Page scripts can't access your data
+- **No Telemetry** — We don't track your usage
+- **No Data Collection** — Your conversations stay local
+- **No Server Calls** — Only your chosen AI provider gets data
+- **Open Source** — Audit the code yourself
+- **Content Security Policy** — Enforced for safety
+- **No Sensitive Access** — Can't access passwords, cookies, or payment info
 
----
-
-## 📦 Permissions Explained
-
-Harbor requests these Chrome permissions:
+### Permissions Explained
 
 | Permission | Why |
 |------------|-----|
-| `activeTab`, `tabs` | Control browser tabs |
+| `activeTab`, `tabs` | Control and switch tabs |
 | `scripting` | Run commands on pages |
 | `sidePanel` | Display the UI |
-| `storage` | Save settings & history |
-| `history`, `bookmarks` | Access your browser data |
+| `storage` | Save settings locally |
+| `history`, `bookmarks` | Read your data (optional) |
 | `downloads` | Download files |
 | `clipboardWrite`, `clipboardRead` | Copy/paste data |
 | `notifications` | Alert you when done |
 | `contextMenus` | Right-click options |
 
-**No permissions for:** cookies, passwords, network monitoring, or sensitive APIs.
+**NOT requested:** Cookies, passwords, payment info, network monitoring
 
 ---
 
-## 🐛 Known Limitations
+## Known Limitations
 
-- **JavaScript-heavy sites** — Some sites using heavy obfuscation may be harder to automate
-- **Rate limiting** — Your AI provider's rate limits apply
-- **Page changes** — If a site heavily redesigns, selectors may need adjustment
-- **No terminal access** — Can't run system commands
-- **No file system access** — Can't access local files (except downloads folder)
-
----
-
-## 🤝 Contributing
-
-Found a bug or have an idea?
-
-1. Check [existing issues](https://github.com/owenawsong/Harbor-Extension/issues)
-2. Open a [new issue](https://github.com/owenawsong/Harbor-Extension/issues/new) or [pull request](https://github.com/owenawsong/Harbor-Extension/pulls)
-3. Follow the code style (ESLint will help)
+- **JavaScript-Heavy Sites** — Heavily obfuscated sites may be harder to automate
+- **Rate Limiting** — Subject to your AI provider's limits
+- **Page Redesigns** — If a site completely redesigns, selectors may need updating
+- **System Commands** — Can't run terminal/system commands
+- **Local Files** — Can't access local file system (only downloads folder)
 
 ---
 
-## 📄 License
+## Contributing
 
-**MIT** — Free and open-source. See [LICENSE](LICENSE) for details.
+Found a bug? Want a feature? We'd love your help!
 
-You're free to use, modify, and distribute Harbor in your own projects.
+1. **[Check existing issues](https://github.com/owenawsong/Harbor/issues)**
+2. **[Open a new issue](https://github.com/owenawsong/Harbor/issues/new)** or **[PR](https://github.com/owenawsong/Harbor/pulls)**
+3. Follow the **[CONTRIBUTING.md](CONTRIBUTING.md)** guidelines
+4. Make sure tests pass: `npm run type-check && npm run build`
 
----
-
-## 🌟 What's Next?
-
-**Roadmap:**
-- [ ] WebStore submission
-- [ ] Firefox support
-- [ ] MCP (Model Context Protocol) servers
-- [ ] Scheduled/recurring tasks
-- [ ] Advanced memory & learning
-- [ ] Custom tool creation
-- [ ] Cloud sync (optional, privacy-preserving)
-
-**Have an idea?** [Open a feature request](https://github.com/owenawsong/Harbor-Extension/issues/new?labels=enhancement)
+See **[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)** for community standards.
 
 ---
 
-## 📞 Support
+## Roadmap 🚀
 
-- **Documentation** — Read the [full guide](https://harbor.app/docs)
-- **GitHub Issues** — Report bugs or ask questions
-- **Discussions** — Chat with the community
+- [ ] **Chrome Web Store** — Official submission & listing
+- [ ] **Firefox Support** — Extend to Firefox users
+- [ ] **MCP Integration** — Use Harbor as Model Context Protocol server
+- [ ] **Scheduled Tasks** — Run agents on a daily schedule
+- [ ] **Advanced Memory** — AI learns from your browsing patterns
+- [ ] **Custom Tools** — Build your own automation tools
+- [ ] **Cloud Sync** — Optional cross-device sync (privacy-preserving)
+- [ ] **Visual Builder** — No-code workflow creation
+
+**[Suggest a feature →](https://github.com/owenawsong/Harbor/issues/new?template=feature_request.md)**
 
 ---
 
-**Made with ❤️ for browser automation**
+## Support & Docs
 
-Harbor is built by developers, for developers. It's open-source, privacy-first, and designed to work with *your* favorite AI model.
+- 📖 **Full Documentation** — [harbor-extension.pages.dev/docs](https://harbor-extension.pages.dev/docs)
+- 💬 **Discord Community** — [Join Discord](https://discord.gg/panb3J2xe2)
+- 🐛 **Report a Bug** — [Create issue](https://github.com/owenawsong/Harbor/issues)
+- 💡 **Feature Request** — [Suggest idea](https://github.com/owenawsong/Harbor/issues/new)
 
-[🚀 Get Started Now](https://github.com/owenawsong/Harbor-Extension) • [📖 Read Docs](https://harbor.app/docs) • [🐛 Report Bug](https://github.com/owenawsong/Harbor-Extension/issues) • [⭐ Star on GitHub](https://github.com/owenawsong/Harbor-Extension)
+---
+
+## License
+
+**MIT License** — Free for personal and commercial use. See **[LICENSE](LICENSE)** for details.
+
+Harbor is open source. You're free to use, modify, and distribute it in your own projects.
+
+---
+
+## Credits & Acknowledgments
+
+- Built with **React 18** & **TypeScript 5.6**
+- Powered by **Vite** for blazing-fast builds
+- Styled with **Tailwind CSS 3**
+- Icons by **[Lucide React](https://lucide.dev/)**
+- Math rendering by **[KaTeX](https://katex.org/)**
+- Markdown by **[React Markdown](https://github.com/remarkjs/react-markdown)**
+
+---
+
+<div align="center">
+
+**Made with ❤️ by developers, for developers**
+
+Harbor brings AI agents into your browser. Automate anything, control everything, keep your privacy.
+
+**[⭐ Star on GitHub](https://github.com/owenawsong/Harbor)** • **[🚀 Get Started](#quick-start)** • **[💬 Join Community](#support--docs)**
+
+</div>
