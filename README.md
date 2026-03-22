@@ -18,7 +18,7 @@
       <img src="https://img.shields.io/badge/RELEASE-LATEST-007ec6?style=for-the-badge" alt="Latest Release" />
     </a>
     <a href="https://discord.gg/panb3J2xe2">
-      <img src="https://img.shields.io/badge/DISCORD-27K%20ONLINE-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
+      <img src="https://img.shields.io/badge/DISCORD-JOIN%20US-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
     </a>
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" />
