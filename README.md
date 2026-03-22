@@ -144,13 +144,18 @@ node --version
 
 #### **Option A: From GitHub (Recommended)**
 
-**All Platforms:**
+**All Platforms (Windows, macOS, Linux):**
 ```bash
 git clone https://github.com/owenawsong/Harbor
 cd Harbor-Extension
 npm install
 npm run build
 ```
+
+These commands work **identically** on:
+- 🪟 **Windows** (PowerShell or Git Bash)
+- 🍎 **macOS** (Terminal)
+- 🐧 **Linux** (Terminal/bash)
 
 **Verification:** You should see a `dist/` folder created.
 
