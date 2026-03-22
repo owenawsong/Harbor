@@ -276,24 +276,22 @@ Harbor is a **Chrome Manifest V3** extension with a decoupled architecture:
 
 ---
 
-## Development
+## How it works (architecture)
 
-### Local Development Setup
+Harbor is a **Chrome Manifest V3** extension with a decoupled architecture:
 
-```bash
-# Clone and install
-git clone https://github.com/owenawsong/Harbor
-cd Harbor-Extension
-npm install
-
-# Development with auto-rebuild
-npm run dev
-
-# Production build
-npm run build
-
-# Type checking
-npm run type-check
+```text
+┌──────────────────────────────────────┐
+│         React Side Panel             │  ← UI, Settings, Chat Interface
+└──────────────────┬───────────────────┘
+                   │ Chrome Runtime Messages
+┌──────────────────┴───────────────────┐
+│      Service Worker (Background)     │  ← Agent Logic, API Orchestration
+└──────────────────┬───────────────────┘
+                   │ Content Bridge
+┌──────────────────┴───────────────────┐
+│           Content Script             │  ← DOM Manipulation, Screenshots
+└──────────────────────────────────────┘
 ```
 
 ### Hot Reload During Development
