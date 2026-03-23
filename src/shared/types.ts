@@ -216,6 +216,17 @@ export interface IdentitySettings {
   customPersonality?: string   // free text instructions
 }
 
+// ─── Appearance Settings ────────────────────────────────────────────────────────
+
+export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+
+export interface AppearanceSettings {
+  theme: 'light' | 'dark' | 'system'
+  fontSize: FontSize
+  compactMode: boolean
+  accentColor?: string
+}
+
 // ─── Memory System ────────────────────────────────────────────────────────────
 
 export type MemoryCategory =

@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeKatex from 'rehype-katex'
-import { ChevronDown, Brain, Pencil, Check, X } from 'lucide-react'
+import { ChevronDown, Brain, Pencil, Check, X, Copy, MoreVertical } from 'lucide-react'
 import 'katex/dist/katex.min.css'
 import type { UIMessage, UIThinkingBlock } from '../hooks/useChat'
 import ToolCallDisplay from './ToolCallDisplay'
@@ -101,6 +101,13 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
     }
   }
 
+  const handleCopyMessage = () => {
+    const text = message.text || ''
+    navigator.clipboard.writeText(text).catch(() => {
+      // Fallback if clipboard API fails
+    })
+  }
+
   if (isUser) {
     return (
       <div
@@ -108,23 +115,32 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <div className="flex items-end gap-1.5 max-w-[85%]">
-          {/* Edit button — visible on hover */}
-          {!isEditing && onEditMessage && isHovered && (
-            <button
-              onClick={() => {
-                setEditValue(message.text || '')
-                setIsEditing(true)
-              }}
-              className="flex-shrink-0 p-1 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-150"
-              style={{
-                color: 'rgb(var(--harbor-text-faint))',
-                opacity: isHovered ? 1 : 0,
-              }}
-              title="Edit message"
-            >
-              <Pencil size={11} />
-            </button>
+        <div className="flex items-end gap-1 max-w-[85%]">
+          {/* Action buttons — fixed position, always space */}
+          {!isEditing && (
+            <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 transition-opacity" style={{ opacity: isHovered ? 1 : 0 }}>
+              <button
+                onClick={handleCopyMessage}
+                className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
+                style={{ color: 'rgb(var(--harbor-text-faint))' }}
+                title="Copy message"
+              >
+                <Copy size={11} />
+              </button>
+              {onEditMessage && (
+                <button
+                  onClick={() => {
+                    setEditValue(message.text || '')
+                    setIsEditing(true)
+                  }}
+                  className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
+                  style={{ color: 'rgb(var(--harbor-text-faint))' }}
+                  title="Edit message"
+                >
+                  <Pencil size={11} />
+                </button>
+              )}
+            </div>
           )}
 
           {isEditing ? (
@@ -168,7 +184,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
               </div>
             </div>
           ) : (
-            <div className="flex items-end gap-1.5">
+            <div className="flex items-end gap-1">
               <div
                 className="px-3 py-2 rounded-2xl rounded-tr-sm text-sm leading-relaxed text-white select-text"
                 style={{ background: 'rgb(79 95 232)' }}
@@ -176,7 +192,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
                 {message.text}
               </div>
               {/* Status indicator */}
-              <div className="text-[10px] mb-0.5 opacity-60">✓</div>
+              <div className="text-[10px] mb-0.5 opacity-60 flex-shrink-0">✓</div>
             </div>
           )}
         </div>
@@ -191,12 +207,12 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
   if (!hasContent && !message.isStreaming) return null
 
   return (
-    <div className="flex items-start gap-2.5 animate-fade-up">
+    <div className="flex items-start gap-2.5 animate-fade-up" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       {/* Avatar */}
       <img src="/icons/logo.png" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0 mt-0.5 select-none" />
 
-      {/* Content */}
-      <div className="flex-1 min-w-0 flex flex-col gap-2 select-text">
+      {/* Content with action buttons */}
+      <div className="flex-1 min-w-0 flex flex-col gap-2 select-text relative group">
         {/* Thinking blocks and tool calls, interleaved by sequence */}
         {(() => {
           const events: Array<{ type: 'thinking' | 'tool'; sequence: number; block?: UIThinkingBlock; toolCall?: typeof message.toolCalls[0]; index?: number }> = []
@@ -260,6 +276,20 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
           </div>
         )}
       </div>
+
+      {/* Copy button for assistant messages */}
+      {message.text && (
+        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ opacity: isHovered ? 1 : 0 }}>
+          <button
+            onClick={handleCopyMessage}
+            className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
+            style={{ color: 'rgb(var(--harbor-text-faint))' }}
+            title="Copy message"
+          >
+            <Copy size={13} />
+          </button>
+        </div>
+      )}
     </div>
   )
 }

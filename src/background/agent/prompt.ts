@@ -134,7 +134,11 @@ You have access to stored memories from previous sessions:
 
 ${memory}
 
-Use these memories to personalize your responses and remember user preferences.`
+Use these memories to personalize your responses and remember user preferences.
+
+**Important**: As you learn new information about the user during this session (preferences, habits, important details, project context, etc.), you should proactively suggest saving this to memory. When you discover something worth remembering, mention it to the user by saying something like "I've noted this for future reference: [detail]"
+
+This helps build a richer profile over time.`
 }
 
 function outputFormatSection(): string {

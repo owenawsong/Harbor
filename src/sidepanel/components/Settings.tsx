@@ -589,11 +589,17 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
   onThemeChange: (t: 'light' | 'dark' | 'system') => void
 }) {
   const [shortcut, setShortcut] = useState('Ctrl+Alt+H')
+  const [fontSize, setFontSize] = useState<'xs' | 'sm' | 'base' | 'lg' | 'xl'>('base')
+  const [compactMode, setCompactMode] = useState(false)
 
   useEffect(() => {
-    chrome.storage.local.get('harbor_keybindings', (data) => {
+    chrome.storage.local.get(['harbor_keybindings', 'harbor_appearance'], (data) => {
       if (data.harbor_keybindings?.commandPalette) {
         setShortcut(data.harbor_keybindings.commandPalette as string)
+      }
+      if (data.harbor_appearance) {
+        setFontSize(data.harbor_appearance.fontSize || 'base')
+        setCompactMode(data.harbor_appearance.compactMode || false)
       }
     })
   }, [])
@@ -603,9 +609,42 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
     chrome.storage.local.set({ harbor_keybindings: { commandPalette: s } })
   }
 
+  const handleFontSizeChange = (size: typeof fontSize) => {
+    setFontSize(size)
+    chrome.storage.local.get('harbor_appearance', (data) => {
+      chrome.storage.local.set({
+        harbor_appearance: {
+          ...(data.harbor_appearance || {}),
+          fontSize: size,
+        },
+      })
+    })
+  }
+
+  const handleCompactModeChange = (compact: boolean) => {
+    setCompactMode(compact)
+    chrome.storage.local.get('harbor_appearance', (data) => {
+      chrome.storage.local.set({
+        harbor_appearance: {
+          ...(data.harbor_appearance || {}),
+          compactMode: compact,
+        },
+      })
+    })
+  }
+
+  const fontSizeOptions = [
+    { value: 'xs' as const, label: 'Extra Small' },
+    { value: 'sm' as const, label: 'Small' },
+    { value: 'base' as const, label: 'Normal' },
+    { value: 'lg' as const, label: 'Large' },
+    { value: 'xl' as const, label: 'Extra Large' },
+  ]
+
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
       <SectionHeader title="Appearance" />
+
       <FormField label="Theme">
         <div className="grid grid-cols-3 gap-2">
           {THEME_OPTIONS.map(({ value, label }) => (
@@ -624,6 +663,40 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
             </button>
           ))}
         </div>
+      </FormField>
+
+      <FormField label="Font Size">
+        <div className="grid grid-cols-2 gap-2">
+          {fontSizeOptions.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => handleFontSizeChange(value)}
+              className="py-2 px-2 rounded-xl border text-xs font-medium transition-all"
+              style={{
+                borderColor: fontSize === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+                background: fontSize === value ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
+                color: fontSize === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
+              }}
+            >
+              {fontSize === value && <Check size={10} />} {label}
+            </button>
+          ))}
+        </div>
+      </FormField>
+
+      <FormField label="Compact Mode">
+        <button
+          onClick={() => handleCompactModeChange(!compactMode)}
+          className="py-2 px-3 rounded-xl border text-xs font-medium transition-all flex items-center gap-2"
+          style={{
+            borderColor: compactMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+            background: compactMode ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
+            color: compactMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
+          }}
+        >
+          {compactMode && <Check size={10} />}
+          {compactMode ? 'Enabled' : 'Disabled'} - Reduces spacing between messages
+        </button>
       </FormField>
     </div>
   )
