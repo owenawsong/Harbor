@@ -10,7 +10,7 @@ interface Props {
 
 const QUICK_PROVIDERS = [
   { id: 'anthropic' as const, label: 'Claude', color: 'from-blue-600 to-blue-700' },
-  { id: 'openai' as const, label: 'GPT-4', color: 'from-green-600 to-green-700' },
+  { id: 'openai' as const, label: 'ChatGPT', color: 'from-green-600 to-green-700' },
   { id: 'google' as const, label: 'Gemini', color: 'from-blue-500 to-red-500' },
   { id: 'ollama' as const, label: 'Local', color: 'from-purple-600 to-purple-700' },
 ]

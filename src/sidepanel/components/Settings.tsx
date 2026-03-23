@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check,
   Palette, User, Brain, Cpu,
@@ -78,6 +79,7 @@ const LANGUAGES = [
 ]
 
 export default function Settings({ settings, theme, identity, onSave, onBack }: Props) {
+  const { i18n } = useTranslation()
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('provider')
   const [savedIndicator, setSavedIndicator] = useState(false)
@@ -150,6 +152,11 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     if (provider === 'ollama' && !baseUrl)             setBaseUrl('http://localhost:11434')
     else if (provider === 'openai-compatible' && !baseUrl) setBaseUrl('http://localhost:1234/v1')
   }, [provider])
+
+  // Apply language changes globally
+  useEffect(() => {
+    i18n.changeLanguage(language)
+  }, [language, i18n])
 
   const handleProviderChange = (p: ProviderName) => {
     setProvider(p)
