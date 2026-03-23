@@ -26,6 +26,20 @@ chrome.commands.onCommand.addListener((command, tab) => {
   }
 })
 
+// ─── Extension Install Handler ────────────────────────────────────────────────
+// Open onboarding page on first install or significant update
+
+chrome.runtime.onInstalled.addListener(async (details) => {
+  if (details.reason === 'install') {
+    // First installation - open onboarding
+    const url = chrome.runtime.getURL('sidepanel.html')
+    chrome.tabs.create({ url })
+  } else if (details.reason === 'update') {
+    // Optional: you can handle updates here if needed
+    console.log('[BACKGROUND] Extension updated')
+  }
+})
+
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
 const DEFAULT_SETTINGS: AgentSettings = {
