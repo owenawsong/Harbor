@@ -194,15 +194,15 @@ chrome.runtime.onConnect.addListener((port) => {
           const session = await getSession(sessionId)
           console.log('✅ Session loaded:', { messageCount: session?.messages.length ?? 0 })
 
-          // Show running indicator on the active tab
+          // Get the active tab (for showing indicator when tools are used)
           let indicatorTabId: number | undefined
           try {
             const [activeTab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
             indicatorTabId = activeTab?.id
-            if (indicatorTabId !== undefined) {
-              chrome.tabs.sendMessage(indicatorTabId, { type: 'harbor_agent_running' }).catch(() => {})
-            }
           } catch { /* tab may not have content script */ }
+
+          // Track if we've shown the indicator (only show once per agent run)
+          let indicatorShown = false
 
           const userChatMsg: ChatMessage = {
             id: crypto.randomUUID(),
@@ -229,6 +229,11 @@ chrome.runtime.onConnect.addListener((port) => {
               history: session?.messages ?? [],
               attachedTabId,
               onEvent: (event) => {
+                // Show indicator only on first tool call, not at start
+                if ((event.type === 'tool_call_started' || event.type === 'tool_call') && !indicatorShown && indicatorTabId !== undefined) {
+                  chrome.tabs.sendMessage(indicatorTabId, { type: 'harbor_agent_running' }).catch(() => {})
+                  indicatorShown = true
+                }
                 if (event.type === 'text_delta') assistantText += event.text
                 send(event)
               },
@@ -238,8 +243,8 @@ chrome.runtime.onConnect.addListener((port) => {
             send({ type: 'error', error: err instanceof Error ? err.message : String(err) })
           } finally {
             activeControllers.delete(sessionId)
-            // Hide the tab indicator
-            if (indicatorTabId !== undefined) {
+            // Hide the tab indicator (only if it was shown)
+            if (indicatorShown && indicatorTabId !== undefined) {
               chrome.tabs.sendMessage(indicatorTabId, { type: 'harbor_agent_stopped' }).catch(() => {})
             }
           }

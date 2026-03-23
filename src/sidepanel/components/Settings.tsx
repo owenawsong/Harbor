@@ -671,14 +671,15 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
             <button
               key={value}
               onClick={() => handleFontSizeChange(value)}
-              className="py-2 px-2 rounded-xl border text-xs font-medium transition-all"
+              className="py-2 px-2 rounded-xl border text-xs font-medium transition-all flex items-center justify-center gap-1.5 h-10"
               style={{
                 borderColor: fontSize === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
                 background: fontSize === value ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
                 color: fontSize === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
               }}
             >
-              {fontSize === value && <Check size={10} />} {label}
+              {fontSize === value && <Check size={10} className="flex-shrink-0" />}
+              {label}
             </button>
           ))}
         </div>

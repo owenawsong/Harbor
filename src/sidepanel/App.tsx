@@ -37,6 +37,8 @@ export default function App() {
   // Pending message to send when switching to chat
   const [pendingMessage, setPendingMessage]     = useState<string | null>(null)
   const [showQuickSetup, setShowQuickSetup]     = useState(false)
+  const [fontSize, setFontSize]                 = useState<'xs' | 'sm' | 'base' | 'lg' | 'xl'>('base')
+  const [compactMode, setCompactMode]           = useState(false)
 
   // ── Load on mount ─────────────────────────────────────────────────────────
 
@@ -73,10 +75,14 @@ export default function App() {
       }
     })
 
-    // Load keybindings
-    chrome.storage.local.get('harbor_keybindings', (data) => {
+    // Load keybindings and appearance settings
+    chrome.storage.local.get(['harbor_keybindings', 'harbor_appearance'], (data) => {
       if (data.harbor_keybindings?.commandPalette) {
         setCmdShortcut(data.harbor_keybindings.commandPalette as string)
+      }
+      if (data.harbor_appearance) {
+        setFontSize(data.harbor_appearance.fontSize || 'base')
+        setCompactMode(data.harbor_appearance.compactMode || false)
       }
     })
 
@@ -346,10 +352,22 @@ export default function App() {
     )
   }
 
+  // Map fontSize setting to Tailwind text size class
+  const fontSizeClass = {
+    'xs': 'text-xs',
+    'sm': 'text-sm',
+    'base': 'text-base',
+    'lg': 'text-lg',
+    'xl': 'text-xl',
+  }[fontSize]
+
+  // Map compact mode to spacing class
+  const compactClass = compactMode ? 'gap-1' : 'gap-2.5'
+
   return (
     <ErrorBoundary>
       <div
-        className="flex flex-col h-full"
+        className={`flex flex-col h-full ${fontSizeClass}`}
         style={{ background: 'rgb(var(--harbor-bg))', color: 'rgb(var(--harbor-text))' }}
       >
       {/* Onboarding */}

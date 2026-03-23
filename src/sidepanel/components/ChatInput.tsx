@@ -139,7 +139,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           onChange={onInput}
           onKeyDown={onKeyDown}
           placeholder={placeholder ?? 'Ask Harbor anything…'}
-          disabled={disabled || isRunning}
+          disabled={disabled}
           rows={1}
           className="flex-1 bg-transparent resize-none outline-none text-sm leading-6 min-h-[24px] max-h-[160px] disabled:opacity-40 text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))]"
         />
