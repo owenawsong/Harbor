@@ -88,7 +88,7 @@ Before you begin, ensure you have:
 - **Chrome, Brave, Edge, or any Chromium-based browser**
 
 <details>
-<summary><b>📦 Install Node.js by OS</b></summary>
+<summary><b> Install Node.js by OS</b></summary>
 
 #### Windows
 1. Go to [nodejs.org](https://nodejs.org/)
@@ -142,9 +142,9 @@ npm run build
 ```
 
 These commands work **identically** on:
-- 🪟 **Windows** (PowerShell or Git Bash)
-- 🍎 **macOS** (Terminal)
-- 🐧 **Linux** (Terminal/bash)
+- **Windows** (PowerShell or Git Bash)
+- **macOS** (Terminal)
+- **Linux** (Terminal/bash)
 
 **Verification:** You should see a `dist/` folder created.
 
@@ -165,21 +165,21 @@ Harbor works on **Chrome, Brave, Edge, and any Chromium-based browser**.
 2. Toggle **Developer Mode** ON (top right)
 3. Click **Load unpacked**
 4. Select your `Harbor-Extension/dist/` folder
-5. The **⛵ Harbor** extension appears in your toolbar
+5. The **Harbor** extension appears in your toolbar
 
 #### **Brave Browser**
 1. Open `brave://extensions/`
 2. Toggle **Developer Mode** ON (top right)
 3. Click **Load unpacked**
 4. Select your `Harbor-Extension/dist/` folder
-5. The **⛵ Harbor** extension appears in your toolbar
+5. The **Harbor** extension appears in your toolbar
 
 #### **Microsoft Edge**
 1. Open `edge://extensions/`
 2. Toggle **Developer Mode** ON (left sidebar)
 3. Click **Load unpacked**
 4. Select your `Harbor-Extension/dist/` folder
-5. The **⛵ Harbor** extension appears in your toolbar
+5. The **Harbor** extension appears in your toolbar
 
 #### **Other Chromium Browsers** (Vivaldi, Opera, etc.)
 1. Open `[browser-name]://extensions/`
@@ -257,24 +257,22 @@ Harbor is a **Chrome Manifest V3** extension with a decoupled architecture:
 
 ---
 
-## Development
+## How it works (architecture)
 
-### Local Development Setup
+Harbor is a **Chrome Manifest V3** extension with a decoupled architecture:
 
-```bash
-# Clone and install
-git clone https://github.com/owenawsong/Harbor
-cd Harbor-Extension
-npm install
-
-# Development with auto-rebuild
-npm run dev
-
-# Production build
-npm run build
-
-# Type checking
-npm run type-check
+```text
+┌──────────────────────────────────────┐
+│         React Side Panel             │  ← UI, Settings, Chat Interface
+└──────────────────┬───────────────────┘
+                   │ Chrome Runtime Messages
+┌──────────────────┴───────────────────┐
+│      Service Worker (Background)     │  ← Agent Logic, API Orchestration
+└──────────────────┬───────────────────┘
+                   │ Content Bridge
+┌──────────────────┴───────────────────┐
+│           Content Script             │  ← DOM Manipulation, Screenshots
+└──────────────────────────────────────┘
 ```
 
 ### Hot Reload During Development
