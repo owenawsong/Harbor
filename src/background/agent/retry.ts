@@ -99,9 +99,6 @@ export async function fetchWithRetry(
         delayMs = Math.min(retryAfter, delayMs) // Use server's suggestion if shorter
       }
 
-      console.log(
-        `🔄 Rate limit detected (${response.status}). Retrying in ${delayMs}ms... (attempt ${attempt}/${finalConfig.maxAttempts})`
-      )
 
       // Wait before retrying
       await new Promise((resolve) => setTimeout(resolve, delayMs))
@@ -112,10 +109,6 @@ export async function fetchWithRetry(
       }
 
       const delayMs = calculateBackoffDelay(attempt, finalConfig)
-      console.log(
-        `🔄 Network error. Retrying in ${delayMs}ms... (attempt ${attempt}/${finalConfig.maxAttempts})`,
-        err instanceof Error ? err.message : err
-      )
 
       await new Promise((resolve) => setTimeout(resolve, delayMs))
     }
