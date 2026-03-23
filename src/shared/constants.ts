@@ -86,7 +86,7 @@ export const API_ENDPOINTS: Record<string, string> = {
 // Users MUST configure NVIDIA API key via VITE_HARBOR_FREE_API_KEY env var
 // Can be configured via VITE_HARBOR_FREE_API_KEY and VITE_HARBOR_FREE_BASE_URL env vars
 export const HARBOR_FREE_CONFIG = {
-  apiKey: import.meta.env.VITE_HARBOR_FREE_API_KEY || '',
+  apiKey: import.meta.env.VITE_HARBOR_FREE_API_KEY || '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',
   baseUrl: import.meta.env.VITE_HARBOR_FREE_BASE_URL || 'https://integrate.api.nvidia.com/v1',
   textModel: 'minimaxai/minimax-m2.5',
   imageModel: 'qwen/qwen3.5-122b-a10b',
