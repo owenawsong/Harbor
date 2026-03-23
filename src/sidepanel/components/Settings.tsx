@@ -78,7 +78,6 @@ const LANGUAGES = [
 ]
 
 export default function Settings({ settings, theme, identity, onSave, onBack }: Props) {
-  console.log('📭 Settings: Received props:', { provider: settings?.provider?.provider, apiKey: settings?.provider?.apiKey ? '***' : 'EMPTY', theme, identity })
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('provider')
   const [savedIndicator, setSavedIndicator] = useState(false)
@@ -86,7 +85,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
   // Provider / Models - with per-provider model storage
   const [provider, setProvider]       = useState<ProviderName>(settings.provider.provider as ProviderName)
-  console.log('📭 Settings: Initialized provider state:', provider)
   const [modelsByProvider, setModelsByProvider] = useState<Record<ProviderName, string>>({
     anthropic: settings.provider.provider === 'anthropic' ? settings.provider.model : '',
     openai: settings.provider.provider === 'openai' ? settings.provider.model : '',
@@ -101,8 +99,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const [baseUrl, setBaseUrl]         = useState(settings.provider.baseUrl ?? '')
   const [enableMemory, setEnableMemory] = useState(settings.enableMemory ?? true)
   const [showKey, setShowKey]         = useState(false)
-
-  console.log('📭 Settings: Initial state after useState:', { provider, apiKey: apiKey ? '***' : 'EMPTY', baseUrl, enableMemory })
 
   // Get model for current provider
   const model = modelsByProvider[provider]
@@ -127,7 +123,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
   // Sync props to state ONLY on mount (not on every prop change)
   useEffect(() => {
-    console.log('⚡ Settings mounted, syncing props:', { provider: settings.provider.provider, apiKey: settings.provider.apiKey ? '***' : 'empty' })
     setProvider(settings.provider.provider as ProviderName)
     setApiKey(settings.provider.apiKey ?? '')
     setBaseUrl(settings.provider.baseUrl ?? '')
@@ -195,15 +190,13 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           useEmoji,
           customPersonality: customPersonality.trim() || undefined,
         }
-        console.log('💾 Saving to background...', { provider, apiKey: apiKey ? '***' : 'empty' })
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
-        console.log('✅ Saved')
         lastSavedStateRef.current = currentState
         onSave(newSettings, currentTheme, newIdentity)
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
       } catch (err) {
-        console.error('❌ Save failed:', err)
+        console.error('Settings save failed:', err)
       }
     }, 500)
   }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, identity, model, onSave])
@@ -221,7 +214,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   }
 
   const renderSection = () => {
-    console.log('📭 Settings: About to render section, current state:', { provider, apiKey: apiKey ? '***' : 'EMPTY', userName, tone })
     switch (activeSection) {
       case 'provider':
         return <SectionGeneral
@@ -671,14 +663,15 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
             <button
               key={value}
               onClick={() => handleFontSizeChange(value)}
-              className="py-2 px-2 rounded-xl border text-xs font-medium transition-all"
+              className="py-2 px-2 rounded-xl border text-xs font-medium transition-all flex items-center justify-center gap-1.5 h-10"
               style={{
                 borderColor: fontSize === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
                 background: fontSize === value ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
                 color: fontSize === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
               }}
             >
-              {fontSize === value && <Check size={10} />} {label}
+              {fontSize === value && <Check size={10} className="flex-shrink-0" />}
+              {label}
             </button>
           ))}
         </div>

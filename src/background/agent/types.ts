@@ -62,6 +62,7 @@ export interface AgentRunOptions {
   settings: AgentSettings
   history: ChatMessage[]
   attachedTabId?: number
+  enablePlanning?: boolean
   onEvent: (event: import('../../shared/types').AgentEvent) => void
   signal?: AbortSignal
 }

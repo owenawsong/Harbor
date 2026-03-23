@@ -108,6 +108,27 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
     })
   }
 
+  const handleSaveToMemory = () => {
+    const text = message.text || ''
+    if (!text) return
+
+    chrome.storage.local.get('harbor_memory_entries', (data) => {
+      const entries = data.harbor_memory_entries || []
+      const newEntry = {
+        id: Math.random().toString(36).slice(2, 11),
+        category: 'general',
+        content: text,
+        tags: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        isPinned: false,
+      }
+      chrome.storage.local.set({
+        harbor_memory_entries: [newEntry, ...entries],
+      })
+    })
+  }
+
   if (isUser) {
     return (
       <div
@@ -126,6 +147,14 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
                 title="Copy message"
               >
                 <Copy size={11} />
+              </button>
+              <button
+                onClick={handleSaveToMemory}
+                className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
+                style={{ color: 'rgb(var(--harbor-text-faint))' }}
+                title="Save to memory"
+              >
+                <Brain size={11} />
               </button>
               {onEditMessage && (
                 <button
@@ -277,9 +306,9 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
         )}
       </div>
 
-      {/* Copy button for assistant messages */}
+      {/* Action buttons for assistant messages */}
       {message.text && (
-        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ opacity: isHovered ? 1 : 0 }}>
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ opacity: isHovered ? 1 : 0 }}>
           <button
             onClick={handleCopyMessage}
             className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
@@ -287,6 +316,14 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
             title="Copy message"
           >
             <Copy size={13} />
+          </button>
+          <button
+            onClick={handleSaveToMemory}
+            className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
+            style={{ color: 'rgb(var(--harbor-text-faint))' }}
+            title="Save to memory"
+          >
+            <Brain size={13} />
           </button>
         </div>
       )}
