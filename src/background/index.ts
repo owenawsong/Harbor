@@ -177,8 +177,8 @@ chrome.runtime.onConnect.addListener((port) => {
       switch (message.type) {
         case 'chat': {
           console.log('💬 Processing chat message')
-          const { sessionId, message: userMessage, attachedTabId } = message
-          console.log('📝 Chat details:', { sessionId, messageLength: userMessage.length, attachedTabId })
+          const { sessionId, message: userMessage, attachedTabId, enablePlanning } = message
+          console.log('📝 Chat details:', { sessionId, messageLength: userMessage.length, attachedTabId, enablePlanning })
 
           console.log('🛑 Aborting previous controller if exists')
           activeControllers.get(sessionId)?.abort()
@@ -228,6 +228,7 @@ chrome.runtime.onConnect.addListener((port) => {
               settings,
               history: session?.messages ?? [],
               attachedTabId,
+              enablePlanning,
               onEvent: (event) => {
                 // Show indicator only on first tool call, not at start
                 if ((event.type === 'tool_call_started' || event.type === 'tool_call') && !indicatorShown && indicatorTabId !== undefined) {

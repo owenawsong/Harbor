@@ -54,7 +54,7 @@ function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] 
 }
 
 export async function runAgent(options: AgentRunOptions): Promise<void> {
-  const { sessionId, message, settings, history, onEvent, signal, attachedTabId } = options
+  const { sessionId, message, settings, history, onEvent, signal, attachedTabId, enablePlanning } = options
   const provider = getProvider(settings.provider.provider)
 
   // Load memory entries from storage if enabled
@@ -91,6 +91,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
   const systemPrompt = buildSystemPrompt({
     enableMemory: settings.enableMemory && memoryData.length > 0,
     memory: memoryData,
+    enablePlanning,
   })
   const tools = getToolDefinitions()
 
