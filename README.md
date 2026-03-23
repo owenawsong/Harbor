@@ -135,7 +135,7 @@ node --version
 
 **All Platforms (Windows, macOS, Linux):**
 ```bash
-git clone https://github.com/owenawsong/Harbor
+git clone https://github.com/owenawsong/Harbor-Extension.git
 cd Harbor-Extension
 npm install
 npm run build
@@ -146,7 +146,13 @@ These commands work **identically** on:
 - **macOS** (Terminal)
 - **Linux** (Terminal/bash)
 
-**Verification:** You should see a `dist/` folder created.
+**What happens:**
+1. `git clone...` downloads Harbor into a new `Harbor-Extension` folder
+2. `cd Harbor-Extension` enters that folder
+3. `npm install` installs all dependencies (takes 1-2 minutes)
+4. `npm run build` creates the `dist/` folder your browser will load
+
+**Verification:** You should see a `dist/` folder created in the `Harbor-Extension` directory.
 
 #### **Option B: From a Release**
 
@@ -165,7 +171,13 @@ Harbor works on **Chrome, Brave, Edge, and any Chromium-based browser**.
 2. Toggle **Developer Mode** ON (top right)
 3. Click **Load unpacked**
 4. Select your `Harbor-Extension/dist/` folder
-5. The **Harbor** extension appears in your toolbar
+5. The **⛵ Harbor** extension appears in your extensions menu
+
+**📌 Pinning Harbor to Your Toolbar (Optional but Recommended):**
+- Click the puzzle icon 🧩 in your toolbar
+- Find **Harbor** in the list
+- Click the **pin icon** next to it
+- Harbor will now appear directly in your toolbar for easy access
 
 #### **Brave Browser**
 1. Open `brave://extensions/`
@@ -216,7 +228,7 @@ Harbor works on **Chrome, Brave, Edge, and any Chromium-based browser**.
 
 **Get API Keys:**
 - **Claude**: [console.anthropic.com](https://console.anthropic.com)
-- **GPT-4**: [platform.openai.com](https://platform.openai.com)
+- **ChatGPT**: [platform.openai.com](https://platform.openai.com)
 - **Gemini**: [aistudio.google.com](https://aistudio.google.com)
 - **Ollama**: [ollama.ai](https://ollama.ai) (local, no key needed)
 - **OpenRouter**: [openrouter.ai](https://openrouter.ai)

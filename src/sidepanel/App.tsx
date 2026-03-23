@@ -93,16 +93,9 @@ export default function App() {
     })
   }, [])
 
-  // Show QuickSetup if in chat view and no API key
-  useEffect(() => {
-    if (view === 'chat' && settings && !settings.provider.apiKey && !showQuickSetup) {
-      const hasShownBefore = sessionStorage.getItem('harbor_quick_setup_shown')
-      if (!hasShownBefore) {
-        setShowQuickSetup(true)
-        sessionStorage.setItem('harbor_quick_setup_shown', 'true')
-      }
-    }
-  }, [view, settings, showQuickSetup])
+  // QuickSetup is now only shown when user explicitly opens Settings
+  // and hasn't configured an API key yet. It won't auto-show on first open.
+  // This gives users more control and a better onboarding experience.
 
   // ── Apply theme ───────────────────────────────────────────────────────────
 

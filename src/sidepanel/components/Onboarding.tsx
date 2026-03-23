@@ -109,14 +109,14 @@ export default function Onboarding({ onComplete }: Props) {
         className="flex flex-col items-center justify-center h-full px-6 overflow-hidden"
         style={{ background: 'rgb(var(--harbor-bg))' }}
       >
-        <div className="flex flex-col items-center gap-6 text-center animate-onboard-reveal">
+        <div className="flex flex-col items-center gap-5 text-center animate-onboard-reveal">
           {/* Animated Logo */}
-          <div className="relative">
+          <div className="relative mt-2">
             <div className="absolute inset-0 animate-pulse rounded-2xl" style={{ background: 'rgb(var(--harbor-accent) / 0.2)', filter: 'blur(20px)' }} />
             <img
               src="/icons/logo.png"
               alt="Harbor"
-              className="w-24 h-24 rounded-2xl logo-glow relative animate-bounce-slow"
+              className="w-20 h-20 rounded-2xl logo-glow relative animate-bounce-slow"
               style={{
                 animation: 'bounceIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)',
               }}
@@ -124,15 +124,15 @@ export default function Onboarding({ onComplete }: Props) {
           </div>
 
           {/* Welcome text with staggered animation */}
-          <div className="flex flex-col gap-2 animate-fade-up" style={{ animationDelay: '0.2s' }}>
+          <div className="flex flex-col gap-1.5 animate-fade-up px-2" style={{ animationDelay: '0.2s' }}>
             <h1
-              className="harbor-serif text-5xl font-light tracking-tight"
+              className="harbor-serif text-4xl font-light tracking-tight"
               style={{ color: 'rgb(var(--harbor-text))' }}
             >
               {t('onboarding.welcome')}
             </h1>
             <p
-              className="text-sm font-light tracking-wide"
+              className="text-xs font-light tracking-wide"
               style={{ color: 'rgb(var(--harbor-text-muted))' }}
             >
               {t('onboarding.tagline')}
@@ -140,7 +140,7 @@ export default function Onboarding({ onComplete }: Props) {
           </div>
 
           <p
-            className="text-xs leading-relaxed max-w-[240px] animate-fade-up"
+            className="text-xs leading-relaxed max-w-[220px] animate-fade-up"
             style={{ color: 'rgb(var(--harbor-text-faint))', animationDelay: '0.3s' }}
           >
             {t('onboarding.subtitle')}
@@ -148,11 +148,11 @@ export default function Onboarding({ onComplete }: Props) {
 
           <button
             onClick={goNext}
-            className="harbor-btn-primary mt-4 px-8 hover:scale-105 transition-transform animate-fade-up"
+            className="harbor-btn-primary mt-2 px-6 py-2 hover:scale-105 transition-transform animate-fade-up text-sm"
             style={{ animationDelay: '0.4s' }}
           >
             {t('onboarding.getStarted')}
-            <ChevronRight size={15} />
+            <ChevronRight size={14} />
           </button>
 
           <p
@@ -165,13 +165,13 @@ export default function Onboarding({ onComplete }: Props) {
 
         <style>{`
           @keyframes bounceIn {
-            0% { transform: scale(0.3); opacity: 0; }
+            0% { transform: scale(0.4); opacity: 0; }
             50% { opacity: 1; }
-            70% { transform: scale(1.05); }
+            70% { transform: scale(1.02); }
             100% { transform: scale(1); }
           }
           @keyframes fadeUp {
-            from { opacity: 0; transform: translateY(20px); }
+            from { opacity: 0; transform: translateY(16px); }
             to { opacity: 1; transform: translateY(0); }
           }
           .animate-fade-up {
@@ -316,12 +316,12 @@ export default function Onboarding({ onComplete }: Props) {
 
 function StepName({ userName, onChange, onNext, t }: any) {
   return (
-    <div className="flex flex-col gap-5 animate-step-in">
+    <div className="flex flex-col gap-4 animate-step-in">
       <div>
-        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+        <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
           {t('onboarding.name')}
         </h2>
-        <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
           {t('onboarding.nameHint')}
         </p>
       </div>
@@ -341,12 +341,12 @@ function StepName({ userName, onChange, onNext, t }: any) {
 
 function StepUseCases({ selected, onToggle, useCases, t }: any) {
   return (
-    <div className="flex flex-col gap-4 animate-step-in">
+    <div className="flex flex-col gap-3 animate-step-in">
       <div>
-        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+        <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
           {t('onboarding.useCases')}
         </h2>
-        <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
           {t('onboarding.useCasesHint')}
         </p>
       </div>
@@ -379,12 +379,12 @@ function StepUseCases({ selected, onToggle, useCases, t }: any) {
 
 function StepTone({ selected, onSelect, tones, t }: any) {
   return (
-    <div className="flex flex-col gap-4 animate-step-in">
+    <div className="flex flex-col gap-3 animate-step-in">
       <div>
-        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+        <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
           {t('onboarding.tone')}
         </h2>
-        <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
           {t('onboarding.toneHint')}
         </p>
       </div>
@@ -424,12 +424,12 @@ function StepTone({ selected, onSelect, tones, t }: any) {
 
 function StepTheme({ selected, onSelect, themes, t }: any) {
   return (
-    <div className="flex flex-col gap-4 animate-step-in">
+    <div className="flex flex-col gap-3 animate-step-in">
       <div>
-        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+        <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
           {t('onboarding.appearance')}
         </h2>
-        <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
           {t('onboarding.appearanceHint')}
         </p>
       </div>
@@ -471,12 +471,12 @@ function StepTheme({ selected, onSelect, themes, t }: any) {
 
 function StepLanguage({ selected, onSelect, languages, t }: any) {
   return (
-    <div className="flex flex-col gap-4 animate-step-in">
+    <div className="flex flex-col gap-3 animate-step-in">
       <div>
-        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+        <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
           {t('onboarding.language')}
         </h2>
-        <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
           {t('onboarding.languageHint')}
         </p>
       </div>
@@ -519,10 +519,10 @@ function StepWelcome({
           <Check size={24} style={{ color: 'rgb(var(--harbor-accent))' }} />
         </div>
         <div>
-          <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+          <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
             {name ? t('onboarding.welcome_step', { name }) : t('onboarding.welcome_alt')}
           </h2>
-          <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+          <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
             {t('onboarding.welcome_ready')}
           </p>
         </div>
