@@ -1,5 +1,5 @@
 export const EXTENSION_NAME = 'Harbor'
-export const VERSION = '1.24'
+export const VERSION = '1.23.0'
 export const PORT_NAME = 'harbor-agent'
 export const STORAGE_KEYS = {
   SETTINGS: 'harbor_settings',
@@ -84,9 +84,10 @@ export const API_ENDPOINTS: Record<string, string> = {
 // ─── Harbor Free Configuration (NVIDIA NIM) ───────────────────────────────
 // Default public demo credentials for Harbor Free service
 // Users can override with their own NVIDIA API keys in settings
+// Can be configured via VITE_HARBOR_FREE_API_KEY and VITE_HARBOR_FREE_BASE_URL env vars
 export const HARBOR_FREE_CONFIG = {
-  apiKey: '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',
-  baseUrl: 'https://integrate.api.nvidia.com/v1',
+  apiKey: import.meta.env.VITE_HARBOR_FREE_API_KEY || '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',
+  baseUrl: import.meta.env.VITE_HARBOR_FREE_BASE_URL || 'https://integrate.api.nvidia.com/v1',
   textModel: 'minimaxai/minimax-m2.5',
   imageModel: 'qwen/qwen3.5-122b-a10b',
 }

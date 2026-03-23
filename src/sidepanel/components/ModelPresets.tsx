@@ -85,7 +85,7 @@ export default function ModelPresets({ currentSettings, onSelectPreset, onClose 
   }
 
   return (
-    <div className="absolute top-full right-0 mt-2 w-80 max-h-96 bg-[rgb(var(--harbor-surface))] border border-[rgb(var(--harbor-border))] rounded-xl shadow-lg overflow-hidden z-50 flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+    <div className="absolute bottom-full right-0 mb-2 w-80 max-h-96 bg-[rgb(var(--harbor-surface))] border border-[rgb(var(--harbor-border))] rounded-xl shadow-lg overflow-hidden z-50 flex flex-col animate-in fade-in slide-in-from-bottom-2 duration-200">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[rgb(var(--harbor-border))]">
         <h3 className="font-semibold text-sm" style={{ color: 'rgb(var(--harbor-text))' }}>
