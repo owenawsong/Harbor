@@ -8,8 +8,6 @@
  * defined inline here.
  */
 
-console.log('🎯 ContentScript: Harbor content script loaded on', document.location.href)
-
 // Inlined from shared/constants.ts — do NOT import; content scripts are classic scripts
 const HARBOR_ELEMENT_ATTR = 'data-harbor-id'
 // ─── Element ID Registry ──────────────────────────────────────────────────────
@@ -975,7 +973,6 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
         }
 
         case 'harbor_toggle_palette': {
-          console.log('🎯 ContentScript: Received toggle-palette command!')
           toggleOverlay()
           sendResponse({ success: true })
           break
@@ -1427,40 +1424,31 @@ async function executeOverlayCommand(commandId: string): Promise<void> {
 }
 
 function toggleOverlay(): void {
-  console.log('🎯 ⚡ toggleOverlay called, isOverlayOpen:', isOverlayOpen)
-  console.log('🎯 overlayRoot exists?', !!overlayRoot)
-
   if (!overlayRoot) {
-    console.log('🎯 Creating overlay DOM...')
     try {
       injectOverlayStyles()
       overlayRoot = createOverlayDOM()
       document.documentElement.appendChild(overlayRoot)
-      console.log('✅ Overlay DOM appended to page')
     } catch (err) {
-      console.error('❌ ERROR creating overlay:', err)
+      console.error('ERROR creating overlay:', err)
       return
     }
   }
 
   if (isOverlayOpen) {
-    console.log('🎯 Closing overlay')
     overlayRoot.classList.remove('open')
     isOverlayOpen = false
   } else {
-    console.log('🎯 Opening overlay')
     try {
       overlayRoot.classList.add('open')
       isOverlayOpen = true
       selectedCommandIndex = 0
       const input = overlayRoot.querySelector('#harbor-overlay-input') as HTMLInputElement
-      console.log('🎯 Input element:', input)
       input.focus()
       input.value = ''
       loadCommandsFromBackground().then(() => renderOverlayList(''))
-      console.log('✅ Overlay opened successfully')
     } catch (err) {
-      console.error('❌ ERROR opening overlay:', err)
+      console.error('ERROR opening overlay:', err)
     }
   }
 }

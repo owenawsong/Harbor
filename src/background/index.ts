@@ -7,39 +7,24 @@ import type { AgentSettings, StoredSettings, StoredSession, ChatMessage } from '
 import type { PortMessage, AgentEvent } from '../shared/types'
 import { PORT_NAME, STORAGE_KEYS, VERSION } from '../shared/constants'
 
-console.log(`🌊 Harbor Extension loaded - Version ${VERSION}`)
-
 // ─── Global Command Listener ──────────────────────────────────────────────────
 // Listen for keyboard commands registered in manifest.json
-console.log('🎯 [BACKGROUND] Setting up chrome.commands listener...')
 
 chrome.commands.onCommand.addListener((command, tab) => {
-  console.log('🎯 [BACKGROUND-COMMAND] ===== COMMAND FIRED =====')
-  console.log('🎯 [BACKGROUND-COMMAND] Received command:', command)
-  console.log('🎯 [BACKGROUND-COMMAND] Tab:', tab?.id, tab?.url)
-
   if (command === 'toggle-command-palette') {
-    console.log('🎯 [BACKGROUND-COMMAND] Toggling command palette...')
     // Get the active tab and send message to content script
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      console.log('🎯 [BACKGROUND-COMMAND] Query results:', tabs.length, 'tabs')
       if (tabs[0]?.id) {
-        console.log('🎯 [BACKGROUND-COMMAND] Sending toggle to tab:', tabs[0].id, tabs[0].url)
         chrome.tabs.sendMessage(tabs[0].id, { type: 'harbor_toggle_palette' }).then(() => {
-          console.log('✅ [BACKGROUND-COMMAND] Message sent successfully!')
         }).catch((err) => {
-          console.error('❌ [BACKGROUND-COMMAND] Could not send to tab:', err)
+          console.error('[BACKGROUND-COMMAND] Could not send to tab:', err)
         })
       } else {
-        console.warn('⚠️  [BACKGROUND-COMMAND] No active tab found')
+        console.warn('[BACKGROUND-COMMAND] No active tab found')
       }
     })
-  } else {
-    console.log('⚠️  [BACKGROUND-COMMAND] Unknown command:', command)
   }
 })
-
-console.log('✅ [BACKGROUND] chrome.commands listener registered')
 
 // ─── Defaults ─────────────────────────────────────────────────────────────────
 
@@ -58,21 +43,12 @@ async function getSettings(): Promise<AgentSettings> {
 
 async function getStoredSettings(): Promise<StoredSettings> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS)
-  console.log('🔍 Background: getStoredSettings - raw data from chrome.storage:', data)
-  console.log('🔍 Background: STORAGE_KEYS.SETTINGS =', STORAGE_KEYS.SETTINGS)
 
   const stored = (data[STORAGE_KEYS.SETTINGS] as StoredSettings) ?? {
     agentSettings: DEFAULT_SETTINGS,
     theme: 'system',
   }
 
-  console.log('📂 Background: getStoredSettings returning:', {
-    provider: stored.agentSettings?.provider?.provider,
-    apiKey: stored.agentSettings?.provider?.apiKey ? '***' : 'empty',
-    hasIdentity: !!stored.identity,
-    theme: stored.theme
-  })
-  console.log('📂 Background: FULL stored object:', stored)
   return stored
 }
 
@@ -82,29 +58,16 @@ async function saveSettings(settings: AgentSettings, theme: string, identity?: a
     theme: (theme as 'light' | 'dark' | 'system') || 'system',
     identity,
   }
-  console.log('💾 SAVING - key:', STORAGE_KEYS.SETTINGS)
-  console.log('💾 SAVING - provider:', settings.provider.provider)
-  console.log('💾 SAVING - apiKey:', settings.provider.apiKey ? '***' : 'empty')
-  console.log('💾 SAVING - full object:', stored)
 
   await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: stored })
-  console.log('⏳ Write command queued, waiting for verification...')
 
   // VERIFY the data was actually written
   const verification = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS)
-  console.log('🔍 VERIFICATION - raw response:', verification)
-  console.log('🔍 VERIFICATION - data[key]:', verification[STORAGE_KEYS.SETTINGS])
 
   const verified = verification[STORAGE_KEYS.SETTINGS]
   if (!verified) {
     throw new Error('CRITICAL: Data was not written to chrome.storage.local!')
   }
-
-  console.log('✅ VERIFIED - Data persisted with:', {
-    provider: verified.agentSettings?.provider?.provider,
-    apiKey: verified.agentSettings?.provider?.apiKey ? '***' : 'empty',
-    theme: verified.theme,
-  })
 }
 
 async function getSession(sessionId: string): Promise<StoredSession | null> {
@@ -161,38 +124,24 @@ chrome.runtime.onConnect.addListener((port) => {
   port.onMessage.addListener(async (message: PortMessage) => {
     const send = (event: AgentEvent) => {
       try {
-        if (event.type === 'error') {
-          console.error('❌🔤 ERROR EVENT being sent to port:', (event as any).error)
-        } else {
-          console.log('🔤 Sending event back to port:', event.type)
-        }
         port.postMessage(event)
       } catch (err) {
-        console.error('❌ Failed to send event to port:', err)
+        console.error('[PORT] Failed to send event:', err)
       }
     }
 
     try {
-      console.log('📨 Background received message:', message.type)
       switch (message.type) {
         case 'chat': {
-          console.log('💬 Processing chat message')
           const { sessionId, message: userMessage, attachedTabId, enablePlanning } = message
-          console.log('📝 Chat details:', { sessionId, messageLength: userMessage.length, attachedTabId, enablePlanning })
 
-          console.log('🛑 Aborting previous controller if exists')
           activeControllers.get(sessionId)?.abort()
           const controller = new AbortController()
           activeControllers.set(sessionId, controller)
-          console.log('✅ New controller created')
 
-          console.log('⚙️  Getting settings')
           const settings = await getSettings()
-          console.log('✅ Settings loaded:', { provider: settings.provider.provider })
 
-          console.log('📂 Getting session')
           const session = await getSession(sessionId)
-          console.log('✅ Session loaded:', { messageCount: session?.messages.length ?? 0 })
 
           // Get the active tab (for showing indicator when tools are used)
           let indicatorTabId: number | undefined
@@ -294,12 +243,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
         case 'save_settings': {
           const { settings, theme, identity } = message as { settings: AgentSettings; theme: string; identity?: any }
           try {
-            console.log('💾 Background: Received save_settings message', { provider: settings.provider.provider, apiKey: settings.provider.apiKey ? '***' : 'empty' })
             await saveSettings(settings, theme ?? 'system', identity)
-            console.log('✅ Background: Settings saved to chrome.storage.local')
             sendResponse({ success: true })
           } catch (err) {
-            console.error('❌ Background: Failed to save settings:', err)
+            console.error('[SETTINGS] Failed to save:', err)
             sendResponse({ success: false, error: err instanceof Error ? err.message : String(err) })
           }
           break
@@ -326,7 +273,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         case 'harbor_get_palette_commands': {
           // Return list of available commands for the command palette overlay
-          console.log('🎯 [BACKGROUND] harbor_get_palette_commands requested')
           const commands = [
             { id: 'new-chat', label: 'New conversation', description: 'Start a fresh chat' },
             { id: 'settings', label: 'Open Settings', description: 'Configure Harbor' },
@@ -335,30 +281,26 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
             { id: 'skills', label: 'Browse Skills', description: 'Explore available tools' },
             { id: 'dashboard', label: 'Open Dashboard', description: 'View usage statistics' },
           ]
-          console.log('✅ [BACKGROUND] Sending', commands.length, 'commands')
           sendResponse({ success: true, data: { commands } })
           break
         }
 
         case 'harbor_execute_palette_command': {
           const { commandId } = message
-          console.log('🎯 [BACKGROUND] harbor_execute_palette_command:', commandId)
           // Send command to the active extension panel
           try {
             // Send message to sidepanel to execute the command
-            console.log('🎯 [BACKGROUND] Sending command to sidepanel...')
             chrome.runtime.sendMessage({
               type: 'harbor_palette_command_execute',
               commandId,
             }).then(() => {
-              console.log('✅ [BACKGROUND] Command sent to sidepanel')
             }).catch((err) => {
-              console.warn('⚠️  [BACKGROUND] Sidepanel not responding:', err)
+              console.warn('[BACKGROUND] Sidepanel not responding:', err)
               // Sidepanel might not be open, that's ok
             })
             sendResponse({ success: true })
           } catch (err) {
-            console.error('❌ [BACKGROUND] Error executing command:', err)
+            console.error('[BACKGROUND] Error executing command:', err)
             sendResponse({ success: false, error: err instanceof Error ? err.message : String(err) })
           }
           break

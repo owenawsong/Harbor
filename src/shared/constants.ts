@@ -82,11 +82,11 @@ export const API_ENDPOINTS: Record<string, string> = {
 }
 
 // ─── Harbor Free Configuration (NVIDIA NIM) ───────────────────────────────
-// Default public demo credentials for Harbor Free service
-// Users can override with their own NVIDIA API keys in settings
+// Harbor Free service configuration
+// Users MUST configure NVIDIA API key via VITE_HARBOR_FREE_API_KEY env var
 // Can be configured via VITE_HARBOR_FREE_API_KEY and VITE_HARBOR_FREE_BASE_URL env vars
 export const HARBOR_FREE_CONFIG = {
-  apiKey: import.meta.env.VITE_HARBOR_FREE_API_KEY || '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',
+  apiKey: import.meta.env.VITE_HARBOR_FREE_API_KEY || '',
   baseUrl: import.meta.env.VITE_HARBOR_FREE_BASE_URL || 'https://integrate.api.nvidia.com/v1',
   textModel: 'minimaxai/minimax-m2.5',
   imageModel: 'qwen/qwen3.5-122b-a10b',
@@ -99,3 +99,35 @@ export const SCREENSHOT_QUALITY = 85
 export const CONTENT_SCRIPT_TIMEOUT = 10000 // 10 seconds
 
 export const HARBOR_ELEMENT_ATTR = 'data-harbor-id'
+
+// ─── Message Types (to avoid magic strings) ────────────────────────────────────
+
+export const MESSAGE_TYPES = {
+  // Chat messages
+  CHAT: 'chat',
+  STOP: 'stop',
+  CLEAR_SESSION: 'clear_session',
+
+  // Settings
+  GET_SETTINGS: 'get_settings',
+  SAVE_SETTINGS: 'save_settings',
+
+  // Sessions
+  GET_SESSIONS: 'get_sessions',
+  GET_SESSION: 'get_session',
+  DELETE_SESSION: 'delete_session',
+
+  // Tab operations
+  GET_ACTIVE_TAB: 'get_active_tab',
+
+  // Command palette
+  TOGGLE_PALETTE: 'harbor_toggle_palette',
+  GET_PALETTE_COMMANDS: 'harbor_get_palette_commands',
+  EXECUTE_PALETTE_COMMAND: 'harbor_execute_palette_command',
+  PALETTE_COMMAND_EXECUTE: 'harbor_palette_command_execute',
+
+  // Agent indicators
+  AGENT_RUNNING: 'harbor_agent_running',
+  AGENT_STOPPED: 'harbor_agent_stopped',
+  AGENT_START: 'harbor_agent_start',
+} as const

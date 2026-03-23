@@ -44,34 +44,23 @@ export default function App() {
 
   useEffect(() => {
     // Load settings, theme, and identity from background service
-    console.log('📞 App: Requesting get_settings from background...')
     chrome.runtime.sendMessage({ type: 'get_settings' }, (res) => {
-      console.log('📥 App: Raw response from background:', res)
-      console.log('📥 App: res.success?', res?.success)
-      console.log('📥 App: res.data?', res?.data)
-
       if (res?.success && res.data) {
         const stored = res.data
-        console.log('📥 App: Received agentSettings:', stored.agentSettings)
 
         const settingsToUse = stored.agentSettings || {
           provider: { provider: 'harbor-free', model: 'minimax/minimax-m2.5', apiKey: '' },
           enableMemory: true,
           enableScreenshots: true,
         }
-        console.log('📥 App: Setting agentSettings state to:', settingsToUse)
         setSettings(settingsToUse)
 
         if (stored.theme) {
-          console.log('🎨 App: Setting theme to', stored.theme)
           setTheme(stored.theme as 'light' | 'dark' | 'system')
         }
         if (stored.identity) {
-          console.log('👤 App: Setting identity to', stored.identity)
           setIdentity(stored.identity as IdentitySettings)
         }
-      } else {
-        console.warn('⚠️ App: No settings response or error:', res)
       }
     })
 
@@ -96,7 +85,6 @@ export default function App() {
         chrome.storage.local.get('harbor_last_session', (sessionData) => {
           const lastSessionId = sessionData.harbor_last_session as string | undefined
           if (lastSessionId) {
-            console.log('📚 App: Restoring last session:', lastSessionId)
             setCurrentSessionId(lastSessionId)
           }
         })
@@ -155,7 +143,6 @@ export default function App() {
   // and opening the palette IN the sidebar instead of on the webpage
   useEffect(() => {
     // Content script handles: Ctrl+Alt+H hotkey -> shows overlay on webpage
-    console.log('🎯 CommandPalette: Hotkey handling delegated to content script')
   }, [])
 
   // ── Context menu message pickup ────────────────────────────────────────────
@@ -190,7 +177,6 @@ export default function App() {
       if (message.type !== 'harbor_palette_command_execute') return
 
       const commandId = message.commandId as string
-      console.log('🎨 App: Executing palette command:', commandId)
 
       // Execute the command based on ID
       switch (commandId) {
@@ -270,7 +256,6 @@ export default function App() {
       newTheme: 'light' | 'dark' | 'system',
       newIdentity?: IdentitySettings,
     ) => {
-      console.log('💾 App: Received save from Settings, updating state')
       setSettings(newSettings)
       setTheme(newTheme)
       if (newIdentity) {
@@ -398,16 +383,13 @@ export default function App() {
 
       {/* Settings */}
       {view === 'settings' && (
-        <>
-          {console.log('📤 App: Rendering Settings with:', { provider: settings?.provider?.provider, apiKey: settings?.provider?.apiKey ? '***' : 'none', theme, identity })}
-          <Settings
-            settings={settings}
-            theme={theme}
-            identity={identity}
-            onSave={handleSaveSettings}
-            onBack={() => setView('chat')}
-          />
-        </>
+        <Settings
+          settings={settings}
+          theme={theme}
+          identity={identity}
+          onSave={handleSaveSettings}
+          onBack={() => setView('chat')}
+        />
       )}
 
       {/* History */}

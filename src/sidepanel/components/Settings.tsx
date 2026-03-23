@@ -195,15 +195,13 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           useEmoji,
           customPersonality: customPersonality.trim() || undefined,
         }
-        console.log('💾 Saving to background...', { provider, apiKey: apiKey ? '***' : 'empty' })
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
-        console.log('✅ Saved')
         lastSavedStateRef.current = currentState
         onSave(newSettings, currentTheme, newIdentity)
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
       } catch (err) {
-        console.error('❌ Save failed:', err)
+        console.error('Settings save failed:', err)
       }
     }, 500)
   }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, identity, model, onSave])
