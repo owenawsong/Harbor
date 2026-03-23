@@ -123,13 +123,17 @@ export default function App() {
     chrome.storage.local.set({ harbor_theme: theme })
   }, [theme])
 
-  // ── Command palette keyboard shortcut ─────────────────────────────────────
+  // ── Command palette keyboard shortcut & appearance settings ────────────────
 
   useEffect(() => {
-    // Keep shortcut in sync when changed from Settings while panel is open
+    // Keep shortcut and appearance settings in sync when changed from Settings while panel is open
     const storageListener = (changes: Record<string, chrome.storage.StorageChange>) => {
       if (changes.harbor_keybindings?.newValue?.commandPalette) {
         setCmdShortcut(changes.harbor_keybindings.newValue.commandPalette as string)
+      }
+      if (changes.harbor_appearance?.newValue) {
+        setFontSize(changes.harbor_appearance.newValue.fontSize || 'base')
+        setCompactMode(changes.harbor_appearance.newValue.compactMode || false)
       }
     }
     chrome.storage.onChanged.addListener(storageListener)

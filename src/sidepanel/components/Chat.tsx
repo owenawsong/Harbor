@@ -8,6 +8,7 @@ import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
 import ChatInput, { type ChatInputHandle } from './ChatInput'
 import EmptyState from './EmptyState'
+import AddInformationDialog from './AddInformationDialog'
 
 
 interface Props {
@@ -48,6 +49,7 @@ export default function Chat({
 
   const [showNotifications, setShowNotifications] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showAddInfoDialog, setShowAddInfoDialog] = useState(false)
 
   // Only show agent border when there are active tool calls, not just thinking
   const hasActiveToolCalls = messages.some((msg) =>
@@ -96,6 +98,15 @@ export default function Chat({
 
         {/* Actions: New, History, Settings + overflow menu */}
         <div className="flex items-center gap-0.5">
+          {isRunning && (
+            <button
+              onClick={() => setShowAddInfoDialog(true)}
+              className="icon-btn"
+              title="Add information to agent"
+            >
+              <Brain size={14} />
+            </button>
+          )}
           <button onClick={onNewConversation} className="icon-btn" title="New conversation">
             <SquarePen size={14} />
           </button>
@@ -244,6 +255,18 @@ export default function Chat({
         onToggleAgentMode={onToggleAgentMode}
         settings={settings}
       />
+
+      {/* ── Add Information Dialog ──────────────────────────────────────────── */}
+      {showAddInfoDialog && (
+        <AddInformationDialog
+          onSubmit={(info) => {
+            sendMessage(info)
+            setShowAddInfoDialog(false)
+          }}
+          onCancel={() => setShowAddInfoDialog(false)}
+          currentStep={messages[messages.length - 1]?.role === 'assistant' ? 'Agent is thinking' : 'Awaiting agent response'}
+        />
+      )}
     </div>
   )
 }
