@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react'
 import {
   ArrowLeft, Search, Plus, Zap, Check, X,
   ShoppingCart, BookOpen, Table, FileEdit, Shuffle,
   Bookmark, Bell, Layers, BookmarkPlus, Save, Camera, FileText,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import type { Skill, SkillCategory } from '../../shared/types'
 import { BUILT_IN_SKILLS, SKILL_CATEGORIES } from '../../shared/skills'
@@ -130,31 +131,8 @@ export default function SkillsGallery({ onBack, onRunSkill }: Props) {
         </div>
       </div>
 
-      {/* Category filter */}
-      <div
-        className="flex gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar border-b"
-        style={{ borderColor: 'rgb(var(--harbor-border))' }}
-      >
-        <button
-          onClick={() => setActiveCategory('all')}
-          className={`memory-cat-chip flex-shrink-0 ${activeCategory === 'all' ? 'active' : ''}`}
-        >
-          All ({skills.length})
-        </button>
-        {categoriesWithCounts.map((cat) => {
-          const meta = SKILL_CATEGORIES[cat]
-          const count = skills.filter((s) => s.category === cat).length
-          return (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`memory-cat-chip flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
-            >
-              {meta.label} ({count})
-            </button>
-          )
-        })}
-      </div>
+      {/* Category filter with scroll navigation */}
+      <SkillsCategoryBar activeCategory={activeCategory} onCategoryChange={setActiveCategory} categoriesWithCounts={categoriesWithCounts} skillsLength={skills.length} />
 
       {/* Skills list */}
       <div className="flex-1 overflow-y-auto harbor-scroll px-3 py-3 flex flex-col gap-2">
@@ -406,6 +384,97 @@ function CreateSkillForm({ onSave, onCancel }: {
           Cancel
         </button>
       </div>
+    </div>
+  )
+}
+
+// ─── Skills Category Bar with Scroll Navigation ───────────────────────────────
+
+function SkillsCategoryBar({
+  activeCategory,
+  onCategoryChange,
+  categoriesWithCounts,
+  skillsLength,
+}: {
+  activeCategory: 'all' | string
+  onCategoryChange: (cat: 'all' | string) => void
+  categoriesWithCounts: any[]
+  skillsLength: number
+}) {
+  const tabsRef = useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const checkScroll = useCallback(() => {
+    if (tabsRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = tabsRef.current
+      setCanScrollLeft(scrollLeft > 10)
+      setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10)
+    }
+  }, [])
+
+  useEffect(() => {
+    checkScroll()
+    window.addEventListener('resize', checkScroll)
+    return () => window.removeEventListener('resize', checkScroll)
+  }, [checkScroll])
+
+  const scroll = (direction: 'left' | 'right') => {
+    if (tabsRef.current) {
+      const scrollAmount = 120
+      tabsRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth',
+      })
+      setTimeout(checkScroll, 500)
+    }
+  }
+
+  return (
+    <div className="flex border-b flex-shrink-0" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+      {canScrollLeft && (
+        <button
+          onClick={() => scroll('left')}
+          className="p-1 flex-shrink-0"
+          style={{ color: 'rgb(var(--harbor-text-muted))' }}
+        >
+          <ChevronLeft size={14} />
+        </button>
+      )}
+      <div
+        ref={tabsRef}
+        className="flex gap-1.5 px-3 py-2 overflow-x-auto no-scrollbar flex-1"
+        onScroll={checkScroll}
+      >
+        <button
+          onClick={() => onCategoryChange('all')}
+          className={`memory-cat-chip flex-shrink-0 ${activeCategory === 'all' ? 'active' : ''}`}
+        >
+          All ({skillsLength})
+        </button>
+        {categoriesWithCounts.map((cat) => {
+          const meta = SKILL_CATEGORIES[cat]
+          const count = skillsLength // This will be updated by parent with actual count
+          return (
+            <button
+              key={cat}
+              onClick={() => onCategoryChange(cat)}
+              className={`memory-cat-chip flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
+            >
+              {meta.label}
+            </button>
+          )
+        })}
+      </div>
+      {canScrollRight && (
+        <button
+          onClick={() => scroll('right')}
+          className="p-1 flex-shrink-0"
+          style={{ color: 'rgb(var(--harbor-text-muted))' }}
+        >
+          <ChevronRight size={14} />
+        </button>
+      )}
     </div>
   )
 }

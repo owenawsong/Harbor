@@ -56,8 +56,41 @@ function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] 
 export async function runAgent(options: AgentRunOptions): Promise<void> {
   const { sessionId, message, settings, history, onEvent, signal, attachedTabId } = options
   const provider = getProvider(settings.provider.provider)
+
+  // Load memory entries from storage if enabled
+  let memoryData = ''
+  if (settings.enableMemory) {
+    try {
+      const storageData = await new Promise<Record<string, any>>((resolve) => {
+        chrome.storage.local.get('harbor_memory_entries', (data) => {
+          resolve(data)
+        })
+      })
+      const entries = storageData.harbor_memory_entries || []
+      if (entries.length > 0) {
+        const grouped = new Map<string, any[]>()
+        entries.forEach((entry: any) => {
+          if (!grouped.has(entry.category)) grouped.set(entry.category, [])
+          grouped.get(entry.category)!.push(entry)
+        })
+
+        const memoryLines: string[] = []
+        grouped.forEach((entriesInCat, category) => {
+          memoryLines.push(`**${category.charAt(0).toUpperCase() + category.slice(1)}**:`)
+          entriesInCat.forEach((e: any) => {
+            memoryLines.push(`- ${e.content}`)
+          })
+        })
+        memoryData = memoryLines.join('\n')
+      }
+    } catch (err) {
+      console.error('Error loading memory:', err)
+    }
+  }
+
   const systemPrompt = buildSystemPrompt({
-    enableMemory: settings.enableMemory,
+    enableMemory: settings.enableMemory && memoryData.length > 0,
+    memory: memoryData,
   })
   const tools = getToolDefinitions()
 
