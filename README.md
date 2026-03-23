@@ -10,19 +10,8 @@
     Automate tasks, navigate websites, and complete workflows — powered by the AI model you choose.
   </div>
   <br />
-  <div>
-    <a href="https://github.com/owenawsong/Harbor/actions">
-      <img src="https://img.shields.io/badge/BUILD-PASSING-44cc11?style=for-the-badge&logo=github" alt="Build Status" />
-    </a>
-    <a href="https://github.com/owenawsong/Harbor/releases">
-      <img src="https://img.shields.io/badge/RELEASE-LATEST-007ec6?style=for-the-badge" alt="Latest Release" />
-    </a>
-    <a href="https://discord.gg/panb3J2xe2">
-      <img src="https://img.shields.io/badge/DISCORD-JOIN%20US-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" />
-    </a>
-    <a href="LICENSE">
-      <img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" />
-    </a>
+  <div style="font-size: 0;">
+    <a href="https://github.com/owenawsong/Harbor/actions"><img src="https://img.shields.io/badge/BUILD-PASSING-44cc11?style=for-the-badge&logo=github" alt="Build Status" style="margin: 0; font-size: 16px;" /></a><a href="https://github.com/owenawsong/Harbor/releases"><img src="https://img.shields.io/badge/RELEASE-LATEST-007ec6?style=for-the-badge" alt="Latest Release" style="margin: 0; font-size: 16px;" /></a><a href="https://discord.gg/panb3J2xe2"><img src="https://img.shields.io/badge/DISCORD-JOIN%20US-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" style="margin: 0; font-size: 16px;" /></a><a href="LICENSE"><img src="https://img.shields.io/badge/LICENSE-MIT-007ec6?style=for-the-badge" alt="License" style="margin: 0; font-size: 16px;" /></a>
   </div>
   <br />
   <div>
@@ -223,8 +212,7 @@ Harbor works on **Chrome, Brave, Edge, and any Chromium-based browser**.
 
 1. Click the **⛵ Harbor** icon in your toolbar
 2. Click **Settings** ⚙️
-3. Select your provider:
-
+3. Select your provider
 
 **Get API Keys:**
 - **Claude**: [console.anthropic.com](https://console.anthropic.com)

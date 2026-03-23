@@ -391,30 +391,18 @@ function SectionGeneral({
     <div className="px-4 py-4 flex flex-col gap-4 relative">
       <SectionHeader title="General" />
 
-      {/* Provider + Presets button */}
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
-          <FormField label="Provider">
-            <select
-              value={provider}
-              onChange={(e) => onProviderChange(e.target.value as ProviderName)}
-              className="harbor-input text-xs"
-            >
-              {Object.entries(PROVIDER_LABELS).map(([id, label]) => (
-                <option key={id} value={id}>{label}</option>
-              ))}
-            </select>
-          </FormField>
-        </div>
-        <button
-          onClick={() => setShowPresets(!showPresets)}
-          className="px-2.5 py-2 rounded-lg border border-[rgb(var(--harbor-border))] hover:bg-[rgb(var(--harbor-surface-2))] transition relative"
-          title="Load preset"
-          style={{ color: 'rgb(var(--harbor-text-muted))' }}
+      {/* Provider */}
+      <FormField label="Provider">
+        <select
+          value={provider}
+          onChange={(e) => onProviderChange(e.target.value as ProviderName)}
+          className="harbor-input text-xs"
         >
-          <Save size={13} />
-        </button>
-      </div>
+          {Object.entries(PROVIDER_LABELS).map(([id, label]) => (
+            <option key={id} value={id}>{label}</option>
+          ))}
+        </select>
+      </FormField>
 
       {/* Model - hidden in Harbor Free */}
       {provider !== 'harbor-free' && (
@@ -499,6 +487,19 @@ function SectionGeneral({
         value={enableMemory}
         onChange={onEnableMemoryChange}
       />
+
+      {/* Save / Manage Model Presets Button */}
+      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[rgb(var(--harbor-border))]">
+        <button
+          onClick={() => setShowPresets(!showPresets)}
+          className="flex-1 px-4 py-3 rounded-xl border border-[rgb(var(--harbor-border))] hover:bg-[rgb(var(--harbor-surface-2))] transition font-medium text-sm flex items-center justify-center gap-2"
+          style={{ color: 'rgb(var(--harbor-text))' }}
+          title="Save current model configuration as a preset for quick access"
+        >
+          <Save size={14} />
+          Save Model Preset
+        </button>
+      </div>
 
       {/* Model Presets Dropdown */}
       {showPresets && currentSettings && (
@@ -623,13 +624,6 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
             </button>
           ))}
         </div>
-      </FormField>
-
-      <FormField label="Command Palette Shortcut">
-        <ShortcutRecorder value={shortcut} onChange={handleShortcutChange} />
-        <p className="text-[10px] mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-          Opens the command palette from anywhere in the panel.
-        </p>
       </FormField>
     </div>
   )
@@ -984,11 +978,11 @@ function SectionAbout() {
           <img src="/icons/logo.png" alt="Harbor" className="w-10 h-10 rounded-xl" />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>Harbor</p>
-            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.22.0 — AI Browser Agent</p>
+            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.23.0 — AI Browser Agent</p>
           </div>
         </div>
         <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-          An open-source AI browser agent. Licensed under AGPL-3.0.
+          An open-source AI browser agent. Licensed under MIT.
         </p>
         <a
           href="https://github.com/owenawsong/Harbor-Extension"

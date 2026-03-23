@@ -1,6 +1,6 @@
 {
   "name": "harbor-extension",
-  "version": "1.22.0",
+  "version": "1.23.0",
   "description": "AI-powered browser agent extension",
   "license": "MIT",
   "author": "Owen Song & Harbor Contributors",
