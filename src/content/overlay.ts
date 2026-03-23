@@ -406,8 +406,6 @@ export function initializeOverlay(): void {
     const needsShift = parts.includes('Shift')
     const needsAlt = parts.includes('Alt')
 
-    console.log('🎯 Overlay: Keyboard listener initialized for:', shortcutStr, { expectedKey, needsCtrl, needsMeta, needsShift, needsAlt })
-
     window.addEventListener('keydown', (e: KeyboardEvent) => {
       const ctrlOrMeta = needsCtrl || needsMeta
       const matches =
@@ -417,7 +415,6 @@ export function initializeOverlay(): void {
         e.altKey === needsAlt
 
       if (matches) {
-        console.log('🎯 Overlay: Command palette hotkey matched!')
         e.preventDefault()
         toggleOverlay()
       }
