@@ -178,7 +178,14 @@ function toolGuidanceSection(): string {
 ## Research
 - Use \`search_history\` to find recently visited pages.
 - Use \`get_bookmarks\` to find saved URLs.
-- Use \`evaluate_script\` for complex data extraction (returns the expression result as JSON).`
+- Use \`evaluate_script\` for complex data extraction (returns the expression result as JSON).
+
+## Parallel Processing
+- Use \`create_parallel_sub_agents\` to split complex tasks into independent subtasks and process them in parallel.
+- Provide a briefing (shared context) and a list of tasks with taskId and description.
+- Maximum 10 sub-agents per call.
+- Best for research, comparison, data gathering, and multi-step processes that don't depend on each other.
+- Results are returned with success/error status for each task.`
 }
 
 function memorySection(memory: string): string {
