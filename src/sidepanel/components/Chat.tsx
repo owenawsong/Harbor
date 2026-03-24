@@ -9,7 +9,7 @@ import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
 import ChatInput, { type ChatInputHandle } from './ChatInput'
 import EmptyState from './EmptyState'
-import AddInformationDialog from './AddInformationDialog'
+import ExecutionCorrectionDialog from './ExecutionCorrectionDialog'
 
 
 interface Props {
@@ -100,7 +100,7 @@ export default function Chat({
 
         {/* Actions: New, History, Settings + overflow menu */}
         <div className="flex items-center gap-0.5">
-          {isRunning && (
+          {isRunning && agentMode && (
             <button
               onClick={() => setShowAddInfoDialog(true)}
               className="icon-btn"
@@ -252,17 +252,15 @@ export default function Chat({
         settings={settings}
       />
 
-      {/* ── Add Information Dialog ──────────────────────────────────────────── */}
-      {showAddInfoDialog && (
-        <AddInformationDialog
-          onSubmit={(info) => {
-            sendMessage(info)
-            setShowAddInfoDialog(false)
-          }}
-          onCancel={() => setShowAddInfoDialog(false)}
-          currentStep={messages[messages.length - 1]?.role === 'assistant' ? t('chat.agent_thinking') : t('chat.awaiting_response')}
-        />
-      )}
+      {/* ── Execution Correction Dialog ────────────────────────────────────── */}
+      <ExecutionCorrectionDialog
+        isOpen={showAddInfoDialog}
+        onClose={() => setShowAddInfoDialog(false)}
+        onSubmit={(correction) => {
+          sendMessage(correction)
+          setShowAddInfoDialog(false)
+        }}
+      />
     </div>
   )
 }
