@@ -30,6 +30,7 @@ interface ChatInputHandle {
 const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode, onCorrect, settings }, ref) => {
   const { t } = useTranslation()
   const [value, setValue] = useState('')
+  const [normalInputValue, setNormalInputValue] = useState('') // Store normal input when in correction mode
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [enablePlanning, setEnablePlanning] = useState(false)
   const [showPresets, setShowPresets] = useState(false)
@@ -83,6 +84,22 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
 
   const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && !isRunning
 
+  // Handle correction mode toggle
+  const handleCorrectionToggle = useCallback(() => {
+    if (isCorrectionMode) {
+      // Switching back to normal mode
+      setNormalInputValue(value)
+      setValue('')
+      setIsCorrectionMode(false)
+    } else {
+      // Switching to correction mode
+      setNormalInputValue(value)
+      setValue('')
+      setIsCorrectionMode(true)
+    }
+    setTimeout(() => textareaRef.current?.focus(), 0)
+  }, [isCorrectionMode, value])
+
   const send = useCallback(() => {
     const text = value.trim()
     if ((!text && attachments.length === 0) || !canSend) return
@@ -91,6 +108,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
     const messageText = isCorrectionMode ? `[CORRECTION] ${text}` : text
 
     setValue('')
+    setNormalInputValue('')
     setAttachments([])
     setIsCorrectionMode(false) // Exit correction mode after sending
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
@@ -276,19 +294,26 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           </button>
         )}
 
-        {/* Correction Button */}
-        <button
-          onClick={() => setIsCorrectionMode(!isCorrectionMode)}
-          disabled={disabled || isRunning}
-          title="Switch to correction mode"
-          className={`flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 disabled:opacity-40 ${
-            isCorrectionMode
-              ? 'text-[rgb(var(--harbor-accent))] bg-[rgb(var(--harbor-accent-light))]'
-              : 'text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-accent))] hover:bg-[rgb(var(--harbor-surface-2))]'
-          }`}
-        >
-          <RefreshCw size={16} style={{ transform: isCorrectionMode ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 300ms' }} />
-        </button>
+        {/* Correction Button - Agent Mode Only */}
+        {agentMode && (
+          <button
+            onClick={handleCorrectionToggle}
+            disabled={!isRunning || disabled}
+            title={isRunning ? 'Provide correction or additional info' : 'Only available while agent is running'}
+            className={`flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 ${
+              !isRunning || disabled
+                ? 'opacity-40 cursor-not-allowed text-[rgb(var(--harbor-text-faint))]'
+                : isCorrectionMode
+                  ? 'text-[rgb(var(--harbor-accent))] bg-[rgb(var(--harbor-accent-light))]'
+                  : 'text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-accent))] hover:bg-[rgb(var(--harbor-surface-2))]'
+            }`}
+          >
+            <RefreshCw size={16} style={{
+              transform: isCorrectionMode ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 300ms'
+            }} />
+          </button>
+        )}
 
         <div className="flex-1" />
 

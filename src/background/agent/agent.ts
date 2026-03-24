@@ -27,10 +27,22 @@ async function executeSubAgents(
   if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
     // Provide detailed error message for debugging
     const inputKeys = Object.keys(input).join(', ')
-    const debugInfo = `Received: { ${inputKeys} }. Expected: { tasks: [...], briefing?: string }`
+    const taskInfo = tasks ? `tasks is ${Array.isArray(tasks) ? 'array with ' + tasks.length + ' items' : 'not an array'}` : 'tasks is undefined'
+    const debugInfo = `Received: { ${inputKeys} }. ${taskInfo}. Expected: { tasks: [{taskId: "...", description: "..."}, ...], briefing?: "..." }`
     return {
       success: false,
-      error: `Invalid input: tasks must be a non-empty array. ${debugInfo}`,
+      error: `Invalid input: tasks must be a non-empty array. ${debugInfo}. IMPORTANT: Each task MUST have taskId and description fields!`,
+    }
+  }
+
+  // Validate each task has required fields
+  for (let i = 0; i < tasks.length; i++) {
+    const task = tasks[i]
+    if (!task.taskId || !task.description) {
+      return {
+        success: false,
+        error: `Task ${i + 1} is invalid: missing taskId or description. Each task must have { taskId: string, description: string }`,
+      }
     }
   }
 

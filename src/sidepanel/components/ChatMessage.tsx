@@ -70,6 +70,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(message.text || '')
+  const [isCopyAnimating, setIsCopyAnimating] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Auto-resize textarea on edit
@@ -109,7 +110,13 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
   const handleCopyMessage = () => {
     const text = message.text || ''
     navigator.clipboard.writeText(text).then(() => {
+      // Trigger animation
+      setIsCopyAnimating(true)
       success('Copied to clipboard')
+      // Reset animation after 1.5 seconds
+      setTimeout(() => {
+        setIsCopyAnimating(false)
+      }, 1500)
     }).catch(() => {
       // Fallback if clipboard API fails
     })
@@ -149,11 +156,18 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
             <div className="flex items-center gap-0.5 flex-shrink-0 opacity-0 transition-opacity" style={{ opacity: isHovered ? 1 : 0 }}>
               <button
                 onClick={handleCopyMessage}
-                className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
-                style={{ color: 'rgb(var(--harbor-text-faint))' }}
+                className="p-1 rounded-lg transition-all duration-300"
+                style={{
+                  color: isCopyAnimating ? '#22c55e' : 'rgb(var(--harbor-text-faint))',
+                  backgroundColor: isCopyAnimating ? 'rgb(34, 197, 94 / 0.15)' : '',
+                }}
                 title="Copy message"
               >
-                <Copy size={11} />
+                {isCopyAnimating ? (
+                  <Check size={11} style={{ animation: 'pulse 0.6s ease-out' }} />
+                ) : (
+                  <Copy size={11} className="hover:opacity-70" />
+                )}
               </button>
               {onEditMessage && (
                 <button
@@ -308,11 +322,18 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" style={{ opacity: isHovered ? 1 : 0 }}>
           <button
             onClick={handleCopyMessage}
-            className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
-            style={{ color: 'rgb(var(--harbor-text-faint))' }}
+            className="p-1 rounded-lg transition-all duration-300"
+            style={{
+              color: isCopyAnimating ? '#22c55e' : 'rgb(var(--harbor-text-faint))',
+              backgroundColor: isCopyAnimating ? 'rgb(34, 197, 94 / 0.15)' : '',
+            }}
             title="Copy message"
           >
-            <Copy size={13} />
+            {isCopyAnimating ? (
+              <Check size={13} style={{ animation: 'pulse 0.6s ease-out' }} />
+            ) : (
+              <Copy size={13} className="hover:opacity-70" />
+            )}
           </button>
         </div>
       )}
