@@ -262,55 +262,111 @@ function getNamedGreetings(t: any, timeOfDay: TimeOfDay): string[] {
   return greetingMap[timeOfDay]
 }
 
-export function getGreeting(t: any, userName?: string): string {
+export function getGreeting(t: any, userName?: string, previousGreeting?: string): string {
   const timeOfDay = getTimeOfDay()
   const dayContext = getDayContext()
+  const lastGreeting = previousGreeting || getLastGreeting()
 
-  // 25% chance of timeless/atmosphere/momentum greeting regardless of time
-  const rng = Math.random()
-  if (rng < 0.15) {
-    const greetings = getTimelessGreetings(t)
-    return greetings[Math.floor(Math.random() * greetings.length)]
-  }
-  if (rng < 0.25) {
-    const greetings = getAtmosphereGreetings(t)
-    return greetings[Math.floor(Math.random() * greetings.length)]
-  }
-  if (rng < 0.32) {
-    const greetings = getMomentumGreetings(t)
-    return greetings[Math.floor(Math.random() * greetings.length)]
-  }
+  // Pool of all possible greeting sources
+  const greetingSources = [
+    { pool: () => getTimelessGreetings(t), weight: 0.12 },
+    { pool: () => getAtmosphereGreetings(t), weight: 0.10 },
+    { pool: () => getMomentumGreetings(t), weight: 0.10 },
+    { pool: () => getMotivationGreetings(t), weight: 0.12 },
+    { pool: () => getCreativeGreetings(t), weight: 0.10 },
+    { pool: () => getProductiveGreetings(t), weight: 0.10 },
+    { pool: () => getCollaborativeGreetings(t), weight: 0.08 },
+    { pool: () => getEncouragingGreetings(t), weight: 0.08 },
+    { pool: () => getFocusedGreetings(t), weight: 0.10 },
+    { pool: () => getWeatherGreetings(t), weight: 0.05 },
+    { pool: () => getStatsGreetings(t), weight: 0.03 },
+    { pool: () => getTimeSensitiveGreetings(t), weight: 0.02 },
+  ]
 
   // Day-specific overrides (morning only for Monday/Friday)
   if (timeOfDay === 'morning') {
-    if (dayContext === 'monday' && Math.random() > 0.5) {
+    if (dayContext === 'monday' && Math.random() > 0.4) {
       const greetings = getMondayGreetings(t)
       const greeting = greetings[Math.floor(Math.random() * greetings.length)]
-      return userName ? greeting.replace('{name}', userName) : greeting
+      const result = userName ? greeting.replace('{name}', userName) : greeting
+      if (result !== lastGreeting) {
+        setLastGreeting(result)
+        return result
+      }
     }
-    if (dayContext === 'friday' && Math.random() > 0.5) {
+    if (dayContext === 'friday' && Math.random() > 0.4) {
       const greetings = getFridayGreetings(t)
       const greeting = greetings[Math.floor(Math.random() * greetings.length)]
-      return userName ? greeting.replace('{name}', userName) : greeting
+      const result = userName ? greeting.replace('{name}', userName) : greeting
+      if (result !== lastGreeting) {
+        setLastGreeting(result)
+        return result
+      }
     }
   }
 
-  if ((dayContext === 'saturday' || dayContext === 'sunday') && Math.random() > 0.6) {
+  if ((dayContext === 'saturday' || dayContext === 'sunday') && Math.random() > 0.5) {
     const greetings = getWeekendGreetings(t)
     const greeting = greetings[Math.floor(Math.random() * greetings.length)]
-    return userName ? greeting.replace('{name}', userName) : greeting
+    const result = userName ? greeting.replace('{name}', userName) : greeting
+    if (result !== lastGreeting) {
+      setLastGreeting(result)
+      return result
+    }
   }
 
-  // Use named greetings if user name available (50% chance for variety)
-  if (userName && Math.random() > 0.5) {
+  // Use named greetings if user name available (40% chance for variety)
+  if (userName && Math.random() > 0.6) {
     const pool = getNamedGreetings(t, timeOfDay)
-    const template = pool[Math.floor(Math.random() * pool.length)]
-    return template.replace('{name}', userName)
+    if (pool.length > 0) {
+      const template = pool[Math.floor(Math.random() * pool.length)]
+      const result = template.replace('{name}', userName)
+      if (result !== lastGreeting) {
+        setLastGreeting(result)
+        return result
+      }
+    }
   }
 
-  // Default time-of-day greetings
+  // Select from weighted pool, ensuring no repeat
+  let attempts = 0
+  let selectedGreeting = ''
+
+  while (attempts < 10) {
+    const rng = Math.random()
+    let cumulative = 0
+
+    for (const source of greetingSources) {
+      cumulative += source.weight
+      if (rng < cumulative) {
+        const pool = source.pool()
+        if (pool.length > 0) {
+          selectedGreeting = pool[Math.floor(Math.random() * pool.length)]
+          break
+        }
+      }
+    }
+
+    if (selectedGreeting && selectedGreeting !== lastGreeting) {
+      setLastGreeting(selectedGreeting)
+      return selectedGreeting
+    }
+
+    attempts++
+  }
+
+  // Fallback to time-of-day greetings if all else fails
   const pool = getTimeOfDayGreetings(t, timeOfDay)
-  return pool[Math.floor(Math.random() * pool.length)]
+  if (pool.length > 0) {
+    const greeting = pool[Math.floor(Math.random() * pool.length)]
+    setLastGreeting(greeting)
+    return greeting
+  }
+
+  // Final fallback
+  const fallback = t('greetings.timeless_1')
+  setLastGreeting(fallback)
+  return fallback
 }
 
 export const SUGGESTION_PROMPTS = [

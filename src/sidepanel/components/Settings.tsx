@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Eye, EyeOff, ExternalLink, Info, Check,
-  Palette, User, Brain, Cpu,
+  Palette, User, Cpu,
   Shield, HelpCircle, Keyboard, ChevronLeft, ChevronRight, Save, Command, Plus,
 } from 'lucide-react'
 import type {
