@@ -221,7 +221,7 @@ export interface IdentitySettings {
 export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 
 export interface AppearanceSettings {
-  theme: 'light' | 'dark' | 'system'
+  theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
   fontSize: FontSize
   compactMode: boolean
   accentColor?: string
@@ -264,7 +264,7 @@ export interface UserProfile {
   preferredLanguage?: string
   communicationStyle?: 'concise' | 'detailed' | 'technical' | 'casual'
   // Preferences
-  themePreference?: 'light' | 'dark'
+  themePreference?: 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
   responseDetailLevel?: 'brief' | 'moderate' | 'detailed'
   // Skills and expertise
   expertise?: string[] // e.g., ["Python", "React", "DevOps"]
@@ -355,7 +355,7 @@ export interface OnboardingData {
   userName?: string
   useCases: string[]
   tone: ToneStyle
-  theme: 'light' | 'dark' | 'system'
+  theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
   language: string
   completedAt?: number
 }
@@ -364,7 +364,7 @@ export interface OnboardingData {
 
 export interface StoredSettings {
   agentSettings: AgentSettings
-  theme: 'light' | 'dark' | 'system'
+  theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
   identity?: IdentitySettings
   modelBlend?: ModelBlendConfig
   notifications?: {

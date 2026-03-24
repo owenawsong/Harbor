@@ -62,33 +62,42 @@ export default function EmptyState({ onSuggestionClick, userName, agentMode = tr
           </p>
         </div>
 
-        {/* Suggestion chips — 2 column grid */}
+        {/* Suggestion chips — visually distinct by mode */}
         <div>
-          <p className="harbor-section-label mb-2 text-xs text-center">{t('suggestions.try_asking')}</p>
-          <div className="grid grid-cols-2 gap-1.5 suggestions-grid">
+          <p className="harbor-section-label mb-3 text-xs text-center font-medium" style={{
+            color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))'
+          }}>
+            {t('suggestions.try_asking')}
+          </p>
+          <div className={`grid gap-2 suggestions-grid ${agentMode ? 'grid-cols-2' : 'grid-cols-2'}`}>
             {suggestions.map(({ icon, text }, i) => {
               const Icon = ICON_MAP[icon]
               return (
                 <button
                   key={text}
                   onClick={() => onSuggestionClick(text)}
-                  className="suggestion-chip flex items-center gap-2 px-2.5 py-2 rounded-lg border text-left animate-fade-up"
+                  className={`suggestion-chip flex items-center gap-2 px-2.5 py-2.5 rounded-lg border text-left animate-fade-up transition-all hover:scale-105 ${
+                    agentMode
+                      ? 'border-[rgb(var(--harbor-accent))] bg-[rgb(var(--harbor-accent-light))] hover:shadow-md hover:shadow-harbor-500/20'
+                      : 'border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] hover:border-[rgb(var(--harbor-accent))]'
+                  }`}
                   style={{
-                    background: 'rgb(var(--harbor-surface))',
-                    borderColor: 'rgb(var(--harbor-border))',
                     animationDelay: `${i * 50}ms`,
                   }}
                 >
                   {Icon && (
                     <Icon
-                      size={13}
+                      size={agentMode ? 14 : 13}
                       className="flex-shrink-0"
-                      style={{ color: 'rgb(var(--harbor-accent))' }}
+                      style={{
+                        color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-accent))',
+                        opacity: agentMode ? 1 : 0.8,
+                      }}
                     />
                   )}
                   <span
-                    className="text-[11px] leading-tight"
-                    style={{ color: 'rgb(var(--harbor-text))' }}
+                    className={`text-[11px] leading-tight font-medium`}
+                    style={{ color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text))' }}
                   >
                     {text}
                   </span>

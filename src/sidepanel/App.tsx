@@ -28,7 +28,7 @@ function AppContent() {
 
   const [view, setView]                         = useState<View>('loading')
   const [settings, setSettings]                 = useState<AgentSettings | null>(null)
-  const [theme, setTheme]                       = useState<'light' | 'dark' | 'system'>('system')
+  const [theme, setTheme]                       = useState<'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'>('system')
   const [identity, setIdentity]                 = useState<IdentitySettings | undefined>(undefined)
   const [sessions, setSessions]                 = useState<StoredSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
@@ -58,7 +58,7 @@ function AppContent() {
         setSettings(settingsToUse)
 
         if (stored.theme) {
-          setTheme(stored.theme as 'light' | 'dark' | 'system')
+          setTheme(stored.theme as 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean')
         }
         if (stored.identity) {
           setIdentity(stored.identity as IdentitySettings)
@@ -103,15 +103,28 @@ function AppContent() {
 
   useEffect(() => {
     const root = document.documentElement
-    const apply = (t: 'light' | 'dark' | 'system') => {
-      if (t === 'dark') {
-        root.classList.add('dark')
-      } else if (t === 'light') {
-        root.classList.remove('dark')
-      } else {
-        window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? root.classList.add('dark')
-          : root.classList.remove('dark')
+    const apply = (t: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean') => {
+      // Remove all theme classes first
+      root.classList.remove('dark', 'moonlight', 'forest', 'nebula', 'sunset', 'ocean')
+
+      if (t === 'system') {
+        // Apply system preference
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          root.classList.add('moonlight')
+        }
+        // else keep default sunlight (no class needed for :root)
+      } else if (t === 'sunlight') {
+        // Keep default sunlight theme (no class needed)
+      } else if (t === 'moonlight') {
+        root.classList.add('moonlight')
+      } else if (t === 'forest') {
+        root.classList.add('forest')
+      } else if (t === 'nebula') {
+        root.classList.add('nebula')
+      } else if (t === 'sunset') {
+        root.classList.add('sunset')
+      } else if (t === 'ocean') {
+        root.classList.add('ocean')
       }
     }
     apply(theme)
@@ -260,7 +273,7 @@ function AppContent() {
   const handleSaveSettings = useCallback(
     (
       newSettings: AgentSettings,
-      newTheme: 'light' | 'dark' | 'system',
+      newTheme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean',
       newIdentity?: IdentitySettings,
     ) => {
       setSettings(newSettings)
