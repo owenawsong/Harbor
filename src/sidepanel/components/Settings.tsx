@@ -426,7 +426,7 @@ function SectionGeneral({
             type="text"
             value={model}
             onChange={(e) => onModelChange(e.target.value)}
-            placeholder="Enter model ID (e.g., gpt-4o, claude-opus-4-5)"
+            placeholder={t('settings_labels.model_placeholder')}
             className="harbor-input text-xs font-mono"
           />
         </FormField>
