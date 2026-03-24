@@ -23,6 +23,7 @@ const KEY_LINKS: Partial<Record<ProviderName, string>> = {
 }
 
 export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
+  const { t } = useTranslation()
   const [selectedProvider, setSelectedProvider] = useState<ProviderName | null>(null)
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
