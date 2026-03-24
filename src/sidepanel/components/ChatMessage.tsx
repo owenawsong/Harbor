@@ -219,8 +219,6 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
               >
                 {message.text}
               </div>
-              {/* Status indicator */}
-              <div className="text-[10px] mb-0.5 opacity-60 flex-shrink-0">✓</div>
             </div>
           )}
         </div>

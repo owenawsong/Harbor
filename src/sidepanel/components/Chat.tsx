@@ -262,6 +262,7 @@ export default function Chat({
         placeholder={hasApiKey ? (agentMode ? t('chat.placeholder') : t('chat.placeholder_alt')) : t('chat.configure_api')}
         agentMode={agentMode}
         onToggleAgentMode={onToggleAgentMode}
+        onCorrect={() => setShowAddInfoDialog(true)}
         settings={settings}
       />
 
