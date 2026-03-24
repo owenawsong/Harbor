@@ -92,6 +92,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     enableMemory: settings.enableMemory && memoryData.length > 0,
     memory: memoryData,
     enablePlanning,
+    chatMode: options.chatModeOnly,
   })
   const tools = getToolDefinitions()
 
