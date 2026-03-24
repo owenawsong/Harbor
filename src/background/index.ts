@@ -147,7 +147,7 @@ chrome.runtime.onConnect.addListener((port) => {
     try {
       switch (message.type) {
         case 'chat': {
-          const { sessionId, message: userMessage, attachedTabId, enablePlanning } = message
+          const { sessionId, message: userMessage, attachedTabId, enablePlanning, chatModeOnly } = message
 
           activeControllers.get(sessionId)?.abort()
           const controller = new AbortController()
@@ -192,6 +192,7 @@ chrome.runtime.onConnect.addListener((port) => {
               history: session?.messages ?? [],
               attachedTabId,
               enablePlanning,
+              chatModeOnly,
               onEvent: (event) => {
                 // Show indicator only on first tool call, not at start
                 if ((event.type === 'tool_call_started' || event.type === 'tool_call') && !indicatorShown && indicatorTabId !== undefined) {

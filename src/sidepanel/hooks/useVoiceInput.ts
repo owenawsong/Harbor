@@ -19,20 +19,30 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
   }, [onTranscribed])
 
   useEffect(() => {
+    // Check for SpeechRecognition API availability
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
 
     if (!SpeechRecognition) {
       console.warn('[Voice Input] SpeechRecognition API not available in this browser/context')
-      // Try to enable it if available through different means
-      console.log('[Voice Input] Available window properties:', Object.keys(window).filter(k => k.includes('Speech') || k.includes('speech')))
+      setIsSupported(false)
       return
     }
 
     console.log('[Voice Input] SpeechRecognition API detected, initializing...')
 
+    // Test if we can actually create an instance
+    let recognition: any
+    try {
+      recognition = new SpeechRecognition()
+    } catch (err) {
+      console.error('[Voice Input] Failed to create SpeechRecognition instance:', err)
+      setIsSupported(false)
+      setPermissionError('Voice input requires microphone permission. Please enable it in your browser settings.')
+      return
+    }
+
     try {
       setIsSupported(true)
-      const recognition = new SpeechRecognition()
       recognition.continuous = true
       recognition.interimResults = true
       recognition.language = language

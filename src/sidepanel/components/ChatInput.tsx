@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown, Mic, MicOff } from 'lucide-react'
+import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown, Mic, MicOff, RefreshCw } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
 import { useVoiceInput } from '../hooks/useVoiceInput'
 import ModelPresets from './ModelPresets'
@@ -19,6 +19,7 @@ interface Props {
   placeholder?: string
   agentMode?: boolean
   onToggleAgentMode?: () => void
+  onCorrect?: () => void
   settings?: AgentSettings
 }
 
@@ -26,7 +27,7 @@ interface ChatInputHandle {
   focus: () => void
 }
 
-const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode, settings }, ref) => {
+const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode, onCorrect, settings }, ref) => {
   const { t } = useTranslation()
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
@@ -187,8 +188,10 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         />
       </div>
 
-      {/* Bottom line: Controls */}
-      <div className="flex items-center gap-2 relative">
+      {/* Bottom line: Controls - Tighter spacing for small screens */}
+      <div className="flex items-center gap-1 relative">
+        {/* LEFT SIDE: File upload, Agent/Chat, Plan, Correct buttons */}
+
         {/* File upload button */}
         <button
           onClick={() => fileInputRef.current?.click()}
@@ -207,76 +210,79 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm,text/*,.pdf,.csv,.json,.md"
         />
 
-        {/* Plan Toggle (Agent Mode only) - MOVED LEFT */}
+        {/* Agent/Chat Mode Toggle Button */}
+        <button
+          onClick={onToggleAgentMode}
+          disabled={disabled || isRunning}
+          title={agentMode ? t('chat.switch_chat_mode') : t('chat.switch_agent_mode')}
+          className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 disabled:opacity-40"
+          style={{
+            color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-faint))',
+            backgroundColor: agentMode ? 'rgb(var(--harbor-accent-light))' : 'transparent',
+            boxShadow: agentMode ? '0 0 8px rgb(var(--harbor-accent) / 0.3)' : 'none',
+            transitionProperty: 'all',
+            transitionDuration: '300ms',
+          }}
+          title={`${agentMode ? 'Agent' : 'Chat'} Mode`}
+        >
+          <Zap
+            size={16}
+            style={{
+              transform: agentMode ? 'rotate(0deg)' : 'rotate(-20deg)',
+              transitionProperty: 'transform',
+              transitionDuration: '300ms',
+            }}
+          />
+        </button>
+
+        {/* Plan Toggle (Agent Mode only) */}
         {agentMode && (
           <button
             onClick={() => setEnablePlanning(!enablePlanning)}
             disabled={disabled || isRunning}
             title={enablePlanning ? t('chat.planning_enabled') : t('chat.enable_planning')}
-            className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-all duration-300 hover:scale-110 active:scale-95"
+            className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 disabled:opacity-40"
             style={{
               color: enablePlanning ? 'rgb(34, 197, 94)' : 'rgb(var(--harbor-text-faint))',
+              backgroundColor: enablePlanning ? 'rgb(34, 197, 94 / 0.1)' : 'transparent',
               boxShadow: enablePlanning ? '0 0 8px rgb(34, 197, 94 / 0.3)' : 'none',
               transitionProperty: 'all',
               transitionDuration: '300ms',
-              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
             }}
           >
             <CheckCircle2 size={16} style={{
-              transform: enablePlanning ? 'scale(1.2) rotate(0deg)' : 'scale(1) rotate(0deg)',
+              transform: enablePlanning ? 'scale(1.2)' : 'scale(1)',
               transitionProperty: 'transform',
               transitionDuration: '300ms',
-              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
             }} />
           </button>
         )}
 
-        {/* Mode Pill Button */}
+        {/* Correction Button */}
         <button
-          onClick={onToggleAgentMode}
+          onClick={onCorrect}
           disabled={disabled || isRunning}
-          title={agentMode ? t('chat.switch_chat_mode') : t('chat.switch_agent_mode')}
-          className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-[rgb(var(--harbor-text))] hover:bg-[rgb(var(--harbor-surface))] disabled:opacity-40 transition-all duration-300 hover:scale-105 active:scale-95"
-          style={{
-            borderColor: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
-            boxShadow: agentMode ? '0 0 0 2px rgb(var(--harbor-accent) / 0.1)' : 'none',
-            transitionProperty: 'all',
-            transitionDuration: '300ms',
-            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-          }}
+          title="Send correction"
+          className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-accent))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-colors"
         >
-          <Zap
-            size={14}
-            style={{
-              color: agentMode ? 'rgb(var(--harbor-accent))' : 'currentColor',
-              transform: agentMode ? 'rotate(0deg)' : 'rotate(-20deg)',
-              transitionProperty: 'transform, color',
-              transitionDuration: '300ms',
-              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-            }}
-          />
-          <span style={{
-            opacity: 1,
-            transitionProperty: 'opacity',
-            transitionDuration: '300ms',
-          }}>
-            {agentMode ? t('chat.agent_mode') : t('chat.chat_mode')}
-          </span>
+          <RefreshCw size={16} />
         </button>
 
         <div className="flex-1" />
 
-        {/* Model Selector Button - NOW CLICKABLE & RIGHT ALIGNED */}
+        {/* RIGHT SIDE: Model Selector & Send/Voice Button */}
+
+        {/* Model Selector Button - Shorter for small screens */}
         {settings?.provider && (
           <div ref={modelButtonRef} className="relative">
             <button
               onClick={() => setShowPresets(!showPresets)}
               disabled={disabled || isRunning}
-              className="flex-shrink-0 px-2.5 py-1.5 rounded-lg bg-[rgb(var(--harbor-surface-2))] hover:bg-[rgb(var(--harbor-surface))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[140px] truncate flex items-center gap-1.5 disabled:opacity-40 transition-colors"
+              className="flex-shrink-0 px-2 py-1.5 rounded-lg bg-[rgb(var(--harbor-surface-2))] hover:bg-[rgb(var(--harbor-surface))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[100px] truncate flex items-center gap-1 disabled:opacity-40 transition-colors"
               title={t('settings.save_preset_tooltip')}
             >
-              <span className="truncate">{settings.provider.model}</span>
-              <ChevronDown size={12} className={`flex-shrink-0 transition-transform ${showPresets ? 'rotate-180' : ''}`} />
+              <span className="truncate text-[11px]">{settings.provider.model}</span>
+              <ChevronDown size={10} className={`flex-shrink-0 transition-transform ${showPresets ? 'rotate-180' : ''}`} />
             </button>
             {showPresets && (
               <ModelPresets
