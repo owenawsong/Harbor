@@ -780,6 +780,7 @@ function SectionIdentity({ userName, tone, verbosity, language, useEmoji, custom
         <select
           value={language}
           onChange={(e) => {
+            alert('DROPDOWN CHANGED: ' + e.target.value)
             console.log('[SectionIdentity] Dropdown changed to:', e.target.value)
             onLanguageChange(e.target.value)
           }}
@@ -1056,7 +1057,7 @@ function SectionAbout() {
           <img src="/icons/logo.png" alt="Harbor" className="w-10 h-10 rounded-xl" />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>Harbor</p>
-            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.23.0 — AI Browser Agent</p>
+            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.24.0 — AI Browser Agent</p>
           </div>
         </div>
         <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
