@@ -13,6 +13,7 @@ import DataManager from './components/DataManager'
 import QuickSetup from './components/QuickSetup'
 import ToastContainer from './components/Toast'
 import { useToast } from './hooks/useToast'
+import { ToastProvider, useGlobalToast } from './contexts/ToastContext'
 import type {
   AgentSettings, StoredSession, OnboardingData, IdentitySettings, ProviderName,
 } from '../shared/types'
@@ -22,7 +23,7 @@ type View = 'loading' | 'onboarding' | 'chat' | 'settings' | 'history' | 'dashbo
 const ONBOARDING_KEY  = 'harbor_onboarding'
 const IDENTITY_KEY    = 'harbor_identity'
 
-export default function App() {
+function AppContent() {
   const { messages: toastMessages, success, error, info, dismiss } = useToast()
 
   const [view, setView]                         = useState<View>('loading')
@@ -497,5 +498,13 @@ export default function App() {
 
       </div>
     </ErrorBoundary>
+  )
+}
+
+export default function App() {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   )
 }
