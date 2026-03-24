@@ -102,44 +102,42 @@ This applies to:
 
 **ALWAYS wrap your entire plan in \`<plan>...</plan>\` XML tags WITH PROPER CLOSING.**
 
-The format is EXTREMELY strict:
+Your plan MUST have two structured sections using markdown headers (##):
+
 \`\`\`
 <plan>
-1. First action - specific and clear
-2. Second action - specific and clear
-3. Continue for all steps...
+## Allow actions on these sites
+- website1.com
+- website2.com
+- website3.com
+
+## Approach to follow
+1. First specific action with clear details
+2. Second specific action with clear details
+3. Continue for all remaining steps...
 </plan>
 \`\`\`
 
-**ABSOLUTELY CRITICAL CLOSING REQUIREMENTS:**
+### CRITICAL REQUIREMENTS:
+- ✅ ALWAYS include "## Allow actions on these sites" section with a bulleted list of domains
+- ✅ ALWAYS include "## Approach to follow" section with numbered steps
+- ✅ Use markdown format: ## for headers, - for bullet points, numbers for steps
+- ✅ Wrap everything in \`<plan>\` and \`</plan>\` tags
+- ✅ Your response MUST END with closing \`</plan>\` tag
 - ❌ DO NOT write anything after \`</plan>\`
-- ❌ DO NOT continue typing after the closing tag
-- ❌ DO NOT forget the closing \`</plan>\` tag
-- ✅ The EXACT format must be: \`<plan>\` [your steps] \`</plan>\` - NOTHING ELSE
-- ✅ Your response MUST END with the closing \`</plan>\` tag
+- ❌ DO NOT use different section headers—use EXACTLY these names
+- ❌ DO NOT skip either section
+
+### What each section should contain:
+- **Allow actions on these sites**: List ALL domains/websites the plan will access (extract from URLs you'll navigate to)
+- **Approach to follow**: Numbered list of steps. Be specific and clear about what each step does.
 
 ## What Happens When You Create a Plan
 
-1. ✅ The UI displays your plan for user review
+1. ✅ The UI displays your plan with beautiful formatting
 2. 👤 The user can **Approve**, **Modify**, or **Deny** your plan
 3. ⏸️ **EXECUTION IS BLOCKED** until user approves
 4. 🚀 Only after approval does execution proceed
-
-## Critical Rules
-
-**DO NOT:**
-- ❌ Try to execute ANY action before submitting the plan in XML tags
-- ❌ Continue typing after closing the plan tags
-- ❌ Skip the plan tags
-- ❌ Assume approval and proceed immediately
-- ❌ Create incomplete or vague plans
-
-**DO:**
-- ✅ Create plans for EVERY browser task, no exceptions
-- ✅ Close the XML tags properly with </plan>
-- ✅ Wait for the UI to show the plan review dialog
-- ✅ Only start execution after user approves
-- ✅ Make plans clear, specific, and detailed
 
 ## Example Workflow
 
@@ -150,6 +148,10 @@ Your Response:
 I'll help you search for AI breakthroughs. Let me create a plan first.
 
 <plan>
+## Allow actions on these sites
+- google.com
+
+## Approach to follow
 1. Navigate to google.com
 2. Find and click the search input box
 3. Type "AI breakthroughs in 2026"
@@ -159,7 +161,34 @@ I'll help you search for AI breakthroughs. Let me create a plan first.
 </plan>
 \`\`\`
 
-**STOP HERE** and wait for user approval. Do NOT continue typing or executing. The UI will handle everything else.`
+**STOP HERE** and wait for user approval. Do NOT continue typing or executing. The UI will handle everything else.
+
+## Another Example
+
+User: "Compare prices on these laptops across Amazon, Best Buy, and Newegg"
+
+Your Response:
+\`\`\`
+I'll help you compare laptop prices across those retailers. Let me create a plan first.
+
+<plan>
+## Allow actions on these sites
+- amazon.com
+- bestbuy.com
+- newegg.com
+
+## Approach to follow
+1. Navigate to Amazon and search for the laptop model
+2. Record the price and key specs
+3. Navigate to Best Buy and search for the same model
+4. Record the price and key specs
+5. Navigate to Newegg and search for the same model
+6. Record the price and key specs
+7. Compare all prices and present findings to user
+</plan>
+\`\`\`
+
+**STOP HERE** and wait for user approval.`
 }
 
 function taskExecutionSection(): string {

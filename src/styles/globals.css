@@ -697,28 +697,28 @@
 /* ─── Enhanced Onboarding Animations ────────────────────────────────────────── */
 
 .animate-onboard-reveal {
-  animation: onboardReveal 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: onboardReveal 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes onboardReveal {
   0% {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.92) translateY(20px);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateY(0);
   }
 }
 
 .animate-step-in {
-  animation: stepIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  animation: stepIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
 @keyframes stepIn {
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(24px);
   }
   100% {
     opacity: 1;
@@ -727,12 +727,28 @@
 }
 
 .animate-bounce-slow {
-  animation: bounceSlow 2s ease-in-out infinite;
+  animation: bounceSlow 2.5s ease-in-out infinite;
 }
 
 @keyframes bounceSlow {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+  50% { transform: translateY(-12px); }
+}
+
+/* Cinematic scale and fade for form inputs */
+.harbor-input:focus {
+  animation: inputFocus 0.3s ease-out;
+}
+
+@keyframes inputFocus {
+  from {
+    transform: scale(0.98);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 /* ─── Responsive layout — adapts to panel/viewport width ────────────────────── */

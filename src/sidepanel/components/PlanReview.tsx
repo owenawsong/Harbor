@@ -8,35 +8,75 @@ interface PlanReviewProps {
   onModify: (newPlan: string) => void
 }
 
-// Parse plan text to extract sites and steps
+// Parse plan text to extract sites and steps from markdown-formatted sections
 function parsePlan(text: string): { sites: string[]; steps: string[] } {
-  const sites = new Set<string>()
+  const sites: string[] = []
   const steps: string[] = []
 
-  // Extract URLs/domains
-  const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/g
-  let match
-  while ((match = urlRegex.exec(text)) !== null) {
-    sites.add(match[1])
+  // Split by section headers (## format)
+  const sections = text.split(/^##\s+/m)
+
+  for (const section of sections) {
+    const lines = section.split('\n')
+    const header = lines[0]?.trim().toLowerCase() || ''
+
+    if (header.includes('allow actions') && header.includes('sites')) {
+      // Extract bulleted domains from this section
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim()
+        // Match lines starting with - (markdown bullet)
+        const match = line.match(/^-\s+(.+)$/)
+        if (match) {
+          const domain = match[1].trim()
+          // Extract just the domain without http/https/www
+          const cleanDomain = domain
+            .replace(/^https?:\/\//, '')
+            .replace(/^www\./, '')
+            .split('/')[0] // Remove path if present
+          if (cleanDomain && !sites.includes(cleanDomain)) {
+            sites.push(cleanDomain)
+          }
+        }
+      }
+    } else if (header.includes('approach') && header.includes('follow')) {
+      // Extract numbered steps from this section
+      for (let i = 1; i < lines.length; i++) {
+        const line = lines[i].trim()
+        // Match lines starting with number (1. 2. etc.)
+        const match = line.match(/^\d+\.\s+(.+)$/)
+        if (match) {
+          steps.push(match[1].trim())
+        }
+      }
+    }
   }
 
-  // Extract numbered steps
-  const stepLines = text.split('\n')
-  for (const line of stepLines) {
-    const stepMatch = line.trim().match(/^(\d+\.?\s+)(.+)/)
-    if (stepMatch) {
-      steps.push(stepMatch[2].trim())
-    } else if (line.trim() && !line.includes('http') && !line.includes('visit')) {
-      // Also capture non-numbered lines that look like steps
-      const cleaned = line.trim()
-      if (cleaned.length > 5 && !steps.includes(cleaned)) {
-        steps.push(cleaned)
+  // Fallback: if no structured sections found, try to extract domains and steps the old way
+  if (sites.length === 0 || steps.length === 0) {
+    // Extract URLs/domains as fallback
+    const urlRegex = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})/g
+    let match
+    while ((match = urlRegex.exec(text)) !== null) {
+      const domain = match[1]
+      if (!sites.includes(domain)) {
+        sites.push(domain)
+      }
+    }
+
+    // Extract numbered steps if not already found
+    if (steps.length === 0) {
+      const stepLines = text.split('\n')
+      for (const line of stepLines) {
+        const stepMatch = line.trim().match(/^(\d+\.?\s+)(.+)/)
+        if (stepMatch) {
+          steps.push(stepMatch[2].trim())
+        }
       }
     }
   }
 
   return {
-    sites: Array.from(sites).slice(0, 5), // Limit to 5 sites for display
+    sites: sites.slice(0, 5), // Limit to 5 sites for display
     steps: steps.slice(0, 8), // Limit to 8 steps for display
   }
 }
