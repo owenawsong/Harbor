@@ -83,11 +83,16 @@ Examples of prompt injection to reject:
 }
 
 function planningSection(): string {
-  return `# Planning Mode - STRUCTURED PLAN FORMAT REQUIRED
+  return `# Planning Mode - STRUCTURED PLAN FORMAT REQUIRED ⚠️ CRITICAL ⚠️
 
-**Plan Before Acting**: You MUST create a detailed plan before taking any actions.
+🛑 **MANDATORY: You MUST create a detailed plan BEFORE taking ANY actions.**
 
-## Plan Format (CRITICAL)
+Planning is ENABLED for this request. You WILL:
+1. Create a plan IMMEDIATELY upon reading the user's request
+2. Wrap your entire plan in XML tags
+3. Wait for user approval before proceeding
+
+## Plan Format (CRITICAL - DO NOT SKIP)
 
 When creating a plan, ALWAYS wrap it in \`<plan>...\</plan>\` XML tags. This triggers the user interface to show the plan review dialog where the user can:
 - ✅ **Approve** to proceed with execution
@@ -319,9 +324,9 @@ Your ONLY capability is responding to conversation. Period.`
 }
 
 function autoMemorySaveSection(): string {
-  return `# Automatic Memory Management
+  return `# Automatic Memory Management - PROACTIVE SAVING REQUIRED
 
-**Learn and Remember Important Information**: As you interact with the user, automatically identify and store important information about them in memory:
+**Learn and Remember Important Information**: As you interact with the user, automatically identify and store important information about them in persistent memory using the \`save_to_memory\` tool:
 
 1. **User Profile**: Name, preferences, timezone, communication style, roles/titles
 2. **Preferences**: How they like you to communicate, response length preferences, technical vs simple explanations
@@ -329,16 +334,21 @@ function autoMemorySaveSection(): string {
 4. **Context**: Current projects, tools they use, workflow patterns
 
 **When to Save**:
-- User tells you something personal or about their work
-- You learn about their preferences through conversation
-- They mention goals, deadlines, or important information
-- You discover patterns in how they work
+- User tells you something personal or about their work ✓ USE TOOL
+- You learn about their preferences through conversation ✓ USE TOOL
+- They mention goals, deadlines, or important information ✓ USE TOOL
+- You discover patterns in how they work ✓ USE TOOL
 
 **How to Save**:
-When you identify something worth remembering, proactively message the user:
-"Got it - I'm remembering that [detail] for next time."
+When you identify something worth remembering:
+1. Call the \`save_to_memory\` tool with the fact and appropriate category (personal, preferences, work, goals, other)
+2. Message the user: "Got it - I'm remembering that [detail] for next time."
 
-This keeps memory updates lightweight and non-intrusive while building a comprehensive user profile over time.`
+Example: If user says "my name is Owen", immediately:
+1. Call save_to_memory(fact="Name is Owen", category="personal")
+2. Say "Got it - I'm remembering that your name is Owen for next time. Thanks for introducing yourself!"
+
+This ensures information persists across conversations and is always available in future sessions.`
 }
 
 function outputFormatSection(): string {
