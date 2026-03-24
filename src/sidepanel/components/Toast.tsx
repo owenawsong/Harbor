@@ -25,9 +25,9 @@ const iconMap = {
 
 const colorMap = {
   success: {
-    bg: 'bg-green-50 dark:bg-green-900/20',
-    border: 'border-green-200 dark:border-green-800',
-    text: 'text-green-700 dark:text-green-300',
+    bg: 'bg-green-100 dark:bg-green-900/40',
+    border: 'border-green-300 dark:border-green-700',
+    text: 'text-green-800 dark:text-green-200',
     icon: 'text-green-600 dark:text-green-400',
   },
   error: {
@@ -72,7 +72,10 @@ function ToastItem({
 
   return (
     <div
-      className={`flex items-start gap-2.5 px-4 py-3 rounded-lg border ${colors.bg} ${colors.border} ${colors.text} animate-fade-up ${isExiting ? 'animate-fade-out opacity-0' : ''} transition-opacity`}
+      className={`flex items-start gap-2.5 px-4 py-3 rounded-lg border ${colors.bg} ${colors.border} ${colors.text} animate-fade-up ${isExiting ? 'animate-fade-out opacity-0' : ''} transition-opacity shadow-lg`}
+      style={{
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      }}
     >
       <div className={`flex-shrink-0 mt-0.5 ${colors.icon}`}>{iconMap[message.type]}</div>
       <div className="flex-1 min-w-0">

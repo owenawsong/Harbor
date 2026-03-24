@@ -21,7 +21,7 @@ export function useToast() {
   }, [])
 
   const success = useCallback((title: string, description?: string) => {
-    return show(title, { type: 'success', description })
+    return show(title, { type: 'success', description, duration: 4500 })
   }, [show])
 
   const error = useCallback((title: string, description?: string) => {

@@ -94,7 +94,8 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     enablePlanning,
     chatMode: options.chatModeOnly,
   })
-  const tools = getToolDefinitions()
+  // In chat mode, don't provide any tools - pure conversation only
+  const tools = options.chatModeOnly ? [] : getToolDefinitions()
 
   // Initialize rate limit manager with settings config
   const rateLimitManager = new RateLimitManager(settings.rateLimitConfig)
