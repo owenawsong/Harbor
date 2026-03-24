@@ -19,7 +19,7 @@
     "appearanceHint": "您可以随时在设置中更改此项。",
     "language": "首选语言",
     "languageHint": "Harbor 将用您选择的语言回复。",
-    "welcome_step": "欢迎，{{name}}。",
+    "welcome_step": "欢迎，{name}。",
     "welcome_alt": "您已完成设置。",
     "welcome_ready": "Harbor 已准备好帮助您。",
     "setup_summary": "您的设置",
@@ -473,18 +473,39 @@
     "weekend_2": "Weekend time. Let's help.",
     "weekend_3": "Weekend projects have my support.",
     "weekend_4": "Weekend time for exploration.",
-    "named_morning_1": "Good morning, {{name}}. Anything on your mind for today?",
-    "named_morning_2": "{{name}}, morning — ready for today?",
-    "named_morning_3": "{{name}}, let's tackle with morning clarity.",
-    "named_morning_4": "Good morning, {{name}}. What's your goal today?",
-    "named_afternoon_1": "Hey, {{name}}. How can I help?",
-    "named_afternoon_2": "{{name}}, afternoon — how's it going?",
-    "named_afternoon_3": "{{name}}, sweet spot of the day.",
-    "named_evening_1": "Evening, {{name}}. Anything on your mind tonight?",
-    "named_evening_2": "{{name}}, evening — let's help.",
-    "named_evening_3": "{{name}}, evening brings good questions.",
-    "named_night_1": "{{name}}, late night work. What do you need?",
-    "named_night_2": "{{name}}, you're up late. Anything I can help with?",
-    "named_night_3": "{{name}}, late night focus."
+    "named_morning_1": "Good morning, {name}. Anything on your mind for today?",
+    "named_morning_2": "{name}, morning — ready for today?",
+    "named_morning_3": "{name}, let's tackle with morning clarity.",
+    "named_morning_4": "Good morning, {name}. What's your goal today?",
+    "named_afternoon_1": "Hey, {name}. How can I help?",
+    "named_afternoon_2": "{name}, afternoon — how's it going?",
+    "named_afternoon_3": "{name}, sweet spot of the day.",
+    "named_evening_1": "Evening, {name}. Anything on your mind tonight?",
+    "named_evening_2": "{name}, evening — let's help.",
+    "named_evening_3": "{name}, evening brings good questions.",
+    "named_night_1": "{name}, late night work. What do you need?",
+    "named_night_2": "{name}, you're up late. Anything I can help with?",
+    "named_night_3": "{name}, late night focus."
+  },
+  "help_section": {
+    "memory_system": "Memory System",
+    "memory_system_desc": "Link conversations to your memory for better context across chats.",
+    "pin_chats": "Pin Important Chats",
+    "pin_chats_desc": "Keep important conversations at the top for quick access.",
+    "export_convos": "Export Conversations",
+    "export_convos_desc": "Download any chat as Markdown for archiving or sharing."
+  },
+  "settings_extended": {
+    "help_title": "Help & Tips",
+    "help_section": "Keyboard shortcuts and usage tips",
+    "keyboard_shortcuts_title": "Keyboard Shortcuts",
+    "pro_tips_title": "Pro Tips",
+    "read_full_docs": "Read Full Documentation"
+  },
+  "keyboard_shortcuts": {
+    "open_harbor": "Open Harbor",
+    "send_message": "Send message",
+    "new_line": "New line",
+    "close_dialog": "Close dialog"
   }
 }
