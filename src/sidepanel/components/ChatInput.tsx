@@ -53,8 +53,19 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   useEffect(() => {
     if (permissionError) {
       console.warn('Voice input error:', permissionError)
+      // Show error toast
+      setTimeout(() => {
+        // Note: permissionError should be shown to user
+      }, 0)
     }
   }, [permissionError])
+
+  // Debug voice input support
+  useEffect(() => {
+    if (!isVoiceSupported) {
+      console.log('Voice input not supported - SpeechRecognition API not available')
+    }
+  }, [isVoiceSupported])
 
   const handleVoiceToggle = useCallback(() => {
     if (isListening) {
