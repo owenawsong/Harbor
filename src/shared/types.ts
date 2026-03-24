@@ -248,6 +248,50 @@ export interface MemoryEntry {
   isPinned?: boolean
 }
 
+/**
+ * User Profile - OpenAI-style comprehensive user learning
+ * Builds a rich profile of the user's preferences, habits, and characteristics
+ */
+export interface UserProfile {
+  id: string
+  lastUpdated: number
+  // Basic identity
+  name?: string
+  role?: string
+  timezone?: string
+  // Work habits
+  workingHours?: string
+  preferredLanguage?: string
+  communicationStyle?: 'concise' | 'detailed' | 'technical' | 'casual'
+  // Preferences
+  themePreference?: 'light' | 'dark'
+  responseDetailLevel?: 'brief' | 'moderate' | 'detailed'
+  // Skills and expertise
+  expertise?: string[] // e.g., ["Python", "React", "DevOps"]
+  learningInterests?: string[]
+  // Projects
+  activeProjects?: string[]
+  completedProjects?: string[]
+  // Important people/contacts
+  importantContacts?: Array<{ name: string; context?: string }>
+  // Custom notes and observations
+  notes?: string[]
+  // Confidence score for each category (0-1)
+  confidence?: {
+    preferences?: number
+    habits?: number
+    expertise?: number
+    personalityTraits?: number
+  }
+}
+
+export interface UserProfileUpdate {
+  field: keyof Omit<UserProfile, 'id' | 'lastUpdated' | 'confidence'>
+  value: any
+  source?: string // e.g., "agent_observation", "user_input"
+  confidence?: number // 0-1, how sure we are about this observation
+}
+
 // ─── Skills System ────────────────────────────────────────────────────────────
 
 export interface Skill {

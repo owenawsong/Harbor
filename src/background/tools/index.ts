@@ -10,6 +10,7 @@ import { downloadTools } from './downloads'
 import { extractionTools } from './extraction'
 import { storageTools } from './storage'
 import { fileTools } from './files'
+import { subAgentTools } from './subagents'
 
 export const ALL_TOOLS: ToolHandler[] = [
   ...navigationTools,
@@ -24,9 +25,10 @@ export const ALL_TOOLS: ToolHandler[] = [
   ...extractionTools,
   ...storageTools,
   ...fileTools,
+  ...subAgentTools,
 ]
 
-export { navigationTools, snapshotTools, inputTools, domTools, bookmarkTools, historyTools, windowTools, tabGroupTools, downloadTools, extractionTools, storageTools, fileTools }
+export { navigationTools, snapshotTools, inputTools, domTools, bookmarkTools, historyTools, windowTools, tabGroupTools, downloadTools, extractionTools, storageTools, fileTools, subAgentTools }
 
 export function getToolByName(name: string): ToolHandler | undefined {
   return ALL_TOOLS.find((t) => t.definition.name === name)

@@ -4,7 +4,7 @@
  */
 
 import type { AgentRunOptions, NormalizedMessage, ToolCallPart, TextPart, ToolResultPart, BrowserContext } from './types'
-import type { AgentEvent, ChatMessage } from '../../shared/types'
+import type { AgentEvent, ChatMessage, AgentSettings } from '../../shared/types'
 import { getProvider } from './providers'
 import { buildSystemPrompt } from './prompt'
 import { getToolByName, getToolDefinitions } from '../tools/index'
@@ -13,6 +13,114 @@ import { RateLimitManager, sleep, isRateLimitError } from './rateLimitManager'
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 11)
+}
+
+async function executeSubAgents(
+  input: Record<string, unknown>,
+  settings: AgentSettings,
+  parentSessionId: string,
+  parentOnEvent: (event: import('../../shared/types').AgentEvent) => void,
+): Promise<import('../../shared/types').ToolResult> {
+  const tasks = input.tasks as Array<{ taskId: string; description: string }> | undefined
+  const briefing = input.briefing as string | undefined
+
+  if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
+    return {
+      success: false,
+      error: 'Invalid input: tasks must be a non-empty array',
+    }
+  }
+
+  if (tasks.length > 10) {
+    return {
+      success: false,
+      error: 'Too many sub-agents: maximum 10 sub-agents allowed',
+    }
+  }
+
+  try {
+    // Run all sub-agents in parallel
+    const subAgentPromises = tasks.map((task) =>
+      runSubAgent(task, briefing, settings, parentSessionId, parentOnEvent)
+    )
+
+    const results = await Promise.all(subAgentPromises)
+
+    // Check if any failed
+    const failures = results.filter((r) => r.status === 'error')
+
+    return {
+      success: failures.length === 0,
+      output: {
+        results,
+        successCount: results.filter((r) => r.status === 'success').length,
+        failureCount: failures.length,
+        summary: `Completed ${results.length} sub-tasks: ${results.filter((r) => r.status === 'success').length} successful, ${failures.length} failed`,
+      },
+    }
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : String(err),
+    }
+  }
+}
+
+async function runSubAgent(
+  task: { taskId: string; description: string },
+  briefing: string | undefined,
+  settings: AgentSettings,
+  parentSessionId: string,
+  parentOnEvent: (event: import('../../shared/types').AgentEvent) => void,
+): Promise<{ taskId: string; status: 'success' | 'error'; result?: string; error?: string }> {
+  return new Promise((resolve) => {
+    const subSessionId = `${parentSessionId}_sub_${task.taskId}`
+    let finalResult = ''
+    let hasError = false
+    let errorMessage = ''
+
+    // Create an event handler that collects results silently
+    const onEvent = (event: import('../../shared/types').AgentEvent) => {
+      if (event.type === 'text_delta') {
+        const textDelta = event as any
+        finalResult += textDelta.text
+      } else if (event.type === 'error') {
+        const errorEvent = event as any
+        hasError = true
+        errorMessage = errorEvent.error
+      }
+    }
+
+    // Build the sub-agent message with context
+    const subAgentMessage = `${briefing ? `Context: ${briefing}\n\n` : ''}Your task: ${task.description}`
+
+    // Run the sub-agent
+    runAgent({
+      sessionId: subSessionId,
+      message: subAgentMessage,
+      settings,
+      history: [],
+      onEvent,
+      signal: undefined,
+      attachedTabId: undefined,
+      enablePlanning: false,
+      chatModeOnly: false,
+    }).then(() => {
+      // Resolve when agent completes
+      resolve({
+        taskId: task.taskId,
+        status: hasError ? 'error' : 'success',
+        result: hasError ? undefined : finalResult,
+        error: hasError ? errorMessage : undefined,
+      })
+    }).catch((err) => {
+      resolve({
+        taskId: task.taskId,
+        status: 'error',
+        error: err instanceof Error ? err.message : String(err),
+      })
+    })
+  })
 }
 
 function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] {
@@ -57,34 +165,52 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
   const { sessionId, message, settings, history, onEvent, signal, attachedTabId, enablePlanning } = options
   const provider = getProvider(settings.provider.provider)
 
-  // Load memory entries from storage if enabled
+  // Load user profile from storage if enabled
   let memoryData = ''
   if (settings.enableMemory) {
     try {
       const storageData = await new Promise<Record<string, any>>((resolve) => {
-        chrome.storage.local.get('harbor_memory_entries', (data) => {
+        chrome.storage.local.get('harbor_user_profile', (data) => {
           resolve(data)
         })
       })
-      const entries = storageData.harbor_memory_entries || []
-      if (entries.length > 0) {
-        const grouped = new Map<string, any[]>()
-        entries.forEach((entry: any) => {
-          if (!grouped.has(entry.category)) grouped.set(entry.category, [])
-          grouped.get(entry.category)!.push(entry)
-        })
+      const profile = storageData.harbor_user_profile
+      if (profile) {
+        // Format user profile for system prompt
+        const profileLines: string[] = []
 
-        const memoryLines: string[] = []
-        grouped.forEach((entriesInCat, category) => {
-          memoryLines.push(`**${category.charAt(0).toUpperCase() + category.slice(1)}**:`)
-          entriesInCat.forEach((e: any) => {
-            memoryLines.push(`- ${e.content}`)
-          })
-        })
-        memoryData = memoryLines.join('\n')
+        if (profile.name) profileLines.push(`**User Name**: ${profile.name}`)
+        if (profile.role) profileLines.push(`**Role/Title**: ${profile.role}`)
+        if (profile.timezone) profileLines.push(`**Timezone**: ${profile.timezone}`)
+        if (profile.workingHours) profileLines.push(`**Working Hours**: ${profile.workingHours}`)
+
+        if (profile.communicationStyle) {
+          profileLines.push(`**Communication Style**: The user prefers ${profile.communicationStyle} communication.`)
+        }
+        if (profile.responseDetailLevel) {
+          profileLines.push(`**Response Detail**: The user prefers ${profile.responseDetailLevel} responses.`)
+        }
+
+        if (profile.expertise && profile.expertise.length > 0) {
+          profileLines.push(`**Expertise**: ${profile.expertise.join(', ')}`)
+        }
+        if (profile.learningInterests && profile.learningInterests.length > 0) {
+          profileLines.push(`**Learning Interests**: ${profile.learningInterests.join(', ')}`)
+        }
+        if (profile.activeProjects && profile.activeProjects.length > 0) {
+          profileLines.push(`**Current Projects**: ${profile.activeProjects.join(', ')}`)
+        }
+
+        if (profile.notes && profile.notes.length > 0) {
+          profileLines.push(`**Important Notes**:\n${profile.notes.map((n: string) => `- ${n}`).join('\n')}`)
+        }
+
+        if (profileLines.length > 0) {
+          memoryData = profileLines.join('\n')
+        }
       }
     } catch (err) {
-      console.error('Error loading memory:', err)
+      console.error('Error loading user profile:', err)
     }
   }
 
@@ -94,7 +220,8 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     enablePlanning,
     chatMode: options.chatModeOnly,
   })
-  const tools = getToolDefinitions()
+  // In chat mode, don't provide any tools - pure conversation only
+  const tools = options.chatModeOnly ? [] : getToolDefinitions()
 
   // Initialize rate limit manager with settings config
   const rateLimitManager = new RateLimitManager(settings.rateLimitConfig)
@@ -273,6 +400,24 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       if (executionMode === 'sequential') {
         // Sequential: Execute tools one at a time (safer for interdependent tools)
         for (const tc of completedToolCalls) {
+          // Special handling for sub-agents tool
+          if (tc.name === 'create_parallel_sub_agents') {
+            const subAgentResult = await executeSubAgents(tc.input, settings, sessionId, onEvent)
+            onEvent({
+              type: 'tool_call_result',
+              toolCallId: tc.id,
+              toolName: tc.name,
+              result: subAgentResult,
+            })
+            toolResults.push({
+              type: 'tool_result',
+              toolCallId: tc.id,
+              content: JSON.stringify(subAgentResult),
+              isError: !subAgentResult.success,
+            })
+            continue
+          }
+
           const handler = getToolByName(tc.name)
           if (!handler) {
             const result = { success: false, error: `Unknown tool: ${tc.name}` }
@@ -327,6 +472,12 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
         // Parallel: Execute all tools concurrently (faster, but less safe for interdependencies)
         const parallelResults = await Promise.all(
           completedToolCalls.map(async (tc) => {
+            // Special handling for sub-agents tool
+            if (tc.name === 'create_parallel_sub_agents') {
+              const subAgentResult = await executeSubAgents(tc.input, settings, sessionId, onEvent)
+              return { toolCall: tc, result: subAgentResult }
+            }
+
             const handler = getToolByName(tc.name)
             if (!handler) {
               return {

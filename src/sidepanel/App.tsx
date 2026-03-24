@@ -371,8 +371,9 @@ export default function App() {
         style={{
           background: 'rgb(var(--harbor-bg))',
           color: 'rgb(var(--harbor-text))',
-          fontSize: fontSizeCSS,
-        }}
+          fontSize: fontSizeCSS + ' !important' as any,
+          '--harbor-font-size': fontSizeCSS,
+        } as React.CSSProperties & { '--harbor-font-size': string }}
       >
       {/* Onboarding */}
       {view === 'onboarding' && (
