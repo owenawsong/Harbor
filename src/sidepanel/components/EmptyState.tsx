@@ -18,7 +18,7 @@ interface Props {
 
 export default function EmptyState({ onSuggestionClick, userName, agentMode = true }: Props) {
   const { t } = useTranslation()
-  const [greeting] = useState(() => getGreeting(userName))
+  const [greeting] = useState(() => getGreeting(t, userName))
 
   const AGENT_SUGGESTIONS = [
     { icon: 'Globe',        text: t('suggestions.agent.summarize') },

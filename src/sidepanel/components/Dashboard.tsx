@@ -27,7 +27,7 @@ export default function Dashboard({
 }: Props) {
   const { t } = useTranslation()
   const [recentSessions, setRecentSessions] = useState<StoredSession[]>([])
-  const [greeting] = useState(() => getGreeting(identity?.userName))
+  const [greeting] = useState(() => getGreeting(t, identity?.userName))
 
   // Define QUICK_ACTIONS with translated strings
   const QUICK_ACTIONS = [
