@@ -104,8 +104,10 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
     const text = value.trim()
     if ((!text && attachments.length === 0) || !canSend) return
 
-    // Prepend correction marker if in correction mode
-    const messageText = isCorrectionMode ? `[CORRECTION] ${text}` : text
+    // Format correction as special message type
+    const messageText = isCorrectionMode
+      ? `<user_correction>${text}</user_correction>`
+      : text
 
     setValue('')
     setNormalInputValue('')
@@ -297,11 +299,21 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         {/* Correction Button - Agent Mode Only */}
         {agentMode && (
           <button
-            onClick={handleCorrectionToggle}
-            disabled={!isRunning || disabled}
+            onClick={() => {
+              if (!isRunning) {
+                // Show toast error message
+                const msg = 'You can only provide corrections while agent is running'
+                console.log(msg)
+                // Dispatch custom event for toast notification
+                window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: msg, type: 'info' } }))
+                return
+              }
+              handleCorrectionToggle()
+            }}
+            disabled={disabled}
             title={isRunning ? 'Provide correction or additional info' : 'Only available while agent is running'}
             className={`flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 ${
-              !isRunning || disabled
+              disabled
                 ? 'opacity-40 cursor-not-allowed text-[rgb(var(--harbor-text-faint))]'
                 : isCorrectionMode
                   ? 'text-[rgb(var(--harbor-accent))] bg-[rgb(var(--harbor-accent-light))]'

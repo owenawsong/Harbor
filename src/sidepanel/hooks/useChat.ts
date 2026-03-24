@@ -70,10 +70,14 @@ function extractThinkingBlocks(
 
 // Extract plan from text (between <plan>...</plan> tags) and return cleaned text + plan.
 function extractPlan(text: string): { text: string; plan: string | null } {
-  const planMatch = text.match(/<plan>([\s\S]*?)<\/plan>/i)
+  // Try to match plan tags - prefer strict closing tag on its own line
+  const planMatch = text.match(/<plan>([\s\S]*?)<\/plan>\s*$/im)
+    || text.match(/<plan>([\s\S]*?)<\/plan>/i)
+
   if (planMatch && planMatch[1]) {
     const plan = planMatch[1].trim()
-    const cleaned = text.replace(/<plan>[\s\S]*?<\/plan>/i, '').trim()
+    // Remove the plan section from text, keeping text before <plan> and after </plan>
+    const cleaned = text.replace(/<plan>[\s\S]*?<\/plan>\s*/i, '').trim()
     return { text: cleaned, plan }
   }
   return { text, plan: null }

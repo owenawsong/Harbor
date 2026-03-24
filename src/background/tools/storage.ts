@@ -282,4 +282,213 @@ export const storageTools: ToolHandler[] = [
       }
     },
   },
+
+  {
+    definition: {
+      name: 'read_user_memory',
+      description: 'Read the user\'s stored memory/profile. Returns all facts organized by category.',
+      parameters: {
+        type: 'object',
+        properties: {
+          category: {
+            type: 'string',
+            enum: ['personal', 'preferences', 'work', 'goals', 'other'],
+            description: 'Optional: filter by category. If not provided, returns all memories.',
+          },
+        },
+      },
+    },
+    async execute(input) {
+      try {
+        const { category } = input as { category?: string }
+
+        const storageData = await new Promise<Record<string, any>>((resolve) => {
+          chrome.storage.local.get('harbor_user_profile', (data) => {
+            resolve(data)
+          })
+        })
+
+        const profileLines = storageData.harbor_user_profile?.split('\n').filter((l: string) => l.trim()) || []
+
+        let memories = profileLines
+        if (category) {
+          const categoryUpper = category.toUpperCase()
+          memories = profileLines.filter((line: string) => line.startsWith(`[${categoryUpper}]`))
+        }
+
+        // Parse into structured format
+        const parsed = memories.map((line: string) => {
+          const match = line.match(/\[(.*?)\]\s+(.*?)\s+\((.*?)\)/)
+          if (match) {
+            return {
+              category: match[1].toLowerCase(),
+              fact: match[2],
+              date: match[3],
+            }
+          }
+          return { raw: line }
+        })
+
+        return ok({
+          count: parsed.length,
+          memories: parsed,
+          total_stored: profileLines.length,
+        })
+      } catch (err) {
+        return error(`Failed to read memory: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    },
+  },
+
+  {
+    definition: {
+      name: 'update_user_memory',
+      description: 'Update or modify an existing memory fact. Find and replace specific information.',
+      parameters: {
+        type: 'object',
+        properties: {
+          old_fact: {
+            type: 'string',
+            description: 'The original fact or part of it to find. Will search for this text.',
+          },
+          new_fact: {
+            type: 'string',
+            description: 'The new fact or information to replace it with.',
+          },
+          category: {
+            type: 'string',
+            enum: ['personal', 'preferences', 'work', 'goals', 'other'],
+            description: 'Category for the updated fact.',
+          },
+        },
+        required: ['old_fact', 'new_fact', 'category'],
+      },
+    },
+    async execute(input) {
+      try {
+        const { old_fact, new_fact, category } = input as { old_fact: string; new_fact: string; category: string }
+
+        const storageData = await new Promise<Record<string, any>>((resolve) => {
+          chrome.storage.local.get('harbor_user_profile', (data) => {
+            resolve(data)
+          })
+        })
+
+        let profileLines = storageData.harbor_user_profile?.split('\n').filter((l: string) => l.trim()) || []
+
+        // Find and replace the fact
+        const timestamp = new Date().toISOString().split('T')[0]
+        const newLine = `[${category.toUpperCase()}] ${new_fact} (${timestamp})`
+
+        let found = false
+        profileLines = profileLines.map((line: string) => {
+          if (line.toLowerCase().includes(old_fact.toLowerCase())) {
+            found = true
+            return newLine
+          }
+          return line
+        })
+
+        if (!found) {
+          return error(`Fact not found: "${old_fact}" - nothing was updated`)
+        }
+
+        // Save back to storage
+        await new Promise<void>((resolve) => {
+          chrome.storage.local.set({
+            harbor_user_profile: profileLines.join('\n'),
+          }, () => {
+            resolve()
+          })
+        })
+
+        return ok({
+          updated: true,
+          old_fact,
+          new_fact,
+          message: `Updated memory: "${old_fact}" → "${new_fact}"`,
+        })
+      } catch (err) {
+        return error(`Failed to update memory: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    },
+  },
+
+  {
+    definition: {
+      name: 'delete_user_memory',
+      description: 'Delete a specific memory fact or all memories in a category.',
+      parameters: {
+        type: 'object',
+        properties: {
+          fact: {
+            type: 'string',
+            description: 'Specific fact or text to find and delete. If not provided with category, searches all memories.',
+          },
+          category: {
+            type: 'string',
+            enum: ['personal', 'preferences', 'work', 'goals', 'other'],
+            description: 'Optional: delete all facts in a category. Use with or without fact parameter.',
+          },
+        },
+      },
+    },
+    async execute(input) {
+      try {
+        const { fact, category } = input as { fact?: string; category?: string }
+
+        if (!fact && !category) {
+          return error('Either fact or category (or both) is required')
+        }
+
+        const storageData = await new Promise<Record<string, any>>((resolve) => {
+          chrome.storage.local.get('harbor_user_profile', (data) => {
+            resolve(data)
+          })
+        })
+
+        let profileLines = storageData.harbor_user_profile?.split('\n').filter((l: string) => l.trim()) || []
+        const originalCount = profileLines.length
+
+        // Filter out matching lines
+        if (fact && category) {
+          const categoryUpper = category.toUpperCase()
+          profileLines = profileLines.filter((line: string) =>
+            !(line.startsWith(`[${categoryUpper}]`) && line.toLowerCase().includes(fact.toLowerCase()))
+          )
+        } else if (category) {
+          const categoryUpper = category.toUpperCase()
+          profileLines = profileLines.filter((line: string) => !line.startsWith(`[${categoryUpper}]`))
+        } else if (fact) {
+          profileLines = profileLines.filter((line: string) =>
+            !line.toLowerCase().includes(fact.toLowerCase())
+          )
+        }
+
+        const deletedCount = originalCount - profileLines.length
+
+        if (deletedCount === 0) {
+          return error('No matching memories found to delete')
+        }
+
+        // Save back to storage
+        await new Promise<void>((resolve) => {
+          chrome.storage.local.set({
+            harbor_user_profile: profileLines.length > 0 ? profileLines.join('\n') : '',
+          }, () => {
+            resolve()
+          })
+        })
+
+        return ok({
+          deleted: true,
+          deleted_count: deletedCount,
+          remaining: profileLines.length,
+          message: `Deleted ${deletedCount} memory fact(s)`,
+        })
+      } catch (err) {
+        return error(`Failed to delete from memory: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    },
+  },
 ]

@@ -132,20 +132,40 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
 
   const startListeningWithPermission = useCallback(async () => {
     setPermissionError(null)
+
+    // Try direct SpeechRecognition first (works in most cases for extensions)
     try {
-      // For Chrome extensions, we can request microphone permission
+      console.log('[Voice Input] Attempting to start speech recognition directly...')
+      startListening()
+      return
+    } catch (err) {
+      console.log('[Voice Input] Direct start failed, will try with getUserMedia...')
+    }
+
+    // Fallback: Try to request microphone permission explicitly
+    try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       // Stop the stream immediately, we just needed permission
       stream.getTracks().forEach(track => track.stop())
-      startListening()
+      // Now try speech recognition
+      try {
+        startListening()
+      } catch (speechErr) {
+        console.error('[Voice Input] Speech recognition failed after permission:', speechErr)
+        setPermissionError('Voice input failed. Please check your browser settings.')
+      }
     } catch (err) {
       const error = err as Error
+      console.error('[Voice Input] Permission request failed:', error)
+
       if (error.name === 'NotAllowedError') {
-        setPermissionError('Microphone permission denied. Please allow access in browser settings.')
+        setPermissionError('Microphone permission denied. Please click the microphone icon in your address bar to enable access.')
       } else if (error.name === 'NotFoundError') {
-        setPermissionError('No microphone found. Please check your audio device.')
+        setPermissionError('No microphone found. Please check your audio device is connected.')
+      } else if (error.name === 'NotSupportedError') {
+        setPermissionError('Your browser does not support microphone access in extensions.')
       } else {
-        setPermissionError(`Failed to access microphone: ${error.message}`)
+        setPermissionError(`Microphone access failed: ${error.message}`)
       }
     }
   }, [startListening])
