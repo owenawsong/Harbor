@@ -502,8 +502,8 @@
     "press_shortcut": "ショートカットを押してください…",
     "set_button": "設定",
     "cancel_button": "キャンセル",
-    "help_title": "Help & Tips",
-    "help_section": "Keyboard shortcuts and usage tips",
+    "help_title": "ヘルプとコツ",
+    "help_section": "キーボードショートカットと使用のコツ",
     "keyboard_shortcuts_title": "Keyboard Shortcuts",
     "pro_tips_title": "Pro Tips",
     "read_full_docs": "Read Full Documentation",
@@ -553,18 +553,18 @@
   "help_section": {
     "agent_vs_chat": {
       "title": "エージェント対チャット",
-      "description": "エージェント モードでタスクを自動化し、チャット モードで議論します。"
+      "description": "エージェントモードでタスクを自動化し、チャットモードで議論します。"
     },
     "model_presets": {
-      "title": "モデル プリセット",
-      "description": "お気に入りのモデル構成を保存して、設定で即座に切り替えます。"
+      "title": "モデルプリセット",
+      "description": "お気に入りのモデル設定を保存して、設定で即座に切り替えます。"
     },
-    "memory_system": "Memory System",
-    "memory_system_desc": "Link conversations to your memory for better context across chats.",
-    "pin_chats": "Pin Important Chats",
-    "pin_chats_desc": "Keep important conversations at the top for quick access.",
-    "export_convos": "Export Conversations",
-    "export_convos_desc": "Download any chat as Markdown for archiving or sharing."
+    "memory_system": "メモリシステム",
+    "memory_system_desc": "会話をメモリにリンクして、チャット全体でより良いコンテキストを得られます。",
+    "pin_chats": "重要なチャットをピン留め",
+    "pin_chats_desc": "重要な会話をトップに保つためにピン留めします。",
+    "export_convos": "会話をエクスポート",
+    "export_convos_desc": "任意のチャットをMarkdownでダウンロードして、アーカイブまたは共有できます。"
   },
   "settings_nav": {
     "general": "一般",

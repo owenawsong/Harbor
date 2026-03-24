@@ -502,8 +502,8 @@
     "press_shortcut": "Verknüpfung drücken…",
     "set_button": "Einstellen",
     "cancel_button": "Abbrechen",
-    "help_title": "Help & Tips",
-    "help_section": "Keyboard shortcuts and usage tips",
+    "help_title": "Hilfe & Tipps",
+    "help_section": "Tastaturkürzel und Verwendungstipps",
     "keyboard_shortcuts_title": "Keyboard Shortcuts",
     "pro_tips_title": "Pro Tips",
     "read_full_docs": "Read Full Documentation",
@@ -552,19 +552,19 @@
   },
   "help_section": {
     "agent_vs_chat": {
-      "title": "Agent vs Chat",
-      "description": "Verwenden Sie Agent-Modus zur Automatisierung von Aufgaben, Chat-Modus für Diskussionen."
+      "title": "Agent vs. Chat",
+      "description": "Verwenden Sie den Agent-Modus zur Automatisierung von Aufgaben und den Chat-Modus für Diskussionen."
     },
     "model_presets": {
-      "title": "Modellvoreinstellungen",
+      "title": "Modell-Voreinstellungen",
       "description": "Speichern Sie Ihre bevorzugten Modellkonfigurationen für sofortiges Umschalten in den Einstellungen."
     },
-    "memory_system": "Memory System",
-    "memory_system_desc": "Link conversations to your memory for better context across chats.",
-    "pin_chats": "Pin Important Chats",
-    "pin_chats_desc": "Keep important conversations at the top for quick access.",
-    "export_convos": "Export Conversations",
-    "export_convos_desc": "Download any chat as Markdown for archiving or sharing."
+    "memory_system": "Speichersystem",
+    "memory_system_desc": "Verknüpfen Sie Konversationen mit Ihrem Speicher für besseren Kontext in Chats.",
+    "pin_chats": "Wichtige Chats anheften",
+    "pin_chats_desc": "Halten Sie wichtige Konversationen oben für schnellen Zugriff.",
+    "export_convos": "Konversationen exportieren",
+    "export_convos_desc": "Laden Sie jeden Chat als Markdown zum Archivieren oder Teilen herunter."
   },
   "settings_nav": {
     "general": "General",

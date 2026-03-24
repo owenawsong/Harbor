@@ -493,16 +493,24 @@
     "named_night_3": "{name}, late night focus."
   },
   "help_section": {
-    "memory_system": "Memory System",
-    "memory_system_desc": "Link conversations to your memory for better context across chats.",
-    "pin_chats": "Pin Important Chats",
-    "pin_chats_desc": "Keep important conversations at the top for quick access.",
-    "export_convos": "Export Conversations",
-    "export_convos_desc": "Download any chat as Markdown for archiving or sharing."
+    "memory_system": "记忆系统",
+    "memory_system_desc": "将对话链接到您的记忆以获得跨聊天的更好上下文。",
+    "pin_chats": "固定重要聊天",
+    "pin_chats_desc": "将重要对话保留在顶部以快速访问。",
+    "export_convos": "导出对话",
+    "export_convos_desc": "将任何聊天下载为Markdown以进行归档或共享。",
+    "agent_vs_chat": {
+      "title": "代理 vs 聊天",
+      "description": "使用代理模式自动化任务，聊天模式进行讨论。"
+    },
+    "model_presets": {
+      "title": "模型预设",
+      "description": "保存您最喜欢的模型配置以在设置中即时切换。"
+    }
   },
   "settings_extended": {
-    "help_title": "Help & Tips",
-    "help_section": "Keyboard shortcuts and usage tips",
+    "help_title": "帮助和提示",
+    "help_section": "键盘快捷键和使用提示",
     "keyboard_shortcuts_title": "Keyboard Shortcuts",
     "pro_tips_title": "Pro Tips",
     "read_full_docs": "Read Full Documentation",
