@@ -79,7 +79,7 @@ const LANGUAGES = [
 ]
 
 export default function Settings({ settings, theme, identity, onSave, onBack }: Props) {
-  const { i18n } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('provider')
   const [savedIndicator, setSavedIndicator] = useState(false)
@@ -155,7 +155,9 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
   // Apply language changes globally
   useEffect(() => {
-    i18n.changeLanguage(language)
+    console.log('[Settings] Language changed to:', language)
+    alert('[TEST] Language changed to: ' + language)
+    i18n.changeLanguage(language).catch(err => console.error('[Settings] i18n.changeLanguage failed:', err))
   }, [language, i18n])
 
   const handleProviderChange = (p: ProviderName) => {
@@ -273,7 +275,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         <button onClick={onBack} className="icon-btn flex-shrink-0">
           <ArrowLeft size={15} />
         </button>
-        <h2 className="font-semibold text-sm flex-1" style={{ color: 'rgb(var(--harbor-text))' }}>Settings</h2>
+        <h2 className="font-semibold text-sm flex-1" style={{ color: 'rgb(var(--harbor-text))' }}>{t('settings.title')}</h2>
         {savedIndicator && (
           <span className="flex items-center gap-1 text-[11px] text-emerald-500 animate-fade-in">
             <Check size={11} /> Saved
@@ -777,7 +779,10 @@ function SectionIdentity({ userName, tone, verbosity, language, useEmoji, custom
       <FormField label="Language">
         <select
           value={language}
-          onChange={(e) => onLanguageChange(e.target.value)}
+          onChange={(e) => {
+            console.log('[SectionIdentity] Dropdown changed to:', e.target.value)
+            onLanguageChange(e.target.value)
+          }}
           className="harbor-input text-xs"
         >
           {LANGUAGES.map((l) => (
