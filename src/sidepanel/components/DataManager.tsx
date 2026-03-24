@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Download, Upload, Trash2, Check } from 'lucide-react'
 import { exportAllData, importData, downloadExportAsFile, parseImportFile, getExportFileName } from '../../shared/dataManager'
 
@@ -7,6 +8,7 @@ interface Props {
 }
 
 export default function DataManager({ onBack }: Props) {
+  const { t } = useTranslation()
   const [exporting, setExporting] = useState(false)
   const [importing, setImporting] = useState(false)
   const [overwrite, setOverwrite] = useState(false)
@@ -69,7 +71,7 @@ export default function DataManager({ onBack }: Props) {
           className="text-sm px-3 py-1 rounded hover:bg-opacity-10 hover:bg-white transition"
           style={{ color: 'rgb(var(--harbor-text-faint))' }}
         >
-          ← Back
+          {t('data_manager.back')}
         </button>
       </div>
 
@@ -106,7 +108,7 @@ export default function DataManager({ onBack }: Props) {
             }}
           >
             <Download className="w-4 h-4" />
-            {exporting ? 'Exporting...' : 'Export Backup'}
+            {exporting ? t('data_manager.exporting') : t('data_manager.export_backup')}
           </button>
           <p className="text-xs mt-3" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
             File will be saved as: <code>{getExportFileName()}</code>
@@ -151,7 +153,7 @@ export default function DataManager({ onBack }: Props) {
             }}
           >
             <Upload className="w-4 h-4" />
-            {importing ? 'Importing...' : 'Select Backup File'}
+            {importing ? t('data_manager.importing') : t('data_manager.select_file')}
           </button>
 
           <input
@@ -164,7 +166,7 @@ export default function DataManager({ onBack }: Props) {
           />
 
           <p className="text-xs mt-3" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            Select a JSON backup file (harbor-backup-*.json) to restore
+            {t('data_manager.select_backup_file')}
           </p>
         </div>
 
