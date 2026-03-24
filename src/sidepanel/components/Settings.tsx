@@ -156,7 +156,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   // Apply language changes globally
   useEffect(() => {
     console.log('[Settings] Language changed to:', language)
-    alert('[TEST] Language changed to: ' + language)
     i18n.changeLanguage(language).catch(err => console.error('[Settings] i18n.changeLanguage failed:', err))
   }, [language, i18n])
 
@@ -780,7 +779,6 @@ function SectionIdentity({ userName, tone, verbosity, language, useEmoji, custom
         <select
           value={language}
           onChange={(e) => {
-            alert('DROPDOWN CHANGED: ' + e.target.value)
             console.log('[SectionIdentity] Dropdown changed to:', e.target.value)
             onLanguageChange(e.target.value)
           }}

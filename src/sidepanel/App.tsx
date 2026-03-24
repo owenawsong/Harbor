@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
+import i18n from '../i18n/config'
 import Chat from './components/Chat'
 import Settings from './components/Settings'
 import ConversationList from './components/ConversationList'
@@ -115,6 +116,14 @@ export default function App() {
     apply(theme)
     chrome.storage.local.set({ harbor_theme: theme })
   }, [theme])
+
+  // ── Apply language from identity ───────────────────────────────────────────
+
+  useEffect(() => {
+    if (identity?.language) {
+      i18n.changeLanguage(identity.language).catch(err => console.error('[App] i18n.changeLanguage failed:', err))
+    }
+  }, [identity?.language])
 
   // ── Command palette keyboard shortcut & appearance settings ────────────────
 
@@ -257,6 +266,7 @@ export default function App() {
       setTheme(newTheme)
       if (newIdentity) {
         setIdentity(newIdentity)
+        chrome.storage.local.set({ [IDENTITY_KEY]: newIdentity })
       }
       // Do NOT call setView('chat') - let user stay in Settings
     },
