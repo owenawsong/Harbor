@@ -82,7 +82,8 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
     focus: () => textareaRef.current?.focus(),
   }))
 
-  const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && !isRunning
+  // Allow sending if: (1) normal message with agent idle, OR (2) correction while agent running
+  const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && (!isRunning || isCorrectionMode)
 
   // Handle correction mode toggle
   const handleCorrectionToggle = useCallback(() => {
@@ -308,22 +309,16 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
                 window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: msg, type: 'info' } }))
                 return
               }
-              handleCorrectionToggle()
+              // Call the onCorrect callback to open the dialog
+              if (onCorrect) {
+                onCorrect()
+              }
             }}
             disabled={disabled}
             title={isRunning ? 'Provide correction or additional info' : 'Only available while agent is running'}
-            className={`flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 ${
-              disabled
-                ? 'opacity-40 cursor-not-allowed text-[rgb(var(--harbor-text-faint))]'
-                : isCorrectionMode
-                  ? 'text-[rgb(var(--harbor-accent))] bg-[rgb(var(--harbor-accent-light))]'
-                  : 'text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-accent))] hover:bg-[rgb(var(--harbor-surface-2))]'
-            }`}
+            className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-accent))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[rgb(var(--harbor-text-faint))]"
           >
-            <RefreshCw size={16} style={{
-              transform: isCorrectionMode ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 300ms'
-            }} />
+            <RefreshCw size={16} />
           </button>
         )}
 
@@ -361,7 +356,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         )}
 
         {/* Send / Stop / Voice button */}
-        {isRunning ? (
+        {isRunning && !isCorrectionMode ? (
           <button
             onClick={onStop}
             title={t('common.close')}
@@ -372,9 +367,13 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         ) : canSend ? (
           <button
             onClick={send}
-            title={t('chat.send')}
-            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 transition-all shadow-lg shadow-harbor-600/60 animate-pulse"
-            style={{ animationDuration: '3s' }}
+            title={isCorrectionMode ? 'Send correction' : t('chat.send')}
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all shadow-lg transition-all"
+            style={{
+              background: isCorrectionMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-accent))',
+              animationDuration: '3s',
+              boxShadow: `0 0 12px ${isCorrectionMode ? 'rgb(var(--harbor-accent) / 0.6)' : 'rgb(var(--harbor-accent) / 0.6)'}`
+            }}
           >
             <ArrowUp size={16} className="text-white" />
           </button>

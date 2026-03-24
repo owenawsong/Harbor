@@ -100,9 +100,9 @@ This applies to:
 
 ## Plan Format (CRITICAL - DO NOT SKIP OR DEVIATE)
 
-**ALWAYS wrap your entire plan in \`<plan>...</plan>\` XML tags.**
+**ALWAYS wrap your entire plan in \`<plan>...</plan>\` XML tags WITH PROPER CLOSING.**
 
-The format is strict:
+The format is EXTREMELY strict:
 \`\`\`
 <plan>
 1. First action - specific and clear
@@ -111,7 +111,12 @@ The format is strict:
 </plan>
 \`\`\`
 
-**CLOSE THE TAGS PROPERLY** - The last line MUST be \`</plan>\` with nothing after it.
+**ABSOLUTELY CRITICAL CLOSING REQUIREMENTS:**
+- ❌ DO NOT write anything after \`</plan>\`
+- ❌ DO NOT continue typing after the closing tag
+- ❌ DO NOT forget the closing \`</plan>\` tag
+- ✅ The EXACT format must be: \`<plan>\` [your steps] \`</plan>\` - NOTHING ELSE
+- ✅ Your response MUST END with the closing \`</plan>\` tag
 
 ## What Happens When You Create a Plan
 
@@ -225,7 +230,7 @@ Corrections are the user's way to guide execution in real-time. Always treat the
 function toolGuidanceSection(): string {
   return `# Tool Guidance
 
-⚠️ **REMINDER: You MUST submit your plan in \`<plan>...\</plan>\` tags BEFORE using ANY of these tools.**
+⚠️ **REMINDER: You MUST submit your plan in \`<plan>...</plan>\` tags BEFORE using ANY of these tools.**
 
 Only after user approval should you proceed with tool calls.
 
@@ -258,30 +263,43 @@ Only after user approval should you proceed with tool calls.
 
 When to use: Research, comparisons, multi-step processes where tasks are independent and can run simultaneously.
 
-**EXACT TOOL CALLING FORMAT (REQUIRED):**
-{
-  "name": "create_parallel_sub_agents",
-  "arguments": {
-    "briefing": "Shared context for all sub-agents (e.g., 'Research topic X', 'User wants Y')",
-    "tasks": [
-      {
-        "taskId": "task1",
-        "description": "Specific task for sub-agent 1 to complete"
-      },
-      {
-        "taskId": "task2",
-        "description": "Specific task for sub-agent 2 to complete"
-      }
-    ]
-  }
-}
+**⚠️ ULTRA-CRITICAL EXACT JSON FORMAT - COPY THIS EXACTLY:**
 
-**REQUIRED FIELDS:**
-- "tasks": MUST be a non-empty array of objects
-- Each task MUST have "taskId" (string, unique identifier) and "description" (string, clear instructions)
-- "briefing": Optional but recommended (provides shared context)
-- Maximum 10 tasks per call
-- Each sub-agent runs independently and reports back results
+When calling create_parallel_sub_agents tool, pass EXACTLY this structure in the "arguments" field:
+\`\`\`json
+{
+  "briefing": "Shared context for all sub-agents - OPTIONAL but recommended",
+  "tasks": [
+    {
+      "taskId": "research_competitor_a",
+      "description": "Specific task for sub-agent 1 - be clear and detailed"
+    },
+    {
+      "taskId": "research_competitor_b",
+      "description": "Specific task for sub-agent 2 - be clear and detailed"
+    },
+    {
+      "taskId": "research_competitor_c",
+      "description": "Specific task for sub-agent 3 - be clear and detailed"
+    }
+  ]
+}
+\`\`\`
+
+**CRITICAL REQUIREMENTS (THESE WILL FAIL IF WRONG):**
+- 🚨 "tasks" MUST be an ARRAY [ ] with at least 1 task (NEVER send empty array)
+- 🚨 EVERY task MUST have BOTH "taskId" AND "description" (strings)
+- 🚨 "briefing" is OPTIONAL - only include if helpful context is needed
+- 🚨 Maximum 10 tasks per single call
+- 🚨 Send the structure as the "arguments" parameter value
+- 🚨 DO NOT nest it further - the structure above IS your "arguments" value
+
+**VALIDATION CHECKLIST BEFORE CALLING:**
+✓ Is "tasks" an array with [ ]?
+✓ Does each task have taskId (string)?
+✓ Does each task have description (string)?
+✓ Are there no empty tasks in the array?
+✓ Is this the direct value of "arguments"?
 
 **EXAMPLE USE CASES:**
 - Comparing prices on 3 different websites in parallel

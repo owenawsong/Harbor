@@ -25,6 +25,7 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
     if (!SpeechRecognition) {
       console.warn('[Voice Input] SpeechRecognition API not available in this browser/context')
       setIsSupported(false)
+      setPermissionError('Voice input is not available in this browser. Please try a different browser like Chrome or Edge.')
       return
     }
 
@@ -37,7 +38,7 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
     } catch (err) {
       console.error('[Voice Input] Failed to create SpeechRecognition instance:', err)
       setIsSupported(false)
-      setPermissionError('Voice input requires microphone permission. Please enable it in your browser settings.')
+      setPermissionError(`Voice input setup failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
       return
     }
 
@@ -46,13 +47,16 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
       recognition.continuous = true
       recognition.interimResults = true
       recognition.language = language
+      // For extension context, ensure max alternatives is set
+      recognition.maxAlternatives = 1
 
       let localInterim = ''
 
       recognition.onstart = () => {
-        console.log('[Voice Input] Listening started')
+        console.log('[Voice Input] Listening started successfully')
         setIsListening(true)
         setInterimTranscript('')
+        setPermissionError(null) // Clear any previous errors
         localInterim = ''
       }
 
@@ -75,17 +79,19 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
         console.error('[Voice Input] Speech recognition error:', event.error)
         setIsListening(false)
 
-        // Handle different error types
+        // Handle different error types with helpful messages
         if (event.error === 'no-speech') {
-          setPermissionError('No speech detected. Please try again.')
+          setPermissionError('No speech detected. Please try speaking again.')
         } else if (event.error === 'network') {
-          setPermissionError('Network error. Please check your connection.')
-        } else if (event.error === 'permission-denied') {
-          setPermissionError('Microphone permission denied. Please allow access in browser settings.')
-        } else if (event.error === 'not-allowed') {
-          setPermissionError('Microphone access not allowed.')
+          setPermissionError('Network error. Please check your internet connection.')
+        } else if (event.error === 'permission-denied' || event.error === 'not-allowed') {
+          setPermissionError('Microphone access denied. Click the microphone icon in your browser\'s address bar to enable access.')
+        } else if (event.error === 'service-not-allowed') {
+          setPermissionError('Voice input service is not available. Please check browser settings.')
+        } else if (event.error === 'bad-grammar') {
+          setPermissionError('Language settings issue. Please try again.')
         } else {
-          setPermissionError(`Speech recognition error: ${event.error}`)
+          setPermissionError(`Voice input error: ${event.error}. Please try again or check browser permissions.`)
         }
       }
 
@@ -99,6 +105,7 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
       console.log('[Voice Input] Initialization complete')
     } catch (err) {
       console.error('[Voice Input] Failed to initialize:', err)
+      setIsSupported(false)
       setPermissionError(`Failed to initialize voice input: ${err instanceof Error ? err.message : String(err)}`)
     }
   }, [language])
@@ -130,44 +137,13 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
     }
   }, [])
 
-  const startListeningWithPermission = useCallback(async () => {
+  const startListeningWithPermission = useCallback(() => {
     setPermissionError(null)
 
-    // Try direct SpeechRecognition first (works in most cases for extensions)
-    try {
-      console.log('[Voice Input] Attempting to start speech recognition directly...')
-      startListening()
-      return
-    } catch (err) {
-      console.log('[Voice Input] Direct start failed, will try with getUserMedia...')
-    }
-
-    // Fallback: Try to request microphone permission explicitly
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      // Stop the stream immediately, we just needed permission
-      stream.getTracks().forEach(track => track.stop())
-      // Now try speech recognition
-      try {
-        startListening()
-      } catch (speechErr) {
-        console.error('[Voice Input] Speech recognition failed after permission:', speechErr)
-        setPermissionError('Voice input failed. Please check your browser settings.')
-      }
-    } catch (err) {
-      const error = err as Error
-      console.error('[Voice Input] Permission request failed:', error)
-
-      if (error.name === 'NotAllowedError') {
-        setPermissionError('Microphone permission denied. Please click the microphone icon in your address bar to enable access.')
-      } else if (error.name === 'NotFoundError') {
-        setPermissionError('No microphone found. Please check your audio device is connected.')
-      } else if (error.name === 'NotSupportedError') {
-        setPermissionError('Your browser does not support microphone access in extensions.')
-      } else {
-        setPermissionError(`Microphone access failed: ${error.message}`)
-      }
-    }
+    // In extension context, directly start speech recognition
+    // The browser will prompt for permission if needed
+    console.log('[Voice Input] Starting speech recognition (browser will prompt for permission if needed)...')
+    startListening()
   }, [startListening])
 
   return {
