@@ -502,8 +502,8 @@
     "press_shortcut": "바로가기를 누르세요…",
     "set_button": "설정",
     "cancel_button": "취소",
-    "help_title": "Help & Tips",
-    "help_section": "Keyboard shortcuts and usage tips",
+    "help_title": "도움말 및 팁",
+    "help_section": "키보드 단축키 및 사용 팁",
     "keyboard_shortcuts_title": "Keyboard Shortcuts",
     "pro_tips_title": "Pro Tips",
     "read_full_docs": "Read Full Documentation",
@@ -553,18 +553,18 @@
   "help_section": {
     "agent_vs_chat": {
       "title": "에이전트 vs 채팅",
-      "description": "에이전트 모드를 사용하여 작업을 자동화하고, 채팅 모드를 토론에 사용하세요."
+      "description": "에이전트 모드를 사용하여 작업을 자동화하고, 채팅 모드로 토론합니다."
     },
     "model_presets": {
       "title": "모델 사전 설정",
-      "description": "좋아하는 모델 구성을 저장하여 설정에서 즉시 전환하세요."
+      "description": "좋아하는 모델 구성을 저장하여 설정에서 즉시 전환합니다."
     },
-    "memory_system": "Memory System",
-    "memory_system_desc": "Link conversations to your memory for better context across chats.",
-    "pin_chats": "Pin Important Chats",
-    "pin_chats_desc": "Keep important conversations at the top for quick access.",
-    "export_convos": "Export Conversations",
-    "export_convos_desc": "Download any chat as Markdown for archiving or sharing."
+    "memory_system": "메모리 시스템",
+    "memory_system_desc": "대화를 메모리와 연결하여 채팅 간에 더 나은 컨텍스트를 얻으세요.",
+    "pin_chats": "중요한 채팅 고정",
+    "pin_chats_desc": "중요한 대화를 위로 유지하여 빠른 액세스를 할 수 있습니다.",
+    "export_convos": "대화 내보내기",
+    "export_convos_desc": "모든 채팅을 Markdown으로 다운로드하여 보관 또는 공유합니다."
   },
   "settings_nav": {
     "general": "General",

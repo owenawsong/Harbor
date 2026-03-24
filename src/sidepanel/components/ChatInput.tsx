@@ -33,6 +33,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [enablePlanning, setEnablePlanning] = useState(false)
   const [showPresets, setShowPresets] = useState(false)
+  const [isCorrectionMode, setIsCorrectionMode] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const modelButtonRef = useRef<HTMLDivElement>(null)
@@ -85,14 +86,20 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   const send = useCallback(() => {
     const text = value.trim()
     if ((!text && attachments.length === 0) || !canSend) return
+
+    // Prepend correction marker if in correction mode
+    const messageText = isCorrectionMode ? `[CORRECTION] ${text}` : text
+
     setValue('')
     setAttachments([])
+    setIsCorrectionMode(false) // Exit correction mode after sending
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
-    onSend(text, attachments.length > 0 ? attachments : undefined, {
+
+    onSend(messageText, attachments.length > 0 ? attachments : undefined, {
       enablePlanning: agentMode && enablePlanning,
       chatModeOnly: !agentMode,
     })
-  }, [value, attachments, canSend, onSend, agentMode, enablePlanning])
+  }, [value, attachments, canSend, onSend, agentMode, enablePlanning, isCorrectionMode])
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -181,15 +188,19 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           value={value}
           onChange={onInput}
           onKeyDown={onKeyDown}
-          placeholder={placeholder ?? t('chat.placeholder')}
+          placeholder={
+            isCorrectionMode
+              ? 'Add a correction or clarification...'
+              : placeholder ?? t('chat.placeholder')
+          }
           disabled={disabled}
           rows={1}
           className="flex-1 bg-transparent resize-none outline-none text-sm leading-6 min-h-[24px] max-h-[160px] disabled:opacity-40 text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))]"
         />
       </div>
 
-      {/* Bottom line: Controls - Tighter spacing for small screens */}
-      <div className="flex items-center gap-1 relative">
+      {/* Bottom line: Controls */}
+      <div className="flex items-center gap-2 relative">
         {/* LEFT SIDE: File upload, Agent/Chat, Plan, Correct buttons */}
 
         {/* File upload button */}
@@ -215,24 +226,31 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           onClick={onToggleAgentMode}
           disabled={disabled || isRunning}
           title={agentMode ? t('chat.switch_chat_mode') : t('chat.switch_agent_mode')}
-          className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 disabled:opacity-40"
+          className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border transition-all duration-300 disabled:opacity-40 hover:scale-105 active:scale-95"
           style={{
-            color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-faint))',
-            backgroundColor: agentMode ? 'rgb(var(--harbor-accent-light))' : 'transparent',
+            borderColor: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+            backgroundColor: agentMode ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface-2))',
+            color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text))',
             boxShadow: agentMode ? '0 0 8px rgb(var(--harbor-accent) / 0.3)' : 'none',
             transitionProperty: 'all',
             transitionDuration: '300ms',
           }}
-          title={`${agentMode ? 'Agent' : 'Chat'} Mode`}
         >
           <Zap
-            size={16}
+            size={14}
             style={{
               transform: agentMode ? 'rotate(0deg)' : 'rotate(-20deg)',
               transitionProperty: 'transform',
               transitionDuration: '300ms',
             }}
           />
+          <span style={{
+            opacity: 1,
+            transitionProperty: 'opacity',
+            transitionDuration: '300ms',
+          }}>
+            {agentMode ? t('chat.agent_mode') : t('chat.chat_mode')}
+          </span>
         </button>
 
         {/* Plan Toggle (Agent Mode only) */}
@@ -260,12 +278,16 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
 
         {/* Correction Button */}
         <button
-          onClick={onCorrect}
+          onClick={() => setIsCorrectionMode(!isCorrectionMode)}
           disabled={disabled || isRunning}
-          title="Send correction"
-          className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-accent))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-colors"
+          title="Switch to correction mode"
+          className={`flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 disabled:opacity-40 ${
+            isCorrectionMode
+              ? 'text-[rgb(var(--harbor-accent))] bg-[rgb(var(--harbor-accent-light))]'
+              : 'text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-accent))] hover:bg-[rgb(var(--harbor-surface-2))]'
+          }`}
         >
-          <RefreshCw size={16} />
+          <RefreshCw size={16} style={{ transform: isCorrectionMode ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 300ms' }} />
         </button>
 
         <div className="flex-1" />
