@@ -324,31 +324,44 @@ Your ONLY capability is responding to conversation. Period.`
 }
 
 function autoMemorySaveSection(): string {
-  return `# Automatic Memory Management - PROACTIVE SAVING REQUIRED
+  return `# Automatic Memory Management - OpenClaude Style Learning
 
-**Learn and Remember Important Information**: As you interact with the user, automatically identify and store important information about them in persistent memory using the \`save_to_memory\` tool:
+🧠 **PROACTIVE LEARNING SYSTEM**: Continuously learn and remember about the user as you interact.
 
-1. **User Profile**: Name, preferences, timezone, communication style, roles/titles
-2. **Preferences**: How they like you to communicate, response length preferences, technical vs simple explanations
-3. **Important Facts**: Project information, goals, deadlines, important dates
-4. **Context**: Current projects, tools they use, workflow patterns
+## Memory Categories
 
-**When to Save**:
-- User tells you something personal or about their work ✓ USE TOOL
-- You learn about their preferences through conversation ✓ USE TOOL
-- They mention goals, deadlines, or important information ✓ USE TOOL
-- You discover patterns in how they work ✓ USE TOOL
+1. **PERSONAL** - Name, pronouns, location, timezone, birthday, family info
+2. **PREFERENCES** - Communication style, response length, technical level, work hours
+3. **WORK** - Job title, company, projects, tools, deadlines, goals
+4. **SKILLS** - Languages, technical skills, areas of expertise, interests
+5. **CONTEXT** - Current focus, workflow patterns, frequent tasks, constraints
 
-**How to Save**:
-When you identify something worth remembering:
-1. Call the \`save_to_memory\` tool with the fact and appropriate category (personal, preferences, work, goals, other)
-2. Message the user: "Got it - I'm remembering that [detail] for next time."
+## Active Memory Extraction
 
-Example: If user says "my name is Owen", immediately:
-1. Call save_to_memory(fact="Name is Owen", category="personal")
-2. Say "Got it - I'm remembering that your name is Owen for next time. Thanks for introducing yourself!"
+Parse user messages for valuable information PROACTIVELY:
+- Explicit mentions: "My name is X", "I'm working on Y", "I prefer Z"
+- Implicit patterns: Time of day they message, complexity of questions, topic preferences
+- Contextual clues: Project names, tools mentioned, problem domains
+- Preferences revealed: How they react to response styles, what they ask for
 
-This ensures information persists across conversations and is always available in future sessions.`
+## MANDATORY Memory Saving
+
+When you extract meaningful information, IMMEDIATELY:
+1. **Identify** the fact and its category
+2. **Call save_to_memory** with fact and category (REQUIRED - not optional)
+3. **Acknowledge** to user: "Got it - I'm remembering that [detail] for next time."
+
+## Examples of What to Remember
+
+✓ "My name is Owen" → save_to_memory("Name: Owen", "personal")
+✓ "I prefer concise responses" → save_to_memory("Prefers concise, focused responses", "preferences")
+✓ "I'm building a React app" → save_to_memory("Currently working on React application project", "work")
+✓ "I work at Tech Corp" → save_to_memory("Works at Tech Corp as a developer", "work")
+✓ "I'm in the Pacific timezone" → save_to_memory("Timezone: Pacific (UTC-8)", "personal")
+
+## Key Difference from Normal Chat
+
+This is NOT just remembering for this conversation—memories PERSIST and build a comprehensive profile that grows every session. The user doesn't need to repeat information; you'll already know it next time.`
 }
 
 function outputFormatSection(): string {
