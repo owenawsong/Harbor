@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Zap, ExternalLink, X, Check, Eye, EyeOff } from 'lucide-react'
 import type { ProviderName } from '../../shared/types'
 import { PROVIDER_LABELS } from '../../shared/constants'
@@ -22,6 +23,7 @@ const KEY_LINKS: Partial<Record<ProviderName, string>> = {
 }
 
 export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
+  const { t } = useTranslation()
   const [selectedProvider, setSelectedProvider] = useState<ProviderName | null>(null)
   const [apiKey, setApiKey] = useState('')
   const [showKey, setShowKey] = useState(false)
@@ -51,7 +53,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
             <div className="flex items-center gap-2">
               <Zap size={20} style={{ color: 'rgb(var(--harbor-accent))' }} />
               <h2 className="font-semibold text-base" style={{ color: 'rgb(var(--harbor-text))' }}>
-                Get Started with Harbor
+                {t('quick_setup.get_started')}
               </h2>
             </div>
             <button
@@ -66,7 +68,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
           {/* Content */}
           <div className="p-6 space-y-4">
             <p className="text-sm" style={{ color: 'rgb(var(--harbor-text))' }}>
-              Choose your AI provider to start chatting:
+              {t('quick_setup.choose_provider')}
             </p>
 
             {/* Provider Grid */}
@@ -100,7 +102,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
             </div>
 
             <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-              Don't have an API key? Get one for free from your provider.
+              {t('quick_setup.no_api_key')}
             </p>
           </div>
 
@@ -119,14 +121,14 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
                 background: 'transparent',
               }}
             >
-              Skip
+              {t('quick_setup.skip')}
             </button>
             <button
               disabled
               className="flex-1 px-3 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
               style={{ background: 'rgb(var(--harbor-accent))' }}
             >
-              Continue
+              {t('quick_setup.continue')}
             </button>
           </div>
         </div>
@@ -153,7 +155,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
               {PROVIDER_LABELS[selectedProvider]} API Key
             </h2>
             <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-              Paste your API key below
+              {t('quick_setup.paste_api_key')}
             </p>
           </div>
           <button
@@ -170,7 +172,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
           {/* API Key Input */}
           <div>
             <label className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-              API Key
+              {t('quick_setup.api_key_input')}
             </label>
             <div className="relative mt-1.5">
               <input
@@ -209,12 +211,12 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
               }}
               title="Open API key page in new tab"
             >
-              Get API Key <ExternalLink size={12} />
+              {t('quick_setup.get_api_key')} <ExternalLink size={12} />
             </a>
           )}
 
           <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            Your API key is stored securely in your browser and never shared with third parties.
+            {t('quick_setup.api_key_security')}
           </p>
         </div>
 
@@ -236,7 +238,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
               background: 'transparent',
             }}
           >
-            Back
+            {t('quick_setup.back')}
           </button>
           <button
             onClick={handleSetup}
@@ -244,7 +246,7 @@ export default function QuickSetup({ onSetupComplete, onDismiss }: Props) {
             className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-white disabled:opacity-50 transition-colors focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
             style={{ background: 'rgb(var(--harbor-accent))' }}
           >
-            <Check size={14} /> Set Up
+            <Check size={14} /> {t('quick_setup.set_up')}
           </button>
         </div>
       </div>
