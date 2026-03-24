@@ -7,6 +7,7 @@ import rehypeKatex from 'rehype-katex'
 import { ChevronDown, Brain, Pencil, Check, X, Copy, MoreVertical } from 'lucide-react'
 import 'katex/dist/katex.min.css'
 import type { UIMessage, UIThinkingBlock } from '../hooks/useChat'
+import { useToast } from '../hooks/useToast'
 import ToolCallDisplay from './ToolCallDisplay'
 
 // ─── Thinking Block ───────────────────────────────────────────────────────────
@@ -64,6 +65,7 @@ interface Props {
 
 export default function ChatMessage({ message, onToggleThinking, onEditMessage }: Props) {
   const { t } = useTranslation()
+  const { success } = useToast()
   const isUser = message.role === 'user'
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -106,7 +108,9 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
 
   const handleCopyMessage = () => {
     const text = message.text || ''
-    navigator.clipboard.writeText(text).catch(() => {
+    navigator.clipboard.writeText(text).then(() => {
+      success('Copied to clipboard')
+    }).catch(() => {
       // Fallback if clipboard API fails
     })
   }
@@ -147,17 +151,9 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
                 onClick={handleCopyMessage}
                 className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
                 style={{ color: 'rgb(var(--harbor-text-faint))' }}
-                title={t('common.edit')}
+                title="Copy message"
               >
                 <Copy size={11} />
-              </button>
-              <button
-                onClick={handleSaveToMemory}
-                className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
-                style={{ color: 'rgb(var(--harbor-text-faint))' }}
-                title={t('memory.add')}
-              >
-                <Brain size={11} />
               </button>
               {onEditMessage && (
                 <button
@@ -316,17 +312,9 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
             onClick={handleCopyMessage}
             className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
             style={{ color: 'rgb(var(--harbor-text-faint))' }}
-            title={t('common.edit')}
+            title="Copy message"
           >
             <Copy size={13} />
-          </button>
-          <button
-            onClick={handleSaveToMemory}
-            className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
-            style={{ color: 'rgb(var(--harbor-text-faint))' }}
-            title={t('memory.add')}
-          >
-            <Brain size={13} />
           </button>
         </div>
       )}

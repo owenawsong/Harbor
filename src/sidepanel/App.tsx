@@ -344,13 +344,21 @@ export default function App() {
     )
   }
 
-  // Map fontSize setting to Tailwind text size class
+  // Map fontSize setting to Tailwind text size class and CSS variable
   const fontSizeClass = {
     'xs': 'text-xs',
     'sm': 'text-sm',
     'base': 'text-base',
     'lg': 'text-lg',
     'xl': 'text-xl',
+  }[fontSize]
+
+  const fontSizeCSS = {
+    'xs': '0.75rem',
+    'sm': '0.875rem',
+    'base': '1rem',
+    'lg': '1.125rem',
+    'xl': '1.25rem',
   }[fontSize]
 
   // Map compact mode to spacing class
@@ -360,7 +368,11 @@ export default function App() {
     <ErrorBoundary>
       <div
         className={`flex flex-col h-full ${fontSizeClass}`}
-        style={{ background: 'rgb(var(--harbor-bg))', color: 'rgb(var(--harbor-text))' }}
+        style={{
+          background: 'rgb(var(--harbor-bg))',
+          color: 'rgb(var(--harbor-text))',
+          fontSize: fontSizeCSS,
+        }}
       >
       {/* Onboarding */}
       {view === 'onboarding' && (

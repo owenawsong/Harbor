@@ -183,6 +183,10 @@ function SkillCard({ skill, onSelect, onToggle, onRun }: {
   const Icon = ICON_MAP[skill.icon] ?? Zap
   const catMeta = SKILL_CATEGORIES[skill.category]
 
+  // Translate skill name and description if they are translation keys
+  const skillName = typeof skill.name === 'string' && skill.name.includes('skills.') ? t(skill.name) : skill.name
+  const skillDesc = typeof skill.description === 'string' && skill.description.includes('skills.') ? t(skill.description) : skill.description
+
   return (
     <div
       className="skill-card"
@@ -198,7 +202,7 @@ function SkillCard({ skill, onSelect, onToggle, onRun }: {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>
-              {skill.name}
+              {skillName}
             </span>
             {!skill.isEnabled && (
               <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgb(var(--harbor-border))', color: 'rgb(var(--harbor-text-faint))' }}>
@@ -207,14 +211,14 @@ function SkillCard({ skill, onSelect, onToggle, onRun }: {
             )}
           </div>
           <p className="text-[11px] leading-snug mt-0.5 line-clamp-2" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-            {skill.description}
+            {skillDesc}
           </p>
         </div>
       </div>
 
       <div className="flex items-center justify-between mt-2.5" onClick={(e) => e.stopPropagation()}>
         <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${catMeta?.color ?? ''}`}>
-          {catMeta?.label}
+          {catMeta?.label && typeof catMeta.label === 'string' && catMeta.label.includes('skills.') ? t(catMeta.label) : catMeta?.label}
         </span>
         <div className="flex items-center gap-1">
           <button
@@ -408,6 +412,7 @@ function SkillsCategoryBar({
   categoriesWithCounts: any[]
   skillsLength: number
 }) {
+  const { t } = useTranslation()
   const tabsRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
@@ -462,13 +467,14 @@ function SkillsCategoryBar({
         {categoriesWithCounts.map((cat) => {
           const meta = SKILL_CATEGORIES[cat]
           const count = skillsLength // This will be updated by parent with actual count
+          const catLabel = meta?.label && typeof meta.label === 'string' && meta.label.includes('skills.') ? t(meta.label) : meta?.label
           return (
             <button
               key={cat}
               onClick={() => onCategoryChange(cat)}
               className={`memory-cat-chip flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
             >
-              {meta.label}
+              {catLabel}
             </button>
           )
         })}

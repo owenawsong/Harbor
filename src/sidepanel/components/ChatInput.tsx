@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown } from 'lucide-react'
+import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown, Mic, MicOff } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
+import { useVoiceInput } from '../hooks/useVoiceInput'
 import ModelPresets from './ModelPresets'
 
 interface Attachment {
@@ -34,6 +35,27 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const modelButtonRef = useRef<HTMLDivElement>(null)
+
+  // Voice input
+  const { isListening, isSupported: isVoiceSupported, interimTranscript, startListening, stopListening } = useVoiceInput({
+    onTranscribed: (text) => {
+      if (text.trim()) {
+        setValue((prev) => (prev ? prev + ' ' + text : text))
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto'
+          textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + 'px'
+        }
+      }
+    },
+  })
+
+  const handleVoiceToggle = useCallback(() => {
+    if (isListening) {
+      stopListening()
+    } else {
+      startListening()
+    }
+  }, [isListening, startListening, stopListening])
 
   useImperativeHandle(ref, () => ({
     focus: () => textareaRef.current?.focus(),
@@ -173,10 +195,21 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
             onClick={() => setEnablePlanning(!enablePlanning)}
             disabled={disabled || isRunning}
             title={enablePlanning ? t('chat.planning_enabled') : t('chat.enable_planning')}
-            className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-colors"
-            style={enablePlanning ? { color: 'rgb(34, 197, 94)' } : {}}
+            className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-all duration-300 hover:scale-110 active:scale-95"
+            style={{
+              color: enablePlanning ? 'rgb(34, 197, 94)' : 'rgb(var(--harbor-text-faint))',
+              boxShadow: enablePlanning ? '0 0 8px rgb(34, 197, 94 / 0.3)' : 'none',
+              transitionProperty: 'all',
+              transitionDuration: '300ms',
+              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
           >
-            <CheckCircle2 size={16} />
+            <CheckCircle2 size={16} style={{
+              transform: enablePlanning ? 'scale(1.2) rotate(0deg)' : 'scale(1) rotate(0deg)',
+              transitionProperty: 'transform',
+              transitionDuration: '300ms',
+              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }} />
           </button>
         )}
 
@@ -185,10 +218,32 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           onClick={onToggleAgentMode}
           disabled={disabled || isRunning}
           title={agentMode ? t('chat.switch_chat_mode') : t('chat.switch_agent_mode')}
-          className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-[rgb(var(--harbor-text))] hover:bg-[rgb(var(--harbor-surface))] disabled:opacity-40 transition-colors"
+          className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-[rgb(var(--harbor-text))] hover:bg-[rgb(var(--harbor-surface))] disabled:opacity-40 transition-all duration-300 hover:scale-105 active:scale-95"
+          style={{
+            borderColor: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+            boxShadow: agentMode ? '0 0 0 2px rgb(var(--harbor-accent) / 0.1)' : 'none',
+            transitionProperty: 'all',
+            transitionDuration: '300ms',
+            transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
         >
-          <Zap size={14} />
-          <span>{agentMode ? t('chat.agent_mode') : t('chat.chat_mode')}</span>
+          <Zap
+            size={14}
+            style={{
+              color: agentMode ? 'rgb(var(--harbor-accent))' : 'currentColor',
+              transform: agentMode ? 'rotate(0deg)' : 'rotate(-20deg)',
+              transitionProperty: 'transform, color',
+              transitionDuration: '300ms',
+              transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+            }}
+          />
+          <span style={{
+            opacity: 1,
+            transitionProperty: 'opacity',
+            transitionDuration: '300ms',
+          }}>
+            {agentMode ? t('chat.agent_mode') : t('chat.chat_mode')}
+          </span>
         </button>
 
         <div className="flex-1" />
@@ -222,7 +277,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           </div>
         )}
 
-        {/* Send / Stop button */}
+        {/* Send / Stop / Voice button */}
         {isRunning ? (
           <button
             onClick={onStop}
@@ -231,17 +286,29 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           >
             <Square size={14} className="text-white fill-white" />
           </button>
-        ) : (
+        ) : canSend ? (
           <button
             onClick={send}
-            disabled={!canSend}
             title={t('chat.send')}
-            className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed transition-all ${canSend ? 'shadow-lg shadow-harbor-600/60 animate-pulse' : ''}`}
-            style={canSend ? { animationDuration: '3s' } : {}}
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 transition-all shadow-lg shadow-harbor-600/60 animate-pulse"
+            style={{ animationDuration: '3s' }}
           >
             <ArrowUp size={16} className="text-white" />
           </button>
-        )}
+        ) : isVoiceSupported ? (
+          <button
+            onClick={handleVoiceToggle}
+            disabled={disabled}
+            title={isListening ? 'Stop listening' : 'Start voice input'}
+            className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+              isListening
+                ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/60 animate-pulse'
+                : 'bg-harbor-600 hover:bg-harbor-700'
+            }`}
+          >
+            {isListening ? <Mic size={16} className="text-white" /> : <Mic size={16} className="text-white opacity-50" />}
+          </button>
+        ) : null}
       </div>
     </div>
   )
