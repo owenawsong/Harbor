@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Send, X, AlertCircle } from 'lucide-react'
 
 interface AddInformationDialogProps {
@@ -12,6 +13,7 @@ export default function AddInformationDialog({
   onCancel,
   currentStep = 'browsing',
 }: AddInformationDialogProps) {
+  const { t } = useTranslation()
   const [info, setInfo] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -74,7 +76,7 @@ export default function AddInformationDialog({
             <textarea
               value={info}
               onChange={(e) => setInfo(e.target.value)}
-              placeholder="E.g., 'The password is 12345' or 'Skip this step, try logging in instead'"
+              placeholder={t('add_information_placeholder')}
               className="w-full px-3 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] text-xs text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))] resize-none focus:border-[rgb(var(--harbor-accent))] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--harbor-accent) / 0.2)]"
               rows={4}
               disabled={isSubmitting}
@@ -91,7 +93,7 @@ export default function AddInformationDialog({
             className="flex-1 px-4 py-2 rounded-lg border border-[rgb(var(--harbor-border))] text-xs font-medium hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-50 transition"
             style={{ color: 'rgb(var(--harbor-text-muted))' }}
           >
-            Cancel
+            {t('common.close')}
           </button>
           <button
             onClick={handleSubmit}
