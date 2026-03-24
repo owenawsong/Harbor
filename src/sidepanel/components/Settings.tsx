@@ -227,11 +227,13 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         return <SectionGeneral
           provider={provider} model={model}
           apiKey={apiKey} baseUrl={baseUrl} enableMemory={enableMemory}
+          language={language}
           showKey={showKey} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
           onProviderChange={handleProviderChange}
           onModelChange={handleModelChange}
           onApiKeyChange={setApiKey} onBaseUrlChange={setBaseUrl}
           onEnableMemoryChange={setEnableMemory}
+          onLanguageChange={setLanguage}
           onShowKeyToggle={() => setShowKey((v) => !v)}
           showPresets={showPresets} setShowPresets={setShowPresets}
           currentSettings={{
@@ -246,9 +248,9 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
       case 'identity':
         return <SectionIdentity
           userName={userName} tone={tone} verbosity={verbosity}
-          language={language} useEmoji={useEmoji} customPersonality={customPersonality}
+          useEmoji={useEmoji} customPersonality={customPersonality}
           onUserNameChange={setUserName} onToneChange={setTone}
-          onVerbosityChange={setVerbosity} onLanguageChange={setLanguage}
+          onVerbosityChange={setVerbosity}
           onUseEmojiChange={setUseEmoji} onCustomPersonalityChange={setCustomPersonality}
         />
       case 'memory':
@@ -395,10 +397,10 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
 // ─── Section: General ─────────────────────────────────────────────────────────
 
 function SectionGeneral({
-  provider, model, apiKey, baseUrl, enableMemory, showKey,
+  provider, model, apiKey, baseUrl, enableMemory, language, showKey,
   needsKey, needsUrl, keyLink,
   onProviderChange, onModelChange, onApiKeyChange, onBaseUrlChange,
-  onEnableMemoryChange, onShowKeyToggle,
+  onEnableMemoryChange, onLanguageChange, onShowKeyToggle,
   showPresets, setShowPresets, currentSettings, onApplyPreset,
 }: any) {
   const { t } = useTranslation()
@@ -502,6 +504,19 @@ function SectionGeneral({
         value={enableMemory}
         onChange={onEnableMemoryChange}
       />
+
+      {/* Language */}
+      <FormField label={t('settings_extended.language')}>
+        <select
+          value={language}
+          onChange={(e) => onLanguageChange(e.target.value)}
+          className="harbor-input text-xs"
+        >
+          {LANGUAGES.map((l) => (
+            <option key={l.code} value={l.code}>{l.label}</option>
+          ))}
+        </select>
+      </FormField>
 
       {/* Save / Manage Model Presets Button */}
       <div className="flex items-center gap-2 mt-4 pt-4 border-t border-[rgb(var(--harbor-border))]">
@@ -721,8 +736,8 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
 
 // ─── Section: Identity ────────────────────────────────────────────────────────
 
-function SectionIdentity({ userName, tone, verbosity, language, useEmoji, customPersonality,
-  onUserNameChange, onToneChange, onVerbosityChange, onLanguageChange, onUseEmojiChange, onCustomPersonalityChange }: any) {
+function SectionIdentity({ userName, tone, verbosity, useEmoji, customPersonality,
+  onUserNameChange, onToneChange, onVerbosityChange, onUseEmojiChange, onCustomPersonalityChange }: any) {
   const { t } = useTranslation()
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
@@ -790,21 +805,6 @@ function SectionIdentity({ userName, tone, verbosity, language, useEmoji, custom
             </button>
           ))}
         </div>
-      </FormField>
-
-      <FormField label="Language">
-        <select
-          value={language}
-          onChange={(e) => {
-            console.log('[SectionIdentity] Dropdown changed to:', e.target.value)
-            onLanguageChange(e.target.value)
-          }}
-          className="harbor-input text-xs"
-        >
-          {LANGUAGES.map((l) => (
-            <option key={l.code} value={l.code}>{l.label}</option>
-          ))}
-        </select>
       </FormField>
 
       <ToggleRow

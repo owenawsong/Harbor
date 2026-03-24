@@ -58,8 +58,33 @@ function ToastItem({
   onDismiss: () => void
 }) {
   const [isExiting, setIsExiting] = useState(false)
-  const colors = colorMap[message.type]
   const duration = message.duration ?? 4000
+
+  // Harbor design token colors
+  const toastColors = {
+    success: {
+      bg: 'rgb(34 197 94 / 0.95)',
+      text: '#fff',
+      icon: '#fff',
+    },
+    error: {
+      bg: 'rgb(239 68 68 / 0.95)',
+      text: '#fff',
+      icon: '#fff',
+    },
+    info: {
+      bg: 'rgb(59 130 246 / 0.95)',
+      text: '#fff',
+      icon: '#fff',
+    },
+    warning: {
+      bg: 'rgb(251 146 60 / 0.95)',
+      text: '#fff',
+      icon: '#fff',
+    },
+  }
+
+  const colors = toastColors[message.type]
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -72,16 +97,21 @@ function ToastItem({
 
   return (
     <div
-      className={`flex items-start gap-2.5 px-4 py-3 rounded-lg border ${colors.bg} ${colors.border} ${colors.text} animate-fade-up ${isExiting ? 'animate-fade-out opacity-0' : ''} transition-opacity shadow-lg`}
+      className={`flex items-center gap-3 px-5 py-3.5 rounded-xl border-0 animate-pop-in ${isExiting ? 'animate-fade-out opacity-0' : ''} transition-all duration-200 shadow-xl`}
       style={{
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        background: colors.bg,
+        color: colors.text,
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset',
+        backdropFilter: 'blur(12px)',
       }}
     >
-      <div className={`flex-shrink-0 mt-0.5 ${colors.icon}`}>{iconMap[message.type]}</div>
+      <div className="flex-shrink-0 text-base leading-none" style={{ color: colors.icon }}>
+        {iconMap[message.type]}
+      </div>
       <div className="flex-1 min-w-0">
-        <p className="font-medium text-sm">{message.title}</p>
+        <p className="font-semibold text-sm leading-tight">{message.title}</p>
         {message.description && (
-          <p className="text-xs mt-0.5 opacity-90">{message.description}</p>
+          <p className="text-xs mt-1 opacity-90">{message.description}</p>
         )}
       </div>
       <button
@@ -89,10 +119,11 @@ function ToastItem({
           setIsExiting(true)
           setTimeout(onDismiss, 200)
         }}
-        className={`flex-shrink-0 ${colors.icon} hover:opacity-70 transition-opacity focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-current rounded`}
+        className="flex-shrink-0 hover:opacity-70 transition-opacity focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-current rounded p-1"
+        style={{ color: colors.icon }}
         title="Dismiss"
       >
-        <X size={14} />
+        <X size={16} />
       </button>
     </div>
   )
