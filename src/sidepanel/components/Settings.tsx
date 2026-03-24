@@ -14,9 +14,9 @@ import ModelPresets from './ModelPresets'
 
 interface Props {
   settings: AgentSettings
-  theme: 'light' | 'dark' | 'system'
+  theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
   identity?: IdentitySettings
-  onSave: (settings: AgentSettings, theme: 'light' | 'dark' | 'system', identity?: IdentitySettings) => void
+  onSave: (settings: AgentSettings, theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean', identity?: IdentitySettings) => void
   onBack: () => void
 }
 
@@ -24,7 +24,6 @@ type SettingsSection =
   | 'provider'
   | 'appearance'
   | 'identity'
-  | 'memory'
   | 'privacy'
   | 'help'
   | 'about'
@@ -40,9 +39,13 @@ const KEY_LINKS: Partial<Record<ProviderName, string>> = {
 }
 
 const getThemeOptions = (t: any) => [
-  { value: 'light' as const,  label: t('settings_extended.theme_light') },
-  { value: 'dark' as const,   label: t('settings_extended.theme_dark') },
-  { value: 'system' as const, label: t('settings_extended.theme_auto') },
+  { value: 'system' as const,    label: t('settings_extended.theme_auto') },
+  { value: 'sunlight' as const,  label: t('settings_extended.theme_sunlight') },
+  { value: 'moonlight' as const, label: t('settings_extended.theme_moonlight') },
+  { value: 'forest' as const,    label: t('settings_extended.theme_forest') },
+  { value: 'nebula' as const,    label: t('settings_extended.theme_nebula') },
+  { value: 'sunset' as const,    label: t('settings_extended.theme_sunset') },
+  { value: 'ocean' as const,     label: t('settings_extended.theme_ocean') },
 ]
 
 const getTones = (t: any): { id: ToneStyle; label: string }[] => [
@@ -77,7 +80,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     { id: 'provider',   label: t('settings_extended.general_section'),    icon: Cpu },
     { id: 'appearance', label: t('settings_extended.appearance_title'),  icon: Palette },
     { id: 'identity',   label: t('settings_extended.identity_title'),    icon: User },
-    { id: 'memory',     label: t('settings_extended.memory_title'),      icon: Brain },
     { id: 'privacy',    label: t('settings_extended.privacy_title'),     icon: Shield },
     { id: 'help',       label: t('settings_extended.help_title'),        icon: HelpCircle },
     { id: 'about',      label: t('settings_extended.about_title'),       icon: Info },
@@ -255,8 +257,6 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           onVerbosityChange={setVerbosity}
           onUseEmojiChange={setUseEmoji} onCustomPersonalityChange={setCustomPersonality}
         />
-      case 'memory':
-        return <SectionMemory enableMemory={enableMemory} onEnableMemoryChange={setEnableMemory} />
       case 'privacy':
         return <SectionPrivacy />
       case 'help':
@@ -314,7 +314,6 @@ function SettingsTabBar({ activeSection, onSectionChange, navItems }: {
       provider: t('settings.general'),
       appearance: t('settings.appearance'),
       identity: t('settings.identity'),
-      memory: t('settings.memory'),
       privacy: t('settings.privacy'),
       help: t('settings.help'),
       about: t('settings.about'),
@@ -407,6 +406,7 @@ function SectionGeneral({
   showPresets, setShowPresets, currentSettings, onApplyPreset,
 }: any) {
   const { t } = useTranslation()
+  const [showClearMemoryConfirm, setShowClearMemoryConfirm] = useState(false)
   return (
     <div className="px-4 py-4 flex flex-col gap-4 relative">
       <SectionHeader title={t('settings_extended.general_section')} />
@@ -542,6 +542,88 @@ function SectionGeneral({
           onClose={() => setShowPresets(false)}
         />
       )}
+
+      {/* Memory Management Section */}
+      <div className="mt-4 pt-4 border-t border-[rgb(var(--harbor-border))] flex flex-col gap-3">
+        <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>
+          {t('settings_labels.memory_section')}
+        </p>
+
+        <div
+          className="flex items-center justify-between px-3 py-2.5 rounded-xl border"
+          style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
+        >
+          <div>
+            <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>
+              {t('settings_labels.enable_memory')}
+            </p>
+            <p className="text-[10px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+              {t('settings_extended.persist_context')}
+            </p>
+          </div>
+          <button
+            onClick={() => onEnableMemoryChange(!enableMemory)}
+            className="ml-2 flex-shrink-0 transition-colors"
+            style={{
+              background: enableMemory ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-surface-2))',
+              width: '40px',
+              height: '24px',
+              borderRadius: '12px',
+              border: 'none',
+              cursor: 'pointer',
+              position: 'relative',
+            }}
+            title={enableMemory ? t('settings_labels.enabled') : t('settings_labels.disabled')}
+          >
+            <div
+              style={{
+                position: 'absolute',
+                width: '20px',
+                height: '20px',
+                borderRadius: '10px',
+                background: 'white',
+                top: '2px',
+                left: enableMemory ? '18px' : '2px',
+                transition: 'left 0.2s',
+              }}
+            />
+          </button>
+        </div>
+
+        <button
+          onClick={() => setShowClearMemoryConfirm(true)}
+          className="w-full px-3 py-2.5 rounded-xl border text-xs font-medium transition"
+          style={{
+            color: '#ef4444',
+            borderColor: 'rgb(239 68 68 / 0.3)',
+            background: 'rgba(239, 68, 68, 0.05)',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'rgba(239, 68, 68, 0.05)'
+          }}
+        >
+          {t('settings_labels.clear_all')} {t('settings_labels.memory_section')}
+        </button>
+
+        {showClearMemoryConfirm && (
+          <ConfirmDialog
+            title={t('settings_labels.clear_all_memories')}
+            description={t('settings_labels.clear_all_memories') + " will be permanently deleted. This cannot be undone."}
+            confirmText={t('settings_labels.clear_all')}
+            isDangerous
+            onConfirm={() => {
+              chrome.storage.local.remove('harbor_user_profile', () => {
+                setShowClearMemoryConfirm(false)
+              })
+            }}
+            onCancel={() => setShowClearMemoryConfirm(false)}
+          />
+        )}
+      </div>
     </div>
   )
 }
@@ -857,69 +939,6 @@ function SectionModels({ provider, model, customModel, apiKey, baseUrl, showKey,
 }
 
 // ─── Section: Memory ──────────────────────────────────────────────────────────
-
-function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: boolean; onEnableMemoryChange: (v: boolean) => void }) {
-  const { t } = useTranslation()
-  const [memoryCount, setMemoryCount] = useState(0)
-  const [showClearConfirm, setShowClearConfirm] = useState(false)
-
-  useEffect(() => {
-    chrome.storage.local.get('harbor_memory_entries', (data) => {
-      setMemoryCount((data.harbor_memory_entries as unknown[])?.length ?? 0)
-    })
-  }, [])
-
-  const clearMemory = () => {
-    chrome.storage.local.remove('harbor_memory_entries', () => {
-      setMemoryCount(0)
-      setShowClearConfirm(false)
-    })
-  }
-
-  return (
-    <div className="px-4 py-4 flex flex-col gap-4">
-      <SectionHeader title={t('settings_labels.memory_section')} description={t('settings_labels.control_how_harbor_remembers')} />
-
-      <ToggleRow
-        label={t('settings_labels.enable_memory')}
-        description={t('settings_labels.remember_context')}
-        value={enableMemory}
-        onChange={onEnableMemoryChange}
-      />
-
-      <div
-        className="flex items-center justify-between px-3 py-3 rounded-xl border"
-        style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
-      >
-        <div>
-          <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{t('settings_labels.stored_memories')}</p>
-          <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            {memoryCount} entr{memoryCount === 1 ? 'y' : 'ies'}
-          </p>
-        </div>
-        {memoryCount > 0 && (
-          <button
-            onClick={() => setShowClearConfirm(true)}
-            className="text-xs px-2.5 py-1 rounded-lg"
-            style={{ color: '#ef4444', border: '1px solid rgb(239 68 68 / 0.3)' }}
-          >
-            {t('settings_labels.clear_all')}
-          </button>
-        )}
-      </div>
-      {showClearConfirm && (
-        <ConfirmDialog
-          title={t('settings_labels.clear_all_memories')}
-          description={t('settings_labels.clear_all_memories') + " will be permanently deleted. This cannot be undone."}
-          confirmText={t('settings_labels.clear_all')}
-          isDangerous
-          onConfirm={clearMemory}
-          onCancel={() => setShowClearConfirm(false)}
-        />
-      )}
-    </div>
-  )
-}
 
 // ─── Section: Notifications ───────────────────────────────────────────────────
 

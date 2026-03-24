@@ -18,7 +18,7 @@ export default function Onboarding({ onComplete }: Props) {
   const [userName, setUserName] = useState('')
   const [useCases, setUseCases] = useState<string[]>([])
   const [tone, setTone] = useState<ToneStyle>('friendly')
-  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system')
+  const [theme, setTheme] = useState<'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'>('system')
   const [language, setLanguage] = useState(i18n.language || 'en')
 
   const USE_CASES = [
@@ -41,9 +41,12 @@ export default function Onboarding({ onComplete }: Props) {
   ]
 
   const THEMES = [
-    { id: 'light' as const, label: t('themes.light'), description: t('themes.light_desc') },
-    { id: 'dark' as const, label: t('themes.dark'), description: t('themes.dark_desc') },
-    { id: 'system' as const, label: t('themes.auto'), description: t('themes.auto_desc') },
+    { id: 'sunlight' as const,  label: t('themes.sunlight'), description: t('themes.sunlight_desc') },
+    { id: 'moonlight' as const, label: t('themes.moonlight'), description: t('themes.moonlight_desc') },
+    { id: 'forest' as const,    label: t('themes.forest'), description: t('themes.forest_desc') },
+    { id: 'nebula' as const,    label: t('themes.nebula'), description: t('themes.nebula_desc') },
+    { id: 'sunset' as const,    label: t('themes.sunset'), description: t('themes.sunset_desc') },
+    { id: 'ocean' as const,     label: t('themes.ocean'), description: t('themes.ocean_desc') },
   ]
 
   const LANGUAGES = [
@@ -449,7 +452,14 @@ function StepTheme({ selected, onSelect, themes, t }: any) {
               <div
                 className="w-10 h-7 rounded-lg border"
                 style={{
-                  background: theme.id === 'light' ? '#f9f8f4' : theme.id === 'dark' ? '#07070e' : 'linear-gradient(135deg, #f9f8f4 50%, #07070e 50%)',
+                  background:
+                    theme.id === 'sunlight' ? '#f9f8f4' :
+                    theme.id === 'moonlight' ? '#07070e' :
+                    theme.id === 'forest' ? '#1a3a2e' :
+                    theme.id === 'nebula' ? '#1a1a2e' :
+                    theme.id === 'sunset' ? '#2d1810' :
+                    theme.id === 'ocean' ? '#0f2b3e' :
+                    'linear-gradient(135deg, #f9f8f4 50%, #07070e 50%)',
                   borderColor: 'rgb(var(--harbor-border))',
                 }}
               />

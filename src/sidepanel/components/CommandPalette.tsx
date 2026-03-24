@@ -24,7 +24,7 @@ interface Props {
   onOpenMemory: () => void
   onOpenSkills: () => void
   onOpenDashboard: () => void
-  onSetTheme: (theme: 'light' | 'dark' | 'system') => void
+  onSetTheme: (theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean') => void
   onSendMessage?: (text: string) => void
 }
 
@@ -90,18 +90,46 @@ export default function CommandPalette({
       action: () => { onOpenDashboard(); onClose() },
     },
     {
-      id: 'theme-dark',
-      label: t('command_palette.dark_mode'),
-      icon: Moon,
-      keywords: ['dark', 'theme', 'night', 'appearance'],
-      action: () => { onSetTheme('dark'); onClose() },
+      id: 'theme-sunlight',
+      label: t('command_palette.theme_sunlight'),
+      icon: Sun,
+      keywords: ['sunlight', 'light', 'theme', 'day', 'warm', 'appearance'],
+      action: () => { onSetTheme('sunlight'); onClose() },
     },
     {
-      id: 'theme-light',
-      label: t('command_palette.light_mode'),
+      id: 'theme-moonlight',
+      label: t('command_palette.theme_moonlight'),
+      icon: Moon,
+      keywords: ['moonlight', 'dark', 'theme', 'night', 'cool', 'appearance'],
+      action: () => { onSetTheme('moonlight'); onClose() },
+    },
+    {
+      id: 'theme-forest',
+      label: t('command_palette.theme_forest'),
+      icon: Globe,
+      keywords: ['forest', 'green', 'theme', 'nature', 'appearance'],
+      action: () => { onSetTheme('forest'); onClose() },
+    },
+    {
+      id: 'theme-nebula',
+      label: t('command_palette.theme_nebula'),
+      icon: Zap,
+      keywords: ['nebula', 'purple', 'space', 'theme', 'appearance'],
+      action: () => { onSetTheme('nebula'); onClose() },
+    },
+    {
+      id: 'theme-sunset',
+      label: t('command_palette.theme_sunset'),
       icon: Sun,
-      keywords: ['light', 'theme', 'day', 'appearance'],
-      action: () => { onSetTheme('light'); onClose() },
+      keywords: ['sunset', 'orange', 'warm', 'theme', 'appearance'],
+      action: () => { onSetTheme('sunset'); onClose() },
+    },
+    {
+      id: 'theme-ocean',
+      label: t('command_palette.theme_ocean'),
+      icon: Globe,
+      keywords: ['ocean', 'blue', 'cyan', 'teal', 'theme', 'appearance'],
+      action: () => { onSetTheme('ocean'); onClose() },
     },
     {
       id: 'theme-system',

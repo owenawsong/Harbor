@@ -8,7 +8,7 @@
 /* ─── Design Tokens ────────────────────────────────────────────────────────── */
 
 @layer base {
-  /* Light mode — warm cream */
+  /* SUNLIGHT theme — bright, warm (renamed from light) */
   :root {
     --harbor-bg:           249 248 244;   /* cream-100 */
     --harbor-surface:      255 255 255;   /* pure white */
@@ -26,7 +26,25 @@
     --harbor-navy:         26  26  46;    /* navy dark */
   }
 
-  /* Dark mode — deep navy */
+  /* MOONLIGHT theme — dark, cool blue (renamed from dark) */
+  .moonlight {
+    --harbor-bg:             7   7  14;   /* navy-900 */
+    --harbor-surface:       13  13  26;   /* navy-800 */
+    --harbor-surface-2:     18  18  35;   /* slightly lighter */
+    --harbor-surface-3:     24  24  45;   /* card */
+    --harbor-border:        38  38  64;   /* subtle border */
+    --harbor-border-2:      55  55  88;   /* more visible */
+    --harbor-text:         236 233 226;   /* cream-200 */
+    --harbor-text-muted:   160 157 152;   /* medium */
+    --harbor-text-faint:   100  98  95;   /* faint */
+    --harbor-accent:       106 180 204;   /* harbor-400 lighter in dark */
+    --harbor-accent-hover: 127 197 218;   /* even lighter */
+    --harbor-accent-light:  18  45  58;   /* dark teal tint */
+    --harbor-glow:    106 180 204;        /* for glow effects */
+    --harbor-navy:           7   7  14;
+  }
+
+  /* Legacy .dark support for backwards compatibility */
   .dark {
     --harbor-bg:             7   7  14;   /* navy-900 */
     --harbor-surface:       13  13  26;   /* navy-800 */
@@ -42,6 +60,78 @@
     --harbor-accent-light:  18  45  58;   /* dark teal tint */
     --harbor-glow:    106 180 204;        /* for glow effects */
     --harbor-navy:           7   7  14;
+  }
+
+  /* FOREST theme — green tones, nature-inspired */
+  .forest {
+    --harbor-bg:            26  58  46;   /* deep forest green */
+    --harbor-surface:       32  68  56;   /* darker forest */
+    --harbor-surface-2:     38  78  66;   /* slightly lighter */
+    --harbor-surface-3:     45  88  75;   /* card background */
+    --harbor-border:        62 108  90;   /* green-tinted border */
+    --harbor-border-2:      85 128 110;   /* more visible border */
+    --harbor-text:         235 242 238;   /* pale cream text */
+    --harbor-text-muted:   165 175 165;   /* muted green-tone */
+    --harbor-text-faint:   115 125 115;   /* faint text */
+    --harbor-accent:       134 194 170;   /* sage green accent */
+    --harbor-accent-hover: 155 210 190;   /* lighter sage */
+    --harbor-accent-light:  45  78  65;   /* dark green tint */
+    --harbor-glow:    134 194 170;        /* for glow effects */
+    --harbor-navy:          26  58  46;
+  }
+
+  /* NEBULA theme — purple/blue tones, space-inspired */
+  .nebula {
+    --harbor-bg:            26  26  46;   /* deep purple-blue */
+    --harbor-surface:       35  35  60;   /* slightly lighter */
+    --harbor-surface-2:     42  42  72;   /* surface variant */
+    --harbor-surface-3:     50  50  85;   /* card background */
+    --harbor-border:        70  70 110;   /* purple-tinted border */
+    --harbor-border-2:      95  95 140;   /* more visible border */
+    --harbor-text:         230 225 245;   /* pale purple-white text */
+    --harbor-text-muted:   155 150 180;   /* muted purple tone */
+    --harbor-text-faint:   110 105 140;   /* faint text */
+    --harbor-accent:       186 150 230;   /* vibrant purple */
+    --harbor-accent-hover: 205 175 245;   /* lighter purple */
+    --harbor-accent-light:  60  50 100;   /* dark purple tint */
+    --harbor-glow:    186 150 230;        /* for glow effects */
+    --harbor-navy:          26  26  46;
+  }
+
+  /* SUNSET theme — orange/warm red tones */
+  .sunset {
+    --harbor-bg:            45  24  16;   /* dark orange-brown */
+    --harbor-surface:       58  32  22;   /* darker orange-brown */
+    --harbor-surface-2:     70  40  28;   /* slightly lighter */
+    --harbor-surface-3:     82  48  35;   /* card background */
+    --harbor-border:       105  65  45;   /* orange-red border */
+    --harbor-border-2:     135  85  60;   /* more visible border */
+    --harbor-text:         248 235 220;   /* warm cream text */
+    --harbor-text-muted:   175 145 120;   /* muted orange-brown */
+    --harbor-text-faint:   130 105  85;   /* faint text */
+    --harbor-accent:       255 140  60;   /* vibrant sunset orange */
+    --harbor-accent-hover: 255 165  85;   /* lighter orange */
+    --harbor-accent-light:  92  50  35;   /* dark orange tint */
+    --harbor-glow:    255 140  60;        /* for glow effects */
+    --harbor-navy:          45  24  16;
+  }
+
+  /* OCEAN theme — blue/teal tones */
+  .ocean {
+    --harbor-bg:            15  43  62;   /* deep ocean blue */
+    --harbor-surface:       22  55  78;   /* darker ocean */
+    --harbor-surface-2:     28  70  95;   /* slightly lighter */
+    --harbor-surface-3:     35  85 115;   /* card background */
+    --harbor-border:        52 110 155;   /* ocean blue border */
+    --harbor-border-2:      75 140 190;   /* more visible border */
+    --harbor-text:         220 240 255;   /* pale blue-white text */
+    --harbor-text-muted:   140 170 200;   /* muted ocean tone */
+    --harbor-text-faint:    95 135 175;   /* faint text */
+    --harbor-accent:       100 200 255;   /* bright cyan-blue */
+    --harbor-accent-hover: 150 220 255;   /* lighter cyan */
+    --harbor-accent-light:  25  60  95;   /* dark ocean tint */
+    --harbor-glow:    100 200 255;        /* for glow effects */
+    --harbor-navy:          15  43  62;
   }
 
   *, *::before, *::after {
