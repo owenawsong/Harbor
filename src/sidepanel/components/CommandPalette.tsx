@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Search, MessageSquare, Settings, Clock, Brain, Zap, LayoutDashboard,
   Plus, Moon, Sun, Monitor, Globe, ArrowRight,
@@ -31,6 +32,7 @@ export default function CommandPalette({
   isOpen, onClose, onNewChat, onOpenSettings, onOpenHistory,
   onOpenMemory, onOpenSkills, onOpenDashboard, onSetTheme, onSendMessage,
 }: Props) {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [focusedIndex, setFocusedIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -39,8 +41,8 @@ export default function CommandPalette({
   const ACTIONS: PaletteAction[] = [
     {
       id: 'new-chat',
-      label: 'New conversation',
-      description: 'Start a fresh chat',
+      label: t('command_palette.new_conversation'),
+      description: t('command_palette.new_conversation_desc'),
       icon: Plus,
       shortcut: '⌘N',
       keywords: ['new', 'chat', 'conversation', 'fresh', 'clear'],
@@ -48,8 +50,8 @@ export default function CommandPalette({
     },
     {
       id: 'settings',
-      label: 'Open Settings',
-      description: 'Configure Harbor',
+      label: t('command_palette.open_settings'),
+      description: t('command_palette.open_settings_desc'),
       icon: Settings,
       shortcut: '⌘,',
       keywords: ['settings', 'config', 'preferences', 'api', 'key'],
@@ -57,60 +59,60 @@ export default function CommandPalette({
     },
     {
       id: 'history',
-      label: 'Conversation History',
-      description: 'Browse past conversations',
+      label: t('command_palette.conversation_history'),
+      description: t('command_palette.conversation_history_desc'),
       icon: Clock,
       keywords: ['history', 'past', 'conversations', 'sessions'],
       action: () => { onOpenHistory(); onClose() },
     },
     {
       id: 'memory',
-      label: 'Memory Panel',
-      description: 'View and manage Harbor\'s memory',
+      label: t('command_palette.memory_panel'),
+      description: t('command_palette.memory_panel_desc'),
       icon: Brain,
       keywords: ['memory', 'remember', 'store', 'context'],
       action: () => { onOpenMemory(); onClose() },
     },
     {
       id: 'skills',
-      label: 'Skills Gallery',
-      description: 'Browse and manage skills',
+      label: t('command_palette.skills_gallery'),
+      description: t('command_palette.skills_gallery_desc'),
       icon: Zap,
       keywords: ['skills', 'gallery', 'automation', 'tools'],
       action: () => { onOpenSkills(); onClose() },
     },
     {
       id: 'dashboard',
-      label: 'Dashboard',
-      description: 'Quick overview and shortcuts',
+      label: t('command_palette.dashboard'),
+      description: t('command_palette.dashboard_desc'),
       icon: LayoutDashboard,
       keywords: ['dashboard', 'home', 'overview'],
       action: () => { onOpenDashboard(); onClose() },
     },
     {
       id: 'theme-dark',
-      label: 'Switch to Dark mode',
+      label: t('command_palette.dark_mode'),
       icon: Moon,
       keywords: ['dark', 'theme', 'night', 'appearance'],
       action: () => { onSetTheme('dark'); onClose() },
     },
     {
       id: 'theme-light',
-      label: 'Switch to Light mode',
+      label: t('command_palette.light_mode'),
       icon: Sun,
       keywords: ['light', 'theme', 'day', 'appearance'],
       action: () => { onSetTheme('light'); onClose() },
     },
     {
       id: 'theme-system',
-      label: 'Use System theme',
+      label: t('command_palette.system_theme'),
       icon: Monitor,
       keywords: ['system', 'auto', 'theme', 'appearance'],
       action: () => { onSetTheme('system'); onClose() },
     },
     {
       id: 'summarize',
-      label: 'Summarize this page',
+      label: t('command_palette.summarize_page'),
       icon: Globe,
       keywords: ['summarize', 'page', 'tldr', 'summary'],
       action: () => {
@@ -120,7 +122,7 @@ export default function CommandPalette({
     },
     {
       id: 'extract',
-      label: 'Extract data from page',
+      label: t('command_palette.extract_data'),
       icon: Globe,
       keywords: ['extract', 'data', 'scrape', 'page'],
       action: () => {
@@ -130,7 +132,7 @@ export default function CommandPalette({
     },
     {
       id: 'organize-tabs',
-      label: 'Organize my tabs',
+      label: t('command_palette.organize_tabs'),
       icon: Globe,
       keywords: ['organize', 'tabs', 'group', 'sort'],
       action: () => {
@@ -212,7 +214,7 @@ export default function CommandPalette({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Search actions, pages, commands…"
+            placeholder={t('command_palette.search_placeholder')}
             className="flex-1 bg-transparent outline-none text-sm"
             style={{ color: 'rgb(var(--harbor-text))' }}
           />
@@ -224,7 +226,7 @@ export default function CommandPalette({
               border: '1px solid rgb(var(--harbor-border))',
             }}
           >
-            ESC
+            {t('command_palette.esc')}
           </kbd>
         </div>
 
@@ -236,7 +238,7 @@ export default function CommandPalette({
           {filtered.length === 0 ? (
             <div className="px-4 py-6 text-center">
               <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-                No actions match "{query}"
+                {t('command_palette.no_results', { query })}
               </p>
             </div>
           ) : (
@@ -299,7 +301,7 @@ export default function CommandPalette({
           }}
         >
           <span className="text-[10px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            ↑↓ Navigate · Enter to select · Esc to close
+            {t('command_palette.footer_hint')}
           </span>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
@@ -17,6 +18,7 @@ function ThinkingBlock({
   block: UIThinkingBlock
   onToggle: () => void
 }) {
+  const { t } = useTranslation()
   return (
     <div className="rounded-lg border border-[rgb(var(--harbor-border))] overflow-hidden text-xs animate-fade-in">
       <button
@@ -24,7 +26,7 @@ function ThinkingBlock({
         className="flex items-center gap-1.5 w-full px-2.5 py-1.5 bg-[rgb(var(--harbor-surface-2))] hover:bg-[rgb(var(--harbor-border))] text-left transition-colors duration-150"
       >
         <Brain size={11} className="flex-shrink-0 text-[rgb(var(--harbor-text-faint))]" />
-        <span className="font-medium text-[rgb(var(--harbor-text-muted))] flex-1">Reasoning</span>
+        <span className="font-medium text-[rgb(var(--harbor-text-muted))] flex-1">{t('chat.agent_thinking')}</span>
         <ChevronDown
           size={11}
           className="text-[rgb(var(--harbor-text-faint))] flex-shrink-0"
@@ -61,6 +63,7 @@ interface Props {
 }
 
 export default function ChatMessage({ message, onToggleThinking, onEditMessage }: Props) {
+  const { t } = useTranslation()
   const isUser = message.role === 'user'
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -144,7 +147,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
                 onClick={handleCopyMessage}
                 className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
                 style={{ color: 'rgb(var(--harbor-text-faint))' }}
-                title="Copy message"
+                title={t('common.edit')}
               >
                 <Copy size={11} />
               </button>
@@ -152,7 +155,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
                 onClick={handleSaveToMemory}
                 className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
                 style={{ color: 'rgb(var(--harbor-text-faint))' }}
-                title="Save to memory"
+                title={t('memory.add')}
               >
                 <Brain size={11} />
               </button>
@@ -164,7 +167,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
                   }}
                   className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
                   style={{ color: 'rgb(var(--harbor-text-faint))' }}
-                  title="Edit message"
+                  title={t('common.edit')}
                 >
                   <Pencil size={11} />
                 </button>
@@ -201,14 +204,14 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
                     background: 'rgb(var(--harbor-surface-2))',
                   }}
                 >
-                  <X size={10} /> Cancel
+                  <X size={10} /> {t('memory.cancel')}
                 </button>
                 <button
                   onClick={handleSave}
                   className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] font-medium text-white transition-colors"
                   style={{ background: 'rgb(var(--harbor-accent))' }}
                 >
-                  <Check size={10} /> Save
+                  <Check size={10} /> {t('memory.save')}
                 </button>
               </div>
             </div>
@@ -313,7 +316,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
             onClick={handleCopyMessage}
             className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
             style={{ color: 'rgb(var(--harbor-text-faint))' }}
-            title="Copy message"
+            title={t('common.edit')}
           >
             <Copy size={13} />
           </button>
@@ -321,7 +324,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
             onClick={handleSaveToMemory}
             className="p-1 rounded-lg hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
             style={{ color: 'rgb(var(--harbor-text-faint))' }}
-            title="Save to memory"
+            title={t('memory.add')}
           >
             <Brain size={13} />
           </button>

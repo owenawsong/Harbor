@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ArrowLeft, Plus, Trash2, MessageSquare, Search, Pin, PinOff, Download } from 'lucide-react'
 import type { StoredSession } from '../../shared/types'
 import ConfirmDialog from './ConfirmDialog'
@@ -79,6 +80,7 @@ export default function ConversationList({
   onExport,
   onBack,
 }: Props) {
+  const { t } = useTranslation()
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<StoredSession | null>(null)
@@ -104,14 +106,14 @@ export default function ConversationList({
         className="flex items-center gap-2 px-3 py-3 border-b"
         style={{ borderColor: 'rgb(var(--harbor-border))' }}
       >
-        <button onClick={onBack} className="icon-btn" title="Back">
+        <button onClick={onBack} className="icon-btn" title={t('common.close')}>
           <ArrowLeft size={15} />
         </button>
         <span
           className="font-semibold text-sm flex-1"
           style={{ color: 'rgb(var(--harbor-text))' }}
         >
-          Conversations
+          {t('conversations.header')}
         </span>
         {sessions.length > 0 && (
           <span className="text-[10px] px-1.5 py-0.5 rounded-full" style={{
@@ -127,7 +129,7 @@ export default function ConversationList({
           style={{ background: 'rgb(var(--harbor-accent))' }}
         >
           <Plus size={12} />
-          New
+          {t('conversations.new')}
         </button>
       </div>
 
@@ -143,7 +145,7 @@ export default function ConversationList({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search conversations…"
+              placeholder={t('conversations.search_placeholder')}
               className="flex-1 bg-transparent outline-none text-xs"
               style={{ color: 'rgb(var(--harbor-text))' }}
             />
@@ -155,7 +157,7 @@ export default function ConversationList({
       {!searchQuery && pinnedCount > 0 && (
         <div className="px-3 pt-2 pb-0.5">
           <span className="text-[10px] font-medium uppercase tracking-wide flex items-center gap-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            <Pin size={9} /> Pinned
+            <Pin size={9} /> {t('conversations.pinned')}
           </span>
         </div>
       )}
@@ -171,10 +173,10 @@ export default function ConversationList({
             <MessageSquare size={28} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
             <div>
               <p className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-                {searchQuery ? 'No results found' : 'No conversations yet'}
+                {searchQuery ? t('conversations.no_results') : t('conversations.empty_state')}
               </p>
               <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-                {searchQuery ? 'Try a different search' : 'Start a new conversation above'}
+                {searchQuery ? t('conversations.try_search') : t('conversations.empty_help')}
               </p>
             </div>
           </div>
@@ -192,7 +194,7 @@ export default function ConversationList({
                   {showSeparator && (
                     <div className="px-2 py-1.5">
                       <span className="text-[10px] font-medium uppercase tracking-wide flex items-center gap-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-                        Recent
+                        {t('conversations.recent')}
                       </span>
                     </div>
                   )}
@@ -229,10 +231,10 @@ export default function ConversationList({
                             : 'rgb(var(--harbor-text))',
                         }}
                       >
-                        {session.title || 'Untitled conversation'}
+                        {session.title || t('conversations.untitled')}
                       </p>
                       <p className="text-[10px] mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-                        {session.messages.length} msg · {formatDate(session.updatedAt)}
+                        {session.messages.length} {t('conversations.msg_count')} · {formatDate(session.updatedAt)}
                       </p>
                     </div>
 
@@ -247,7 +249,7 @@ export default function ConversationList({
                               onPinSession(session.id, !isPinned)
                             }}
                             className="p-1 rounded-lg transition-colors focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
-                            title={isPinned ? 'Unpin' : 'Pin'}
+                            title={isPinned ? t('conversations.unpin') : t('conversations.pin')}
                             style={{ color: isPinned ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-faint))' }}
                           >
                             {isPinned ? <PinOff size={11} /> : <Pin size={11} />}
@@ -262,7 +264,7 @@ export default function ConversationList({
                             onExport?.()
                           }}
                           className="p-1 rounded-lg transition-colors focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
-                          title="Export as Markdown"
+                          title={t('conversations.export')}
                           style={{ color: 'rgb(var(--harbor-text-faint))' }}
                         >
                           <Download size={11} />
@@ -275,7 +277,7 @@ export default function ConversationList({
                             setDeleteTarget(session)
                           }}
                           className="p-1 rounded-lg transition-colors focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-red-500"
-                          title="Delete"
+                          title={t('common.delete')}
                           style={{ color: 'rgb(var(--harbor-text-faint))' }}
                         >
                           <Trash2 size={11} />
@@ -293,9 +295,9 @@ export default function ConversationList({
       {/* Styled delete confirmation */}
       {deleteTarget && (
         <ConfirmDialog
-          title="Delete conversation"
-          description={`"${deleteTarget.title || 'Untitled conversation'}" will be permanently removed.`}
-          confirmText="Delete"
+          title={t('conversations.delete_confirm')}
+          description={`"${deleteTarget.title || t('conversations.untitled')}" ${t('conversations.delete_message')}`}
+          confirmText={t('common.delete')}
           isDangerous
           onConfirm={() => {
             onDeleteSession(deleteTarget.id)

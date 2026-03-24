@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Plus, Search, Pin, Trash2, Tag, Brain,
   User, Settings as SettingsIcon, FolderOpen, Wrench, Heart, Users, MessageSquare,
@@ -9,14 +10,15 @@ interface Props {
   onBack: () => void
 }
 
-const CATEGORY_META: Record<MemoryCategory, { label: string; icon: React.ComponentType<{ size?: number }>; color: string }> = {
-  identity:    { label: 'Identity',    icon: User,          color: 'text-purple-500 bg-purple-50 dark:bg-purple-950/30' },
-  preferences: { label: 'Preferences', icon: Heart,         color: 'text-rose-500 bg-rose-50 dark:bg-rose-950/30' },
-  projects:    { label: 'Projects',    icon: FolderOpen,    color: 'text-blue-500 bg-blue-50 dark:bg-blue-950/30' },
-  tools:       { label: 'Tools',       icon: Wrench,        color: 'text-amber-500 bg-amber-50 dark:bg-amber-950/30' },
-  habits:      { label: 'Habits',      icon: Brain,         color: 'text-green-500 bg-green-50 dark:bg-green-950/30' },
-  people:      { label: 'People',      icon: Users,         color: 'text-teal-500 bg-teal-50 dark:bg-teal-950/30' },
-  general:     { label: 'General',     icon: MessageSquare, color: 'text-gray-500 bg-gray-50 dark:bg-gray-950/30' },
+// CATEGORY_META will have labels injected via t() in the component where it's used
+const CATEGORY_META: Record<MemoryCategory, { icon: React.ComponentType<{ size?: number }>; color: string }> = {
+  identity:    { icon: User,          color: 'text-purple-500 bg-purple-50 dark:bg-purple-950/30' },
+  preferences: { icon: Heart,         color: 'text-rose-500 bg-rose-50 dark:bg-rose-950/30' },
+  projects:    { icon: FolderOpen,    color: 'text-blue-500 bg-blue-50 dark:bg-blue-950/30' },
+  tools:       { icon: Wrench,        color: 'text-amber-500 bg-amber-50 dark:bg-amber-950/30' },
+  habits:      { icon: Brain,         color: 'text-green-500 bg-green-50 dark:bg-green-950/30' },
+  people:      { icon: Users,         color: 'text-teal-500 bg-teal-50 dark:bg-teal-950/30' },
+  general:     { icon: MessageSquare, color: 'text-gray-500 bg-gray-50 dark:bg-gray-950/30' },
 }
 
 const ALL_CATEGORIES: MemoryCategory[] = ['identity', 'preferences', 'projects', 'tools', 'habits', 'people', 'general']
@@ -28,11 +30,26 @@ function uid(): string {
 }
 
 export default function MemoryPanel({ onBack }: Props) {
+  const { t } = useTranslation()
   const [entries, setEntries] = useState<MemoryEntry[]>([])
   const [activeCategory, setActiveCategory] = useState<MemoryCategory | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+
+  // Category labels with translations
+  const getCategoryLabel = (cat: MemoryCategory): string => {
+    const labels: Record<MemoryCategory, string> = {
+      identity: t('memory.identity'),
+      preferences: t('memory.preferences'),
+      projects: t('memory.projects'),
+      tools: t('memory.tools'),
+      habits: t('memory.habits'),
+      people: t('memory.people'),
+      general: t('memory.general'),
+    }
+    return labels[cat]
+  }
 
   // Load from storage
   useEffect(() => {
@@ -105,12 +122,12 @@ export default function MemoryPanel({ onBack }: Props) {
           className="font-semibold text-sm flex-1"
           style={{ color: 'rgb(var(--harbor-text))' }}
         >
-          Memory
+          {t('memory.header')}
         </h2>
         <button
           onClick={() => setShowAdd(true)}
           className="icon-btn"
-          title="Add memory"
+          title={t('memory.add')}
         >
           <Plus size={15} />
         </button>
@@ -127,7 +144,7 @@ export default function MemoryPanel({ onBack }: Props) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search memories…"
+            placeholder={t('memory.search_placeholder')}
             className="flex-1 bg-transparent outline-none text-xs"
             style={{ color: 'rgb(var(--harbor-text))' }}
           />
@@ -143,7 +160,7 @@ export default function MemoryPanel({ onBack }: Props) {
           onClick={() => setActiveCategory('all')}
           className={`memory-cat-chip flex-shrink-0 ${activeCategory === 'all' ? 'active' : ''}`}
         >
-          All ({entries.length})
+          {t('memory.all')} ({entries.length})
         </button>
         {ALL_CATEGORIES.map((cat) => {
           const meta = CATEGORY_META[cat]
@@ -155,7 +172,7 @@ export default function MemoryPanel({ onBack }: Props) {
               onClick={() => setActiveCategory(cat)}
               className={`memory-cat-chip flex-shrink-0 ${activeCategory === cat ? 'active' : ''}`}
             >
-              {meta.label} ({count})
+              {getCategoryLabel(cat)} ({count})
             </button>
           )
         })}
@@ -175,15 +192,15 @@ export default function MemoryPanel({ onBack }: Props) {
             <Brain size={32} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
             <div>
               <p className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-                {searchQuery ? 'No results found' : 'No memories yet'}
+                {searchQuery ? t('memory.no_results') : t('memory.empty_state')}
               </p>
               <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-                {searchQuery ? 'Try a different search term' : 'Harbor will remember things you tell it, or you can add them manually.'}
+                {searchQuery ? t('memory.try_search') : t('memory.empty_help')}
               </p>
             </div>
             {!searchQuery && (
               <button onClick={() => setShowAdd(true)} className="harbor-btn-primary text-xs px-4 py-2">
-                <Plus size={13} /> Add first memory
+                <Plus size={13} /> {t('memory.add_first')}
               </button>
             )}
           </div>
@@ -219,9 +236,24 @@ interface MemoryCardProps {
 }
 
 function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, onTogglePin }: MemoryCardProps) {
+  const { t } = useTranslation()
   const [editContent, setEditContent] = useState(entry.content)
   const meta = CATEGORY_META[entry.category]
   const CatIcon = meta.icon
+
+  // Get translated category label
+  const getCategoryLabel = (cat: MemoryCategory): string => {
+    const labels: Record<MemoryCategory, string> = {
+      identity: t('memory.identity'),
+      preferences: t('memory.preferences'),
+      projects: t('memory.projects'),
+      tools: t('memory.tools'),
+      habits: t('memory.habits'),
+      people: t('memory.people'),
+      general: t('memory.general'),
+    }
+    return labels[cat]
+  }
 
   useEffect(() => {
     setEditContent(entry.content)
@@ -238,13 +270,13 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
       <div className="flex items-start justify-between gap-2">
         <div className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${meta.color}`}>
           <CatIcon size={10} />
-          {meta.label}
+          {getCategoryLabel(entry.category)}
         </div>
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
             onClick={onTogglePin}
             className="p-1 rounded hover:bg-[rgb(var(--harbor-surface-2))] focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
-            title={entry.isPinned ? 'Unpin' : 'Pin'}
+            title={entry.isPinned ? t('memory.unpin') : t('memory.pin')}
           >
             <Pin
               size={11}
@@ -257,7 +289,7 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
           <button
             onClick={onDelete}
             className="p-1 rounded hover:bg-red-50 dark:hover:bg-red-950/20 focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-red-500"
-            title="Delete"
+            title={t('memory.delete')}
           >
             <Trash2 size={11} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
           </button>
@@ -283,14 +315,14 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
               className="text-[11px] px-2.5 py-1 rounded-lg font-medium focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
               style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
             >
-              Save
+              {t('memory.save')}
             </button>
             <button
               onClick={onCancelEdit}
               className="text-[11px] px-2.5 py-1 rounded-lg focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
               style={{ color: 'rgb(var(--harbor-text-muted))' }}
             >
-              Cancel
+              {t('memory.cancel')}
             </button>
           </div>
         </div>
@@ -331,9 +363,24 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
 // ─── Add Entry Form ────────────────────────────────────────────────────────────
 
 function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: MemoryCategory, tags: string[]) => void; onCancel: () => void }) {
+  const { t } = useTranslation()
   const [content, setContent] = useState('')
   const [category, setCategory] = useState<MemoryCategory>('general')
   const [tagsInput, setTagsInput] = useState('')
+
+  // Get translated category label
+  const getCategoryLabel = (cat: MemoryCategory): string => {
+    const labels: Record<MemoryCategory, string> = {
+      identity: t('memory.identity'),
+      preferences: t('memory.preferences'),
+      projects: t('memory.projects'),
+      tools: t('memory.tools'),
+      habits: t('memory.habits'),
+      people: t('memory.people'),
+      general: t('memory.general'),
+    }
+    return labels[cat]
+  }
 
   const handleAdd = () => {
     if (!content.trim()) return
@@ -346,11 +393,11 @@ function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: 
       className="rounded-xl border p-3 flex flex-col gap-3 animate-fade-in"
       style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-accent) / 0.3)' }}
     >
-      <p className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>New Memory</p>
+      <p className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>{t('memory.new_memory')}</p>
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
-        placeholder="What should Harbor remember?"
+        placeholder={t('memory.what_remember')}
         className="w-full text-xs rounded-lg p-2 border outline-none resize-none min-h-[60px] focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
         style={{
           background: 'rgb(var(--harbor-surface-2))',
@@ -371,14 +418,14 @@ function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: 
           }}
         >
           {ALL_CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>{CATEGORY_META[cat].label}</option>
+            <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
           ))}
         </select>
         <input
           type="text"
           value={tagsInput}
           onChange={(e) => setTagsInput(e.target.value)}
-          placeholder="Tags (comma-separated)"
+          placeholder={t('memory.tags_placeholder')}
           className="text-xs rounded-lg px-2 py-1.5 border outline-none focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
           style={{
             background: 'rgb(var(--harbor-surface))',
@@ -394,14 +441,14 @@ function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: 
           className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
         >
-          Save
+          {t('memory.save')}
         </button>
         <button
           onClick={onCancel}
           className="text-xs px-3 py-1.5 rounded-lg focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           style={{ color: 'rgb(var(--harbor-text-muted))' }}
         >
-          Cancel
+          {t('memory.cancel')}
         </button>
       </div>
     </div>

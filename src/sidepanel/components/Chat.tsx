@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Settings as SettingsIcon, Clock, SquarePen,
   Brain, Zap, Search, MoreVertical, Wifi, WifiOff,
@@ -44,6 +45,7 @@ export default function Chat({
   agentMode = true,
   onToggleAgentMode,
 }: Props) {
+  const { t } = useTranslation()
   const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock, editMessage } =
     useChat(settings, currentSessionId)
 
@@ -102,18 +104,18 @@ export default function Chat({
             <button
               onClick={() => setShowAddInfoDialog(true)}
               className="icon-btn"
-              title="Add information to agent"
+              title={t('chat.add_information')}
             >
               <Brain size={14} />
             </button>
           )}
-          <button onClick={onNewConversation} className="icon-btn" title="New conversation">
+          <button onClick={onNewConversation} className="icon-btn" title={t('chat.new_conversation')}>
             <SquarePen size={14} />
           </button>
-          <button onClick={onViewHistory} className="icon-btn" title="History">
+          <button onClick={onViewHistory} className="icon-btn" title={t('chat.history')}>
             <Clock size={14} />
           </button>
-          <button onClick={onOpenSettings} className="icon-btn" title="Settings">
+          <button onClick={onOpenSettings} className="icon-btn" title={t('chat.settings')}>
             <SettingsIcon size={14} />
           </button>
 
@@ -122,7 +124,7 @@ export default function Chat({
             <button
               onClick={() => setShowMenu((v) => !v)}
               className="icon-btn"
-              title="More"
+              title={t('chat.more')}
             >
               <MoreVertical size={14} />
             </button>
@@ -148,7 +150,7 @@ export default function Chat({
                     style={{ color: 'rgb(var(--harbor-text))' }}
                   >
                     <Search size={12} />
-                    Search
+                    {t('common.search')}
                   </button>
                   <div className="h-px" style={{ background: 'rgb(var(--harbor-border))' }} />
                   <button
@@ -157,7 +159,7 @@ export default function Chat({
                     style={{ color: 'rgb(var(--harbor-text))' }}
                   >
                     <Brain size={12} />
-                    Memory
+                    {t('chat.memory')}
                   </button>
                   <button
                     onClick={() => { onOpenSkills?.(); setShowMenu(false) }}
@@ -165,7 +167,7 @@ export default function Chat({
                     style={{ color: 'rgb(var(--harbor-text))' }}
                   >
                     <Zap size={12} />
-                    Skills
+                    {t('chat.skills')}
                   </button>
                 </div>
               </>
@@ -185,13 +187,7 @@ export default function Chat({
           }}
         >
           <div>
-            No API key configured. Add one in{' '}
-            <button onClick={onOpenSettings} className="font-semibold underline underline-offset-2 hover:no-underline">
-              Settings
-            </button>
-            , or use{' '}
-            <span className="font-semibold">Harbor Free ✦</span>
-            {' '}for free access.
+            {t('chat.no_api_key')}
           </div>
         </div>
       )}
@@ -208,7 +204,7 @@ export default function Chat({
         >
           <span className="flex-shrink-0 text-base leading-none">⚠️</span>
           <div className="flex-1">
-            <p className="font-medium mb-0.5">Something went wrong</p>
+            <p className="font-medium mb-0.5">{t('chat.something_wrong')}</p>
             <p style={{ color: 'rgb(220 38 38 / 0.8)' }}>{error}</p>
           </div>
         </div>
@@ -250,7 +246,7 @@ export default function Chat({
         onStop={stopAgent}
         isRunning={isRunning}
         disabled={!hasApiKey}
-        placeholder={hasApiKey ? (agentMode ? 'Ask Harbor anything…' : 'Chat with Harbor…') : 'Configure your API key first'}
+        placeholder={hasApiKey ? (agentMode ? t('chat.placeholder') : t('chat.placeholder_alt')) : t('chat.configure_api')}
         agentMode={agentMode}
         onToggleAgentMode={onToggleAgentMode}
         settings={settings}
@@ -264,7 +260,7 @@ export default function Chat({
             setShowAddInfoDialog(false)
           }}
           onCancel={() => setShowAddInfoDialog(false)}
-          currentStep={messages[messages.length - 1]?.role === 'assistant' ? 'Agent is thinking' : 'Awaiting agent response'}
+          currentStep={messages[messages.length - 1]?.role === 'assistant' ? t('chat.agent_thinking') : t('chat.awaiting_response')}
         />
       )}
     </div>

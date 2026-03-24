@@ -1,4 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
+import { useTranslation } from 'react-i18next'
 import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
 import ModelPresets from './ModelPresets'
@@ -25,6 +26,7 @@ interface ChatInputHandle {
 }
 
 const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunning, disabled, placeholder, agentMode = true, onToggleAgentMode, settings }, ref) => {
+  const { t } = useTranslation()
   const [value, setValue] = useState('')
   const [attachments, setAttachments] = useState<Attachment[]>([])
   const [enablePlanning, setEnablePlanning] = useState(false)
@@ -138,7 +140,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           value={value}
           onChange={onInput}
           onKeyDown={onKeyDown}
-          placeholder={placeholder ?? 'Ask Harbor anything…'}
+          placeholder={placeholder ?? t('chat.placeholder')}
           disabled={disabled}
           rows={1}
           className="flex-1 bg-transparent resize-none outline-none text-sm leading-6 min-h-[24px] max-h-[160px] disabled:opacity-40 text-[rgb(var(--harbor-text))] placeholder:text-[rgb(var(--harbor-text-faint))]"
@@ -151,7 +153,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         <button
           onClick={() => fileInputRef.current?.click()}
           disabled={disabled || isRunning}
-          title="Attach file"
+          title={t('chat.attach_file')}
           className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-colors"
         >
           <Paperclip size={16} />
@@ -170,7 +172,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           <button
             onClick={() => setEnablePlanning(!enablePlanning)}
             disabled={disabled || isRunning}
-            title={enablePlanning ? 'Planning enabled' : 'Enable planning'}
+            title={enablePlanning ? t('chat.planning_enabled') : t('chat.enable_planning')}
             className="flex-shrink-0 p-1.5 rounded-lg text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-text-muted))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 transition-colors"
             style={enablePlanning ? { color: 'rgb(34, 197, 94)' } : {}}
           >
@@ -182,11 +184,11 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         <button
           onClick={onToggleAgentMode}
           disabled={disabled || isRunning}
-          title={agentMode ? 'Switch to Chat Mode' : 'Switch to Agent Mode'}
+          title={agentMode ? t('chat.switch_chat_mode') : t('chat.switch_agent_mode')}
           className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface-2))] text-[rgb(var(--harbor-text))] hover:bg-[rgb(var(--harbor-surface))] disabled:opacity-40 transition-colors"
         >
           <Zap size={14} />
-          <span>{agentMode ? 'Agent' : 'Chat'}</span>
+          <span>{agentMode ? t('chat.agent_mode') : t('chat.chat_mode')}</span>
         </button>
 
         <div className="flex-1" />
@@ -198,7 +200,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
               onClick={() => setShowPresets(!showPresets)}
               disabled={disabled || isRunning}
               className="flex-shrink-0 px-2.5 py-1.5 rounded-lg bg-[rgb(var(--harbor-surface-2))] hover:bg-[rgb(var(--harbor-surface))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[140px] truncate flex items-center gap-1.5 disabled:opacity-40 transition-colors"
-              title="Switch model preset"
+              title={t('settings.save_preset_tooltip')}
             >
               <span className="truncate">{settings.provider.model}</span>
               <ChevronDown size={12} className={`flex-shrink-0 transition-transform ${showPresets ? 'rotate-180' : ''}`} />
@@ -224,7 +226,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         {isRunning ? (
           <button
             onClick={onStop}
-            title="Stop"
+            title={t('common.close')}
             className="flex-shrink-0 w-8 h-8 rounded-lg bg-red-500 hover:bg-red-600 flex items-center justify-center transition-colors"
           >
             <Square size={14} className="text-white fill-white" />
@@ -233,7 +235,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           <button
             onClick={send}
             disabled={!canSend}
-            title="Send (Enter)"
+            title={t('chat.send')}
             className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed transition-all ${canSend ? 'shadow-lg shadow-harbor-600/60 animate-pulse' : ''}`}
             style={canSend ? { animationDuration: '3s' } : {}}
           >

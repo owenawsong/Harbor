@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   MessageSquare, Clock, Brain, Zap, Settings, Plus,
   Globe, Search, ShoppingCart, Layers, TrendingUp, ArrowRight,
@@ -17,19 +18,24 @@ interface Props {
   onOpenChat: () => void
 }
 
-const QUICK_ACTIONS = [
-  { icon: Globe,        label: 'Summarize page',  text: 'Summarize this page' },
-  { icon: Search,       label: 'Research',         text: 'Research a topic for me' },
-  { icon: ShoppingCart, label: 'Compare prices',   text: 'Compare prices for this product' },
-  { icon: Layers,       label: 'Organize tabs',    text: 'Organize all my open tabs' },
-]
+// Note: QUICK_ACTIONS labels are now dynamically generated with translation
+// in the component to support i18n
 
 export default function Dashboard({
   identity, onNewChat, onOpenHistory, onOpenMemory,
   onOpenSkills, onOpenSettings, onSendMessage, onOpenChat,
 }: Props) {
+  const { t } = useTranslation()
   const [recentSessions, setRecentSessions] = useState<StoredSession[]>([])
   const [greeting] = useState(() => getGreeting(identity?.userName))
+
+  // Define QUICK_ACTIONS with translated strings
+  const QUICK_ACTIONS = [
+    { icon: Globe,        label: t('dashboard.summarize'),        text: 'Summarize this page' },
+    { icon: Search,       label: t('dashboard.research'),         text: 'Research a topic for me' },
+    { icon: ShoppingCart, label: t('dashboard.compare_prices'),   text: 'Compare prices for this product' },
+    { icon: Layers,       label: t('dashboard.organize_tabs'),    text: 'Organize all my open tabs' },
+  ]
 
   useEffect(() => {
     chrome.runtime.sendMessage({ type: 'get_sessions' }, (res) => {
@@ -56,7 +62,7 @@ export default function Dashboard({
             {greeting}
           </h2>
           <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            What can Harbor help with today?
+            {t('dashboard.welcome')}
           </p>
         </div>
 
@@ -66,12 +72,12 @@ export default function Dashboard({
           className="harbor-btn-primary w-full justify-start gap-3 py-3"
         >
           <Plus size={15} />
-          <span className="text-sm">New conversation</span>
+          <span className="text-sm">{t('dashboard.new_conversation')}</span>
         </button>
 
         {/* Quick actions */}
         <div>
-          <p className="harbor-section-label mb-2.5">Quick actions</p>
+          <p className="harbor-section-label mb-2.5">{t('dashboard.quick_actions')}</p>
           <div className="grid grid-cols-2 gap-2">
             {QUICK_ACTIONS.map(({ icon: Icon, label, text }) => (
               <button
@@ -97,9 +103,9 @@ export default function Dashboard({
           <p className="harbor-section-label mb-2.5">Harbor</p>
           <div className="grid grid-cols-3 gap-2">
             {[
-              { icon: Brain,    label: 'Memory',   onClick: onOpenMemory },
-              { icon: Zap,      label: 'Skills',   onClick: onOpenSkills },
-              { icon: Clock,    label: 'History',  onClick: onOpenHistory },
+              { icon: Brain,    label: t('dashboard.memory'),   onClick: onOpenMemory },
+              { icon: Zap,      label: t('dashboard.skills'),   onClick: onOpenSkills },
+              { icon: Clock,    label: t('dashboard.history'),  onClick: onOpenHistory },
             ].map(({ icon: Icon, label, onClick }) => (
               <button
                 key={label}
@@ -123,14 +129,14 @@ export default function Dashboard({
         {recentSessions.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-2.5">
-              <p className="harbor-section-label">Recent</p>
+              <p className="harbor-section-label">{t('dashboard.recent')}</p>
               <button
                 onClick={onOpenHistory}
                 className="text-[10px] flex items-center gap-0.5 focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] rounded px-1 py-0.5"
                 style={{ color: 'rgb(var(--harbor-accent))' }}
-                title="View all conversations"
+                title={t('dashboard.view_all')}
               >
-                View all <ArrowRight size={10} />
+                {t('dashboard.view_all')} <ArrowRight size={10} />
               </button>
             </div>
             <div className="flex flex-col gap-1.5">
@@ -150,10 +156,10 @@ export default function Dashboard({
                   <MessageSquare size={13} style={{ color: 'rgb(var(--harbor-text-faint))', flexShrink: 0 }} />
                   <div className="flex-1 min-w-0">
                     <p className="text-xs truncate font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>
-                      {session.title ?? `Chat from ${new Date(session.createdAt).toLocaleDateString()}`}
+                      {session.title ?? t('dashboard.chat_from', { date: new Date(session.createdAt).toLocaleDateString() })}
                     </p>
                     <p className="text-[10px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-                      {session.messages.length} messages · {formatRelativeTime(session.updatedAt)}
+                      {session.messages.length} {t('dashboard.messages')} · {formatRelativeTime(session.updatedAt, t)}
                     </p>
                   </div>
                   <ArrowRight size={11} style={{ color: 'rgb(var(--harbor-text-faint))', flexShrink: 0 }} />
@@ -168,21 +174,21 @@ export default function Dashboard({
           onClick={onOpenSettings}
           className="flex items-center gap-2 text-xs focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] rounded px-1 py-0.5 hover:text-[rgb(var(--harbor-text-muted))] transition-colors"
           style={{ color: 'rgb(var(--harbor-text-faint))' }}
-          title="Settings & configuration"
+          title={t('dashboard.settings_config')}
         >
           <Settings size={12} />
-          Settings & configuration
+          {t('dashboard.settings_config')}
         </button>
       </div>
     </div>
   )
 }
 
-function formatRelativeTime(ts: number): string {
+function formatRelativeTime(ts: number, t: any): string {
   const diff = Date.now() - ts
-  if (diff < 60_000) return 'just now'
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
-  if (diff < 604_800_000) return `${Math.floor(diff / 86_400_000)}d ago`
+  if (diff < 60_000) return t('dashboard.just_now')
+  if (diff < 3_600_000) return t('dashboard.minutes_ago', { n: Math.floor(diff / 60_000) })
+  if (diff < 86_400_000) return t('dashboard.hours_ago', { n: Math.floor(diff / 3_600_000) })
+  if (diff < 604_800_000) return t('dashboard.days_ago', { n: Math.floor(diff / 86_400_000) })
   return new Date(ts).toLocaleDateString()
 }
