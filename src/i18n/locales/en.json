@@ -503,7 +503,17 @@
     "cat_shopping": "Shopping",
     "cat_navigation": "Navigation",
     "cat_content": "Content",
-    "cat_custom": "Custom"
+    "cat_custom": "Custom",
+    "name_manage_bookmarks": "Manage Bookmarks",
+    "desc_manage_bookmarks": "Smart bookmark management — organize, archive, and search bookmarks.",
+    "name_monitor_page": "Monitor Page",
+    "desc_monitor_page": "Watch for changes on a web page and alert you when they occur.",
+    "name_read_later": "Read Later",
+    "desc_read_later": "Save articles for later reading with automatic cleanup.",
+    "name_save_page": "Save Page",
+    "desc_save_page": "Archive web pages offline for later viewing and reference.",
+    "name_summarize_page": "Summarize Page",
+    "desc_summarize_page": "Get a concise summary of any web page with key points and insights."
   },
   "settings_extended": {
     "general_section": "General",
