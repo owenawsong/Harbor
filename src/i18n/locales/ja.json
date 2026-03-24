@@ -104,6 +104,10 @@
     "chat_mode": "チャット",
     "more": "詳細",
     "multiline_hint": "Shift+Enterで複数行メッセージを入力"
+    "correction_title": "Correction or Additional Info",
+    "correction_description": "You can add corrections, clarifications, or additional information. The agent will incorporate this and adjust its execution.",
+    "correction_placeholder": "e.g., 'Wait, use this URL instead...' or 'The password is different, let me give you the correct one...'",
+    "send_correction": "Send Info",
   },
   "settings": {
     "title": "設定",

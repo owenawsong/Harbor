@@ -104,6 +104,10 @@
     "chat_mode": "Chat",
     "more": "Altro",
     "multiline_hint": "Usa Shift+Invio per messaggi su più righe"
+    "correction_title": "Correction or Additional Info",
+    "correction_description": "You can add corrections, clarifications, or additional information. The agent will incorporate this and adjust its execution.",
+    "correction_placeholder": "e.g., 'Wait, use this URL instead...' or 'The password is different, let me give you the correct one...'",
+    "send_correction": "Send Info",
   },
   "settings": {
     "title": "Impostazioni",
