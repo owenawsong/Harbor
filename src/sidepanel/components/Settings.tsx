@@ -287,7 +287,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
       </div>
 
       {/* Horizontal tab bar with small-screen scroll navigation */}
-      <SettingsTabBar activeSection={activeSection} onSectionChange={setActiveSection} />
+      <SettingsTabBar activeSection={activeSection} onSectionChange={setActiveSection} navItems={NAV_ITEMS} />
 
       {/* Section content */}
       <div className="flex-1 overflow-y-auto harbor-scroll animate-fade-in">
@@ -299,9 +299,10 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
 // ─── Settings Tab Bar with Small Screen Navigation ────────────────────────────
 
-function SettingsTabBar({ activeSection, onSectionChange }: {
+function SettingsTabBar({ activeSection, onSectionChange, navItems }: {
   activeSection: SettingsSection
   onSectionChange: (section: SettingsSection) => void
+  navItems: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[]
 }) {
   const { t } = useTranslation()
   const tabsRef = useRef<HTMLDivElement>(null)
@@ -366,7 +367,7 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
         style={{ scrollbarWidth: 'none' }}
         onScroll={checkScroll}
       >
-        {NAV_ITEMS.map(({ id, icon: Icon }) => (
+        {navItems.map(({ id, icon: Icon }) => (
           <button
             key={id}
             onClick={() => onSectionChange(id)}
@@ -379,7 +380,7 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
             }}
           >
             <Icon size={12} />
-            {NAV_ITEMS.find(item => item.id === id)?.label || ''}
+            {navItems.find(item => item.id === id)?.label || ''}
           </button>
         ))}
       </div>
