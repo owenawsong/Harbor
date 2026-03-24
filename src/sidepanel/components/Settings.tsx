@@ -401,12 +401,13 @@ function SectionGeneral({
   onEnableMemoryChange, onShowKeyToggle,
   showPresets, setShowPresets, currentSettings, onApplyPreset,
 }: any) {
+  const { t } = useTranslation()
   return (
     <div className="px-4 py-4 flex flex-col gap-4 relative">
-      <SectionHeader title="General" />
+      <SectionHeader title={t('settings_extended.general_section')} />
 
       {/* Provider */}
-      <FormField label="Provider">
+      <FormField label={t('settings_extended.provider_label')}>
         <select
           value={provider}
           onChange={(e) => onProviderChange(e.target.value as ProviderName)}
@@ -420,7 +421,7 @@ function SectionGeneral({
 
       {/* Model - hidden in Harbor Free */}
       {provider !== 'harbor-free' && (
-        <FormField label="Model">
+        <FormField label={t('settings_extended.model_label')}>
           <input
             type="text"
             value={model}
@@ -434,7 +435,7 @@ function SectionGeneral({
       {/* API Key */}
       {needsKey && (
         <FormField
-          label="API Key"
+          label={t('settings_extended.api_key_label')}
           rightSlot={keyLink && (
             <a href={keyLink} target="_blank" rel="noopener noreferrer"
                className="text-[11px] flex items-center gap-1"
@@ -460,14 +461,14 @@ function SectionGeneral({
             </button>
           </div>
           <p className="text-[10px] mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            Stored locally, never shared.
+            {t('settings_extended.stored_locally')}
           </p>
         </FormField>
       )}
 
       {/* Base URL */}
       {needsUrl && (
-        <FormField label="Base URL">
+        <FormField label={t('settings_extended.base_url_label')}>
           <input
             type="text"
             value={baseUrl}
@@ -481,23 +482,23 @@ function SectionGeneral({
       {/* Ollama / Harbor Free hints */}
       {provider === 'ollama' && (
         <InfoBox>
-          Run Ollama with{' '}
+          {t('settings_extended.run_ollama')}{' '}
           <code className="font-mono text-[10px] px-1 rounded" style={{ background: 'rgb(var(--harbor-surface-3))' }}>
             OLLAMA_ORIGINS=*
           </code>{' '}
-          for browser access.
+          {t('settings_extended.for_browser_access')}
         </InfoBox>
       )}
       {provider === 'harbor-free' && (
         <InfoBox>
-          No API key needed. Uses MiniMax-m2.5 for text and auto-switches to Qwen3.5-122B when images or video are attached.
+          {t('settings_extended.minimax_description')}
         </InfoBox>
       )}
 
       {/* Memory toggle */}
       <ToggleRow
-        label="Enable Memory"
-        description="Persist context across conversations"
+        label={t('settings_extended.enable_memory_label')}
+        description={t('settings_extended.persist_context')}
         value={enableMemory}
         onChange={onEnableMemoryChange}
       />
@@ -511,7 +512,7 @@ function SectionGeneral({
           title="Save current model configuration as a preset for quick access"
         >
           <Save size={14} />
-          Save Model Preset
+          {t('settings_extended.save_model_preset')}
         </button>
       </div>
 
@@ -972,6 +973,7 @@ function SectionPrivacy() {
 // ─── Section: Help ────────────────────────────────────────────────────────────
 
 function SectionHelp() {
+  const { t } = useTranslation()
   const shortcuts = [
     { keys: ['Ctrl', 'Shift', 'Y'], mac: ['Cmd', 'Shift', 'Y'], action: 'Open Harbor' },
     { keys: ['Enter'], mac: ['Enter'], action: 'Send message' },
@@ -980,9 +982,9 @@ function SectionHelp() {
   ]
 
   const tips = [
-    { title: 'Agent vs Chat', desc: 'Use Agent mode to automate tasks, Chat mode for discussions.' },
+    { title: t('help_section.agent_vs_chat.title'), desc: t('help_section.agent_vs_chat.description') },
     { title: 'Memory System', desc: 'Link conversations to your memory for better context across chats.' },
-    { title: 'Model Presets', desc: 'Save your favorite model configs for instant switching in Settings.' },
+    { title: t('help_section.model_presets.title'), desc: t('help_section.model_presets.description') },
     { title: 'Pin Important Chats', desc: 'Keep important conversations at the top for quick access.' },
     { title: 'Export Conversations', desc: 'Download any chat as Markdown for archiving or sharing.' },
   ]

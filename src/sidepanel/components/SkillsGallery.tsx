@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef, useCallback, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   ArrowLeft, Search, Plus, Zap, Check, X,
   ShoppingCart, BookOpen, Table, FileEdit, Shuffle,
@@ -23,6 +24,7 @@ function uid(): string {
 }
 
 export default function SkillsGallery({ onBack, onRunSkill }: Props) {
+  const { t } = useTranslation()
   const [skills, setSkills] = useState<Skill[]>(BUILT_IN_SKILLS)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<SkillCategory | 'all'>('all')
@@ -93,12 +95,12 @@ export default function SkillsGallery({ onBack, onRunSkill }: Props) {
         </button>
         <Zap size={15} style={{ color: 'rgb(var(--harbor-accent))' }} />
         <h2 className="font-semibold text-sm flex-1" style={{ color: 'rgb(var(--harbor-text))' }}>
-          Skills
+          {t('skills.header')}
         </h2>
         <button
           onClick={() => setShowCreateForm(true)}
           className="icon-btn"
-          title="Create skill"
+          title={t('skills.create_skill')}
         >
           <Plus size={15} />
         </button>
@@ -115,7 +117,7 @@ export default function SkillsGallery({ onBack, onRunSkill }: Props) {
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search skills…"
+            placeholder={t('skills.search_placeholder')}
             className="flex-1 bg-transparent outline-none text-xs"
             style={{ color: 'rgb(var(--harbor-text))' }}
           />
@@ -123,7 +125,7 @@ export default function SkillsGallery({ onBack, onRunSkill }: Props) {
             <button
               onClick={() => setSearchQuery('')}
               className="p-0.5 rounded focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
-              title="Clear search"
+              title={t('skills.clear_search')}
             >
               <X size={11} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
             </button>
@@ -147,10 +149,10 @@ export default function SkillsGallery({ onBack, onRunSkill }: Props) {
           <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
             <Zap size={32} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
             <p className="text-sm" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-              No skills found
+              {t('skills.no_skills_found')}
             </p>
             <button onClick={() => setShowCreateForm(true)} className="harbor-btn-primary text-xs px-4 py-2">
-              <Plus size={13} /> Create skill
+              <Plus size={13} /> {t('skills.create_skill')}
             </button>
           </div>
         )}
@@ -177,6 +179,7 @@ function SkillCard({ skill, onSelect, onToggle, onRun }: {
   onToggle: () => void
   onRun: () => void
 }) {
+  const { t } = useTranslation()
   const Icon = ICON_MAP[skill.icon] ?? Zap
   const catMeta = SKILL_CATEGORIES[skill.category]
 
@@ -199,7 +202,7 @@ function SkillCard({ skill, onSelect, onToggle, onRun }: {
             </span>
             {!skill.isEnabled && (
               <span className="text-[9px] px-1.5 py-0.5 rounded-full" style={{ background: 'rgb(var(--harbor-border))', color: 'rgb(var(--harbor-text-faint))' }}>
-                Off
+                {t('skills.off')}
               </span>
             )}
           </div>
@@ -219,7 +222,7 @@ function SkillCard({ skill, onSelect, onToggle, onRun }: {
             className="text-[11px] px-2.5 py-1 rounded-lg font-medium focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
             style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
           >
-            Run
+            {t('skills.run_skill')}
           </button>
         </div>
       </div>
@@ -235,6 +238,7 @@ function SkillDetail({ skill, onBack, onRun, onToggle }: {
   onRun: () => void
   onToggle: () => void
 }) {
+  const { t } = useTranslation()
   const Icon = ICON_MAP[skill.icon] ?? Zap
   const catMeta = SKILL_CATEGORIES[skill.category]
 
@@ -270,7 +274,7 @@ function SkillDetail({ skill, onBack, onRun, onToggle }: {
         </p>
 
         <div>
-          <p className="harbor-section-label mb-2">Instructions</p>
+          <p className="harbor-section-label mb-2">{t('skills.instructions')}</p>
           <div
             className="text-xs leading-relaxed p-3 rounded-xl border font-mono"
             style={{
@@ -286,17 +290,17 @@ function SkillDetail({ skill, onBack, onRun, onToggle }: {
 
         {skill.usageCount !== undefined && skill.usageCount > 0 && (
           <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            Used {skill.usageCount} times
+            {t('skills.used_count', { count: skill.usageCount })}
           </p>
         )}
       </div>
 
       <div className="px-3 py-3 border-t flex gap-2" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
         <button onClick={onToggle} className="harbor-btn-ghost flex-shrink-0 px-4">
-          {skill.isEnabled ? 'Disable' : 'Enable'}
+          {skill.isEnabled ? t('skills.disable') : t('skills.enable')}
         </button>
         <button onClick={onRun} className="harbor-btn-primary flex-1">
-          <Zap size={13} /> Run skill
+          <Zap size={13} /> {t('skills.run_skill')}
         </button>
       </div>
     </div>
@@ -309,6 +313,7 @@ function CreateSkillForm({ onSave, onCancel }: {
   onSave: (skill: Omit<Skill, 'id' | 'isBuiltIn' | 'createdAt' | 'updatedAt' | 'usageCount'>) => void
   onCancel: () => void
 }) {
+  const { t } = useTranslation()
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [instructions, setInstructions] = useState('')
@@ -331,13 +336,15 @@ function CreateSkillForm({ onSave, onCancel }: {
       className="rounded-xl border p-3 flex flex-col gap-3 animate-fade-in"
       style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-accent) / 0.3)' }}
     >
-      <p className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>Create Custom Skill</p>
+      <p className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>
+        {t('skills.create_skill_form.title')}
+      </p>
 
       <input
         type="text"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Skill name"
+        placeholder={t('skills.create_skill_form.name_placeholder')}
         className="harbor-input text-xs"
         autoFocus
       />
@@ -346,7 +353,7 @@ function CreateSkillForm({ onSave, onCancel }: {
         type="text"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder="Short description"
+        placeholder={t('skills.create_skill_form.description_placeholder')}
         className="harbor-input text-xs"
       />
 
@@ -363,7 +370,7 @@ function CreateSkillForm({ onSave, onCancel }: {
       <textarea
         value={instructions}
         onChange={(e) => setInstructions(e.target.value)}
-        placeholder="Instructions for Harbor (describe what it should do when running this skill)…"
+        placeholder={t('skills.create_skill_form.instructions_placeholder')}
         className="harbor-input text-xs resize-none min-h-[80px]"
       />
 
@@ -374,14 +381,14 @@ function CreateSkillForm({ onSave, onCancel }: {
           className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
         >
-          Create
+          {t('skills.create_skill_form.create')}
         </button>
         <button
           onClick={onCancel}
           className="text-xs px-3 py-1.5 rounded-lg focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
           style={{ color: 'rgb(var(--harbor-text-muted))' }}
         >
-          Cancel
+          {t('skills.create_skill_form.cancel')}
         </button>
       </div>
     </div>

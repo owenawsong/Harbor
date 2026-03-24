@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Globe, Search, ShoppingCart, Table, Shuffle,
   Layers, BookOpen, Camera,
@@ -9,24 +10,6 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: 
   Globe, Search, ShoppingCart, Table, Shuffle, Layers, BookOpen, Camera,
 }
 
-const AGENT_SUGGESTIONS = [
-  { icon: 'Globe',        text: 'Summarize this page' },
-  { icon: 'Search',       text: 'Research a topic' },
-  { icon: 'ShoppingCart', text: 'Compare prices' },
-  { icon: 'Table',        text: 'Extract data' },
-  { icon: 'Shuffle',      text: 'Find alternatives' },
-  { icon: 'Layers',       text: 'Organize my tabs' },
-]
-
-const CHAT_SUGGESTIONS = [
-  { icon: 'Search',       text: 'Research a topic' },
-  { icon: 'BookOpen',     text: 'Explain a concept' },
-  { icon: 'ShoppingCart', text: 'Get recommendations' },
-  { icon: 'Shuffle',      text: 'Brainstorm ideas' },
-  { icon: 'Camera',       text: 'Analyze an image' },
-  { icon: 'Layers',       text: 'Organize information' },
-]
-
 interface Props {
   onSuggestionClick: (text: string) => void
   userName?: string
@@ -34,11 +17,31 @@ interface Props {
 }
 
 export default function EmptyState({ onSuggestionClick, userName, agentMode = true }: Props) {
+  const { t } = useTranslation()
   const [greeting] = useState(() => getGreeting(userName))
+
+  const AGENT_SUGGESTIONS = [
+    { icon: 'Globe',        text: t('suggestions.agent.summarize') },
+    { icon: 'Search',       text: t('suggestions.agent.research') },
+    { icon: 'ShoppingCart', text: t('suggestions.agent.compare') },
+    { icon: 'Table',        text: t('suggestions.agent.extract') },
+    { icon: 'Shuffle',      text: t('suggestions.agent.find_alternatives') },
+    { icon: 'Layers',       text: t('suggestions.agent.organize') },
+  ]
+
+  const CHAT_SUGGESTIONS = [
+    { icon: 'Search',       text: t('suggestions.chat.research') },
+    { icon: 'BookOpen',     text: t('suggestions.chat.explain') },
+    { icon: 'ShoppingCart', text: t('suggestions.chat.recommend') },
+    { icon: 'Shuffle',      text: t('suggestions.chat.brainstorm') },
+    { icon: 'Camera',       text: t('suggestions.chat.analyze') },
+    { icon: 'Layers',       text: t('suggestions.chat.organize') },
+  ]
+
   const suggestions = agentMode ? AGENT_SUGGESTIONS : CHAT_SUGGESTIONS
   const description = agentMode
-    ? 'Automate tasks, navigate pages, and browse smarter.'
-    : 'Ask anything, get answers, explore ideas.'
+    ? t('empty_state.agent_description')
+    : t('empty_state.chat_description')
 
   return (
     <div className="flex flex-col h-full overflow-y-auto harbor-scroll justify-center items-center">
@@ -61,7 +64,7 @@ export default function EmptyState({ onSuggestionClick, userName, agentMode = tr
 
         {/* Suggestion chips — 2 column grid */}
         <div>
-          <p className="harbor-section-label mb-2 text-xs text-center">Try asking</p>
+          <p className="harbor-section-label mb-2 text-xs text-center">{t('suggestions.try_asking')}</p>
           <div className="grid grid-cols-2 gap-1.5 suggestions-grid">
             {suggestions.map(({ icon, text }, i) => {
               const Icon = ICON_MAP[icon]
@@ -101,7 +104,7 @@ export default function EmptyState({ onSuggestionClick, userName, agentMode = tr
             className="text-[10px] text-center italic"
             style={{ color: 'rgb(var(--harbor-text-faint))' }}
           >
-            Use Shift+Enter for multi-line messages
+            {t('chat.multiline_hint')}
           </p>
         </div>
       </div>
