@@ -379,7 +379,7 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
             }}
           >
             <Icon size={12} />
-            {getTranslatedLabel(id)}
+            {NAV_ITEMS.find(item => item.id === id)?.label || ''}
           </button>
         ))}
       </div>

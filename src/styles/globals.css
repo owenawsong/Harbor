@@ -71,7 +71,7 @@
   }
 }
 
-/* ─── Global Transitions ────────────────────────────────────────────────────── */
+/* ─── Global Transitions & Font Size Cascade ────────────────────────────────── */
 
 * {
   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow;

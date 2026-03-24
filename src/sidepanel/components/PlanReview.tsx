@@ -22,7 +22,7 @@ export default function PlanReview({ plan, onAccept, onDecline, onModify }: Plan
   }
 
   return (
-    <div className="mx-3 mt-3 p-4 rounded-xl border-2 bg-[rgb(var(--harbor-surface-2))] border-[rgb(var(--harbor-accent) / 0.4)]">
+    <div className="mx-3 mt-3 p-4 rounded-xl border-2 bg-[rgb(var(--harbor-surface-2))] border-[rgb(var(--harbor-accent) / 0.4)] animate-scale-in">
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="font-semibold text-sm" style={{ color: 'rgb(var(--harbor-accent))' }}>

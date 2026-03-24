@@ -10,6 +10,7 @@ import ChatMessages from './ChatMessages'
 import ChatInput, { type ChatInputHandle } from './ChatInput'
 import EmptyState from './EmptyState'
 import ExecutionCorrectionDialog from './ExecutionCorrectionDialog'
+import PlanReview from './PlanReview'
 
 
 interface Props {
@@ -46,8 +47,10 @@ export default function Chat({
   onToggleAgentMode,
 }: Props) {
   const { t } = useTranslation()
-  const { messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock, editMessage } =
-    useChat(settings, currentSessionId)
+  const {
+    messages, isRunning, error, sendMessage, stopAgent, toggleThinkingBlock, editMessage,
+    pendingPlan, approvePlan, denyPlan, modifyPlan,
+  } = useChat(settings, currentSessionId)
 
   const [showNotifications, setShowNotifications] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
@@ -208,6 +211,16 @@ export default function Chat({
             <p style={{ color: 'rgb(220 38 38 / 0.8)' }}>{error}</p>
           </div>
         </div>
+      )}
+
+      {/* ── Plan Review Dialog ──────────────────────────────────────────────── */}
+      {pendingPlan && (
+        <PlanReview
+          plan={pendingPlan.plan}
+          onAccept={approvePlan}
+          onDecline={denyPlan}
+          onModify={modifyPlan}
+        />
       )}
 
       {/* ── Messages / Empty state ──────────────────────────────────────────── */}

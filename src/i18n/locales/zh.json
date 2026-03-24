@@ -102,7 +102,11 @@
     "switch_agent_mode": "切换到代理模式",
     "agent_mode": "代理",
     "chat_mode": "聊天",
-    "more": "更多"
+    "more": "更多",
+    "correction_title": "Correction or Additional Info",
+    "correction_description": "You can add corrections, clarifications, or additional information. The agent will incorporate this and adjust its execution.",
+    "correction_placeholder": "e.g., 'Wait, use this URL instead...' or 'The password is different, let me give you the correct one...'",
+    "send_correction": "Send Info"
   },
   "settings": {
     "title": "设置",
@@ -274,7 +278,8 @@
     "delete": "删除",
     "edit": "编辑",
     "close": "关闭",
-    "ok": "确定"
+    "ok": "确定",
+    "cancel": "Cancel"
   },
   "settings_nav": {
     "general": "General",

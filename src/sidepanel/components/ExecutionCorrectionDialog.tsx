@@ -52,12 +52,12 @@ export default function ExecutionCorrectionDialog({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-[rgb(var(--harbor-border))]">
           <h3 className="text-sm font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>
-            Correction or Additional Info
+            {t('chat.correction_title')}
           </h3>
           <button
             onClick={onClose}
             className="p-1 rounded hover:bg-[rgb(var(--harbor-surface-2))] transition-colors"
-            title="Close"
+            title={t('common.close')}
           >
             <X size={16} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
           </button>
@@ -66,14 +66,14 @@ export default function ExecutionCorrectionDialog({
         {/* Content */}
         <div className="p-4 space-y-3">
           <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            You can add corrections, clarifications, or additional information. The agent will incorporate this and adjust its execution.
+            {t('chat.correction_description')}
           </p>
           <textarea
             ref={textareaRef}
             value={text}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="e.g., 'Wait, use this URL instead...' or 'The password is different, let me give you the correct one...'"
+            placeholder={t('chat.correction_placeholder')}
             className="w-full px-3 py-2 rounded-lg text-sm resize-none border border-[rgb(var(--harbor-border))] outline-none transition-colors focus:border-[rgb(var(--harbor-accent))]"
             style={{
               background: 'rgb(var(--harbor-surface))',
@@ -91,7 +91,7 @@ export default function ExecutionCorrectionDialog({
             className="px-3 py-1.5 rounded-lg text-xs font-medium border border-[rgb(var(--harbor-border))] transition-colors hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-50"
             style={{ color: 'rgb(var(--harbor-text-muted))' }}
           >
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSubmit}
@@ -100,7 +100,7 @@ export default function ExecutionCorrectionDialog({
             style={{ background: 'rgb(var(--harbor-accent))' }}
           >
             <Send size={12} />
-            Send Info
+            {t('chat.send_correction')}
           </button>
         </div>
       </div>

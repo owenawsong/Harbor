@@ -54,7 +54,7 @@ export default function Dashboard({
     <div className="flex flex-col h-full overflow-y-auto harbor-scroll">
       <div className="flex flex-col gap-4 px-4 py-5">
         {/* Greeting */}
-        <div>
+        <div className="animate-fade-in">
           <h2
             className="harbor-serif text-2xl font-light leading-snug"
             style={{ color: 'rgb(var(--harbor-text))' }}
@@ -69,14 +69,15 @@ export default function Dashboard({
         {/* New chat CTA */}
         <button
           onClick={onNewChat}
-          className="harbor-btn-primary w-full justify-start gap-3 py-3"
+          className="harbor-btn-primary w-full justify-start gap-3 py-3 animate-fade-up"
+          style={{ animationDelay: '50ms' }}
         >
           <Plus size={15} />
           <span className="text-sm">{t('dashboard.new_conversation')}</span>
         </button>
 
         {/* Quick actions */}
-        <div>
+        <div className="animate-fade-up" style={{ animationDelay: '100ms' }}>
           <p className="harbor-section-label mb-2.5">{t('dashboard.quick_actions')}</p>
           <div className="grid grid-cols-2 gap-2">
             {QUICK_ACTIONS.map(({ icon: Icon, label, text }) => (
@@ -99,21 +100,22 @@ export default function Dashboard({
         </div>
 
         {/* Nav tiles */}
-        <div>
+        <div className="animate-fade-up" style={{ animationDelay: '150ms' }}>
           <p className="harbor-section-label mb-2.5">Harbor</p>
           <div className="grid grid-cols-3 gap-2">
             {[
               { icon: Brain,    label: t('dashboard.memory'),   onClick: onOpenMemory },
               { icon: Zap,      label: t('dashboard.skills'),   onClick: onOpenSkills },
               { icon: Clock,    label: t('dashboard.history'),  onClick: onOpenHistory },
-            ].map(({ icon: Icon, label, onClick }) => (
+            ].map(({ icon: Icon, label, onClick }, i) => (
               <button
                 key={label}
                 onClick={onClick}
-                className="skill-card flex flex-col items-center gap-2 px-2 py-3 rounded-xl border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
+                className="skill-card flex flex-col items-center gap-2 px-2 py-3 rounded-xl border focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] animate-fade-up"
                 style={{
                   background: 'rgb(var(--harbor-surface))',
                   borderColor: 'rgb(var(--harbor-border))',
+                  animationDelay: `${150 + i * 30}ms`,
                 }}
               >
                 <Icon size={18} style={{ color: 'rgb(var(--harbor-accent))' }} />
@@ -127,7 +129,7 @@ export default function Dashboard({
 
         {/* Recent conversations */}
         {recentSessions.length > 0 && (
-          <div>
+          <div className="animate-fade-up" style={{ animationDelay: '240ms' }}>
             <div className="flex items-center justify-between mb-2.5">
               <p className="harbor-section-label">{t('dashboard.recent')}</p>
               <button
@@ -140,17 +142,18 @@ export default function Dashboard({
               </button>
             </div>
             <div className="flex flex-col gap-1.5">
-              {recentSessions.map((session) => (
+              {recentSessions.map((session, i) => (
                 <button
                   key={session.id}
                   onClick={() => {
                     // Navigate to session - handled by parent
                     onOpenHistory()
                   }}
-                  className="suggestion-chip flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
+                  className="suggestion-chip flex items-center gap-2.5 px-3 py-2.5 rounded-xl border text-left focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))] animate-fade-up"
                   style={{
                     background: 'rgb(var(--harbor-surface))',
                     borderColor: 'rgb(var(--harbor-border))',
+                    animationDelay: `${240 + i * 30}ms`,
                   }}
                 >
                   <MessageSquare size={13} style={{ color: 'rgb(var(--harbor-text-faint))', flexShrink: 0 }} />

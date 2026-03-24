@@ -7,7 +7,7 @@ import rehypeKatex from 'rehype-katex'
 import { ChevronDown, Brain, Pencil, Check, X, Copy, MoreVertical } from 'lucide-react'
 import 'katex/dist/katex.min.css'
 import type { UIMessage, UIThinkingBlock } from '../hooks/useChat'
-import { useToast } from '../hooks/useToast'
+import { useGlobalToast } from '../contexts/ToastContext'
 import ToolCallDisplay from './ToolCallDisplay'
 
 // ─── Thinking Block ───────────────────────────────────────────────────────────
@@ -65,7 +65,7 @@ interface Props {
 
 export default function ChatMessage({ message, onToggleThinking, onEditMessage }: Props) {
   const { t } = useTranslation()
-  const { success } = useToast()
+  const { success } = useGlobalToast()
   const isUser = message.role === 'user'
   const [isHovered, setIsHovered] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
