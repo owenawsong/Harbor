@@ -1,5 +1,5 @@
 // Diverse, personalized greeting messages for Harbor's empty state.
-// Mix of time-based, weather-like, motivational, and casual greetings.
+// All strings are translatable via i18n system.
 
 export type TimeOfDay = 'morning' | 'afternoon' | 'evening' | 'night'
 
@@ -20,191 +20,213 @@ export function getDayContext(): string {
   return 'weekday'
 }
 
-// Greetings that don't reference time — just vibes, curiosity, motivation
-const TIMELESS_GREETINGS = [
-  "Ready when you are.",
-  "What's on your mind?",
-  "Let's figure something out.",
-  "What are we exploring today?",
-  "Ask me anything.",
-  "I've been waiting for a good question.",
-  "What do you need?",
-  "Curiosity is a great place to start.",
-  "Something on your mind?",
-  "Let's get into it.",
-  "Big ideas welcome here.",
-  "I work best when I'm busy.",
-  "What shall we discover?",
-  "No task too big, no question too small.",
-  "Where would you like to begin?",
-  "The best questions start right here.",
-  "Your browser. Your agent. Your move.",
-  "Let's make something happen.",
-]
-
-// Greetings that feel like weather/environment/atmosphere
-const ATMOSPHERE_GREETINGS = [
-  "Clear skies and a clear head — what's first?",
-  "It's a good day for research.",
-  "Storm of ideas? I'll help sort them out.",
-  "Perfect conditions for getting things done.",
-  "The forecast says: productive.",
-  "Fresh air, fresh start. What do you need?",
-  "Conditions look ideal. Let's work.",
-  "A calm moment. A perfect time to think.",
-]
-
-// Motivational / momentum
-const MOMENTUM_GREETINGS = [
-  "Momentum starts here.",
-  "Small actions, big results. What's first?",
-  "Let's cross something off your list.",
-  "One question at a time.",
-  "Progress starts with a question.",
-  "Every great project starts with curiosity.",
-  "You're closer to the answer than you think.",
-]
-
-const GREETINGS: Record<TimeOfDay, string[]> = {
-  morning: [
-    "Good morning. What shall we tackle today?",
-    "Morning — ready to make today count?",
-    "Rise and research. What's on your mind?",
-    "Good morning. The day is full of possibility.",
-    "Morning clarity: what's the first thing on your mind?",
-    "Every great day starts with a good question.",
-    "Good morning. Where would you like to begin?",
-    "The morning is yours. What would you like to explore?",
-    "Morning has arrived. I'm here and ready.",
-    "Good morning. I've been quietly waiting.",
-  ],
-  afternoon: [
-    "Good afternoon. What can I help you with?",
-    "Afternoon — keeping the momentum going?",
-    "Good afternoon. Deep focus time — what's the task?",
-    "Afternoon greetings. What question can I answer?",
-    "Good afternoon. No task too big or too small.",
-    "Peak hours. What's the goal?",
-    "Afternoon! Still plenty of day left.",
-    "The afternoon is prime time. What are we working on?",
-  ],
-  evening: [
-    "Good evening. What's on your mind tonight?",
-    "Evening — winding down or still going strong?",
-    "The evening brings good questions. What's yours?",
-    "Good evening. The quiet hours are great for focus.",
-    "Evening's here. What would you like to accomplish?",
-    "Good evening. I work just as well after sunset.",
-    "Evening! Big ideas often arrive at this hour.",
-  ],
-  night: [
-    "Still at it? I admire the dedication.",
-    "The late hours belong to curious minds.",
-    "Night owl energy. What's keeping you going?",
-    "Late night session — what's the mission?",
-    "The world is quiet. Good time for deep work.",
-    "Can't sleep? Or won't? Either way, I'm here.",
-    "The stars are out. What's on your mind?",
-    "Late night question — I love those. What is it?",
-    "Night mode: engaged.",
-  ],
+// Helper to get translated greeting arrays
+function getTimelessGreetings(t: any): string[] {
+  return [
+    t('greetings.timeless_1'),
+    t('greetings.timeless_2'),
+    t('greetings.timeless_3'),
+    t('greetings.timeless_4'),
+    t('greetings.timeless_5'),
+    t('greetings.timeless_6'),
+    t('greetings.timeless_7'),
+    t('greetings.timeless_8'),
+    t('greetings.timeless_9'),
+    t('greetings.timeless_10'),
+    t('greetings.timeless_11'),
+    t('greetings.timeless_12'),
+    t('greetings.timeless_13'),
+    t('greetings.timeless_14'),
+    t('greetings.timeless_15'),
+    t('greetings.timeless_16'),
+    t('greetings.timeless_17'),
+    t('greetings.timeless_18'),
+  ]
 }
 
-const MONDAY_GREETINGS = [
-  "New week, new possibilities. What's first?",
-  "Monday — a clean slate. What are we building?",
-  "Let's start the week strong.",
-]
-
-const FRIDAY_GREETINGS = [
-  "Friday energy! Let's finish strong.",
-  "Almost the weekend — let's make it count.",
-  "TGIF! What needs to get done before you sign off?",
-]
-
-const WEEKEND_GREETINGS = [
-  "Weekend mode — working on something personal?",
-  "Even on weekends, curious minds keep going.",
-  "A weekend question? You're dedicated.",
-  "Taking a break from the break to get something done?",
-]
-
-const NAMED_GREETINGS: Record<TimeOfDay, string[]> = {
-  morning: [
-    "Good morning, {name}!",
-    "Morning, {name}. What's on the agenda?",
-    "Hey {name} — ready to start something great?",
-    "Good morning, {name}. Where shall we begin?",
-  ],
-  afternoon: [
-    "Good afternoon, {name}.",
-    "Hey {name}! What do you need?",
-    "Good afternoon, {name} — still crushing it?",
-  ],
-  evening: [
-    "Good evening, {name}.",
-    "Evening, {name}! What's left on the list?",
-    "Hey {name} — what's on your mind?",
-  ],
-  night: [
-    "Still up, {name}?",
-    "Late night, {name}? What do you need?",
-    "Hey {name} — burning the midnight oil?",
-  ],
+function getAtmosphereGreetings(t: any): string[] {
+  return [
+    t('greetings.atmosphere_1'),
+    t('greetings.atmosphere_2'),
+    t('greetings.atmosphere_3'),
+    t('greetings.atmosphere_4'),
+    t('greetings.atmosphere_5'),
+    t('greetings.atmosphere_6'),
+    t('greetings.atmosphere_7'),
+    t('greetings.atmosphere_8'),
+  ]
 }
 
-export function getGreeting(userName?: string): string {
+function getMomentumGreetings(t: any): string[] {
+  return [
+    t('greetings.momentum_1'),
+    t('greetings.momentum_2'),
+    t('greetings.momentum_3'),
+    t('greetings.momentum_4'),
+    t('greetings.momentum_5'),
+    t('greetings.momentum_6'),
+    t('greetings.momentum_7'),
+  ]
+}
+
+function getTimeOfDayGreetings(t: any, timeOfDay: TimeOfDay): string[] {
+  const greetingMap: Record<TimeOfDay, string[]> = {
+    morning: [
+      t('greetings.morning_1'),
+      t('greetings.morning_2'),
+      t('greetings.morning_3'),
+      t('greetings.morning_4'),
+      t('greetings.morning_5'),
+      t('greetings.morning_6'),
+      t('greetings.morning_7'),
+      t('greetings.morning_8'),
+      t('greetings.morning_9'),
+      t('greetings.morning_10'),
+    ],
+    afternoon: [
+      t('greetings.afternoon_1'),
+      t('greetings.afternoon_2'),
+      t('greetings.afternoon_3'),
+      t('greetings.afternoon_4'),
+      t('greetings.afternoon_5'),
+      t('greetings.afternoon_6'),
+      t('greetings.afternoon_7'),
+      t('greetings.afternoon_8'),
+    ],
+    evening: [
+      t('greetings.evening_1'),
+      t('greetings.evening_2'),
+      t('greetings.evening_3'),
+      t('greetings.evening_4'),
+      t('greetings.evening_5'),
+      t('greetings.evening_6'),
+      t('greetings.evening_7'),
+    ],
+    night: [
+      t('greetings.night_1'),
+      t('greetings.night_2'),
+      t('greetings.night_3'),
+      t('greetings.night_4'),
+      t('greetings.night_5'),
+      t('greetings.night_6'),
+      t('greetings.night_7'),
+      t('greetings.night_8'),
+      t('greetings.night_9'),
+    ],
+  }
+  return greetingMap[timeOfDay]
+}
+
+function getMondayGreetings(t: any): string[] {
+  return [
+    t('greetings.monday_1'),
+    t('greetings.monday_2'),
+    t('greetings.monday_3'),
+  ]
+}
+
+function getFridayGreetings(t: any): string[] {
+  return [
+    t('greetings.friday_1'),
+    t('greetings.friday_2'),
+    t('greetings.friday_3'),
+  ]
+}
+
+function getWeekendGreetings(t: any): string[] {
+  return [
+    t('greetings.weekend_1'),
+    t('greetings.weekend_2'),
+    t('greetings.weekend_3'),
+    t('greetings.weekend_4'),
+  ]
+}
+
+function getNamedGreetings(t: any, timeOfDay: TimeOfDay): string[] {
+  const greetingMap: Record<TimeOfDay, string[]> = {
+    morning: [
+      t('greetings.named_morning_1'),
+      t('greetings.named_morning_2'),
+      t('greetings.named_morning_3'),
+      t('greetings.named_morning_4'),
+    ],
+    afternoon: [
+      t('greetings.named_afternoon_1'),
+      t('greetings.named_afternoon_2'),
+      t('greetings.named_afternoon_3'),
+    ],
+    evening: [
+      t('greetings.named_evening_1'),
+      t('greetings.named_evening_2'),
+      t('greetings.named_evening_3'),
+    ],
+    night: [
+      t('greetings.named_night_1'),
+      t('greetings.named_night_2'),
+      t('greetings.named_night_3'),
+    ],
+  }
+  return greetingMap[timeOfDay]
+}
+
+export function getGreeting(t: any, userName?: string): string {
   const timeOfDay = getTimeOfDay()
   const dayContext = getDayContext()
 
   // 25% chance of timeless/atmosphere/momentum greeting regardless of time
   const rng = Math.random()
   if (rng < 0.15) {
-    return TIMELESS_GREETINGS[Math.floor(Math.random() * TIMELESS_GREETINGS.length)]
+    const greetings = getTimelessGreetings(t)
+    return greetings[Math.floor(Math.random() * greetings.length)]
   }
   if (rng < 0.25) {
-    return ATMOSPHERE_GREETINGS[Math.floor(Math.random() * ATMOSPHERE_GREETINGS.length)]
+    const greetings = getAtmosphereGreetings(t)
+    return greetings[Math.floor(Math.random() * greetings.length)]
   }
   if (rng < 0.32) {
-    return MOMENTUM_GREETINGS[Math.floor(Math.random() * MOMENTUM_GREETINGS.length)]
+    const greetings = getMomentumGreetings(t)
+    return greetings[Math.floor(Math.random() * greetings.length)]
   }
 
   // Day-specific overrides (morning only for Monday/Friday)
   if (timeOfDay === 'morning') {
     if (dayContext === 'monday' && Math.random() > 0.5) {
-      const greeting = MONDAY_GREETINGS[Math.floor(Math.random() * MONDAY_GREETINGS.length)]
+      const greetings = getMondayGreetings(t)
+      const greeting = greetings[Math.floor(Math.random() * greetings.length)]
       return userName ? greeting.replace('{name}', userName) : greeting
     }
     if (dayContext === 'friday' && Math.random() > 0.5) {
-      const greeting = FRIDAY_GREETINGS[Math.floor(Math.random() * FRIDAY_GREETINGS.length)]
+      const greetings = getFridayGreetings(t)
+      const greeting = greetings[Math.floor(Math.random() * greetings.length)]
       return userName ? greeting.replace('{name}', userName) : greeting
     }
   }
 
   if ((dayContext === 'saturday' || dayContext === 'sunday') && Math.random() > 0.6) {
-    const greeting = WEEKEND_GREETINGS[Math.floor(Math.random() * WEEKEND_GREETINGS.length)]
+    const greetings = getWeekendGreetings(t)
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)]
     return userName ? greeting.replace('{name}', userName) : greeting
   }
 
   // Use named greetings if user name available (50% chance for variety)
   if (userName && Math.random() > 0.5) {
-    const pool = NAMED_GREETINGS[timeOfDay]
+    const pool = getNamedGreetings(t, timeOfDay)
     const template = pool[Math.floor(Math.random() * pool.length)]
     return template.replace('{name}', userName)
   }
 
   // Default time-of-day greetings
-  const pool = GREETINGS[timeOfDay]
+  const pool = getTimeOfDayGreetings(t, timeOfDay)
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
 export const SUGGESTION_PROMPTS = [
-  { icon: 'Globe',       text: 'Summarize this page' },
-  { icon: 'Search',      text: 'Research a topic for me' },
-  { icon: 'ShoppingCart',text: 'Compare prices for this product' },
-  { icon: 'FileText',    text: 'Extract data from this page' },
-  { icon: 'Shuffle',     text: 'Find alternatives to this' },
-  { icon: 'Layers',      text: 'Organize my tabs' },
-  { icon: 'BookOpen',    text: 'Deep research: explain this topic' },
-  { icon: 'Camera',      text: 'Create a screenshot walkthrough' },
+  { icon: 'Globe',       key: 'suggestions.full_prompts.summarize_page' },
+  { icon: 'Search',      key: 'suggestions.full_prompts.research_topic' },
+  { icon: 'ShoppingCart',key: 'suggestions.full_prompts.compare_prices' },
+  { icon: 'FileText',    key: 'suggestions.full_prompts.extract_data' },
+  { icon: 'Shuffle',     key: 'suggestions.full_prompts.find_alternatives' },
+  { icon: 'Layers',      key: 'suggestions.full_prompts.organize_tabs' },
+  { icon: 'BookOpen',    key: 'suggestions.full_prompts.deep_research' },
+  { icon: 'Camera',      key: 'suggestions.full_prompts.screenshot_walkthrough' },
 ]
