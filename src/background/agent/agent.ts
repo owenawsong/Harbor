@@ -165,7 +165,7 @@ function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] 
 }
 
 export async function runAgent(options: AgentRunOptions): Promise<void> {
-  const { sessionId, message, settings, history, onEvent, signal, attachedTabId, enablePlanning } = options
+  const { sessionId, message, settings, history, onEvent, signal, attachedTabId, enablePlanning, chatModeOnly } = options
   const provider = getProvider(settings.provider.provider)
 
   // Load user profile from storage if enabled
