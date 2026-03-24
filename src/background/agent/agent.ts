@@ -165,34 +165,52 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
   const { sessionId, message, settings, history, onEvent, signal, attachedTabId, enablePlanning } = options
   const provider = getProvider(settings.provider.provider)
 
-  // Load memory entries from storage if enabled
+  // Load user profile from storage if enabled
   let memoryData = ''
   if (settings.enableMemory) {
     try {
       const storageData = await new Promise<Record<string, any>>((resolve) => {
-        chrome.storage.local.get('harbor_memory_entries', (data) => {
+        chrome.storage.local.get('harbor_user_profile', (data) => {
           resolve(data)
         })
       })
-      const entries = storageData.harbor_memory_entries || []
-      if (entries.length > 0) {
-        const grouped = new Map<string, any[]>()
-        entries.forEach((entry: any) => {
-          if (!grouped.has(entry.category)) grouped.set(entry.category, [])
-          grouped.get(entry.category)!.push(entry)
-        })
+      const profile = storageData.harbor_user_profile
+      if (profile) {
+        // Format user profile for system prompt
+        const profileLines: string[] = []
 
-        const memoryLines: string[] = []
-        grouped.forEach((entriesInCat, category) => {
-          memoryLines.push(`**${category.charAt(0).toUpperCase() + category.slice(1)}**:`)
-          entriesInCat.forEach((e: any) => {
-            memoryLines.push(`- ${e.content}`)
-          })
-        })
-        memoryData = memoryLines.join('\n')
+        if (profile.name) profileLines.push(`**User Name**: ${profile.name}`)
+        if (profile.role) profileLines.push(`**Role/Title**: ${profile.role}`)
+        if (profile.timezone) profileLines.push(`**Timezone**: ${profile.timezone}`)
+        if (profile.workingHours) profileLines.push(`**Working Hours**: ${profile.workingHours}`)
+
+        if (profile.communicationStyle) {
+          profileLines.push(`**Communication Style**: The user prefers ${profile.communicationStyle} communication.`)
+        }
+        if (profile.responseDetailLevel) {
+          profileLines.push(`**Response Detail**: The user prefers ${profile.responseDetailLevel} responses.`)
+        }
+
+        if (profile.expertise && profile.expertise.length > 0) {
+          profileLines.push(`**Expertise**: ${profile.expertise.join(', ')}`)
+        }
+        if (profile.learningInterests && profile.learningInterests.length > 0) {
+          profileLines.push(`**Learning Interests**: ${profile.learningInterests.join(', ')}`)
+        }
+        if (profile.activeProjects && profile.activeProjects.length > 0) {
+          profileLines.push(`**Current Projects**: ${profile.activeProjects.join(', ')}`)
+        }
+
+        if (profile.notes && profile.notes.length > 0) {
+          profileLines.push(`**Important Notes**:\n${profile.notes.map((n: string) => `- ${n}`).join('\n')}`)
+        }
+
+        if (profileLines.length > 0) {
+          memoryData = profileLines.join('\n')
+        }
       }
     } catch (err) {
-      console.error('Error loading memory:', err)
+      console.error('Error loading user profile:', err)
     }
   }
 
