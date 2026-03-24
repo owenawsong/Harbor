@@ -1,7 +1,8 @@
 import React, { useState, useRef, useCallback, useEffect, forwardRef, useImperativeHandle } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown } from 'lucide-react'
+import { ArrowUp, Square, Paperclip, X, Zap, CheckCircle2, ChevronDown, Mic, MicOff } from 'lucide-react'
 import type { AgentSettings } from '../../shared/types'
+import { useVoiceInput } from '../hooks/useVoiceInput'
 import ModelPresets from './ModelPresets'
 
 interface Attachment {
@@ -34,6 +35,27 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const modelButtonRef = useRef<HTMLDivElement>(null)
+
+  // Voice input
+  const { isListening, isSupported: isVoiceSupported, interimTranscript, startListening, stopListening } = useVoiceInput({
+    onTranscribed: (text) => {
+      if (text.trim()) {
+        setValue((prev) => (prev ? prev + ' ' + text : text))
+        if (textareaRef.current) {
+          textareaRef.current.style.height = 'auto'
+          textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 160) + 'px'
+        }
+      }
+    },
+  })
+
+  const handleVoiceToggle = useCallback(() => {
+    if (isListening) {
+      stopListening()
+    } else {
+      startListening()
+    }
+  }, [isListening, startListening, stopListening])
 
   useImperativeHandle(ref, () => ({
     focus: () => textareaRef.current?.focus(),
@@ -222,7 +244,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           </div>
         )}
 
-        {/* Send / Stop button */}
+        {/* Send / Stop / Voice button */}
         {isRunning ? (
           <button
             onClick={onStop}
@@ -231,17 +253,29 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           >
             <Square size={14} className="text-white fill-white" />
           </button>
-        ) : (
+        ) : canSend ? (
           <button
             onClick={send}
-            disabled={!canSend}
             title={t('chat.send')}
-            className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 disabled:bg-[rgb(var(--harbor-border))] disabled:cursor-not-allowed transition-all ${canSend ? 'shadow-lg shadow-harbor-600/60 animate-pulse' : ''}`}
-            style={canSend ? { animationDuration: '3s' } : {}}
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center bg-harbor-600 hover:bg-harbor-700 transition-all shadow-lg shadow-harbor-600/60 animate-pulse"
+            style={{ animationDuration: '3s' }}
           >
             <ArrowUp size={16} className="text-white" />
           </button>
-        )}
+        ) : isVoiceSupported ? (
+          <button
+            onClick={handleVoiceToggle}
+            disabled={disabled}
+            title={isListening ? 'Stop listening' : 'Start voice input'}
+            className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
+              isListening
+                ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/60 animate-pulse'
+                : 'bg-harbor-600 hover:bg-harbor-700'
+            }`}
+          >
+            {isListening ? <Mic size={16} className="text-white" /> : <Mic size={16} className="text-white opacity-50" />}
+          </button>
+        ) : null}
       </div>
     </div>
   )
