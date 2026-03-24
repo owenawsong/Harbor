@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Bell, X, Check, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react'
 import type { HarborNotification, NotificationLevel } from '../../shared/types'
 
@@ -27,6 +28,7 @@ interface BellProps {
 }
 
 export function NotificationBell({ onClick }: BellProps) {
+  const { t } = useTranslation()
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
@@ -45,7 +47,7 @@ export function NotificationBell({ onClick }: BellProps) {
   }, [])
 
   return (
-    <button onClick={onClick} className="icon-btn relative" title="Notifications">
+    <button onClick={onClick} className="icon-btn relative" title={t('notifications_center.title')}>
       <Bell size={15} />
       {unreadCount > 0 && (
         <span
@@ -66,6 +68,7 @@ interface PanelProps {
 }
 
 export function NotificationCenter({ onClose }: PanelProps) {
+  const { t } = useTranslation()
   const [notifications, setNotifications] = useState<HarborNotification[]>([])
 
   const load = () => {
@@ -116,7 +119,7 @@ export function NotificationCenter({ onClose }: PanelProps) {
         <div className="flex items-center gap-1.5">
           <Bell size={13} style={{ color: 'rgb(var(--harbor-accent))' }} />
           <span className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>
-            Notifications
+            {t('notifications_center.title')}
           </span>
           {unreadCount > 0 && (
             <span
@@ -134,7 +137,7 @@ export function NotificationCenter({ onClose }: PanelProps) {
               className="text-[10px] px-1.5 py-0.5 rounded"
               style={{ color: 'rgb(var(--harbor-accent))' }}
             >
-              Mark all read
+              {t('notifications_center.mark_all_read')}
             </button>
           )}
           <button onClick={onClose} className="icon-btn p-0.5">
@@ -149,7 +152,7 @@ export function NotificationCenter({ onClose }: PanelProps) {
           <div className="flex flex-col items-center justify-center py-8 gap-2">
             <Bell size={24} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
             <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-              All caught up!
+              {t('notifications_center.all_caught_up')}
             </p>
           </div>
         ) : (
@@ -176,7 +179,7 @@ export function NotificationCenter({ onClose }: PanelProps) {
             className="text-[10px] w-full text-center"
             style={{ color: 'rgb(var(--harbor-text-faint))' }}
           >
-            Clear all
+            {t('notifications_center.clear_all')}
           </button>
         </div>
       )}
