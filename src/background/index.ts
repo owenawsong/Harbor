@@ -199,7 +199,10 @@ chrome.runtime.onConnect.addListener((port) => {
                   chrome.tabs.sendMessage(indicatorTabId, { type: 'harbor_agent_running' }).catch(() => {})
                   indicatorShown = true
                 }
-                if (event.type === 'text_delta') assistantText += event.text
+                // Accumulate message content from events
+                if (event.type === 'text_delta') {
+                  assistantText += event.text
+                }
                 send(event)
               },
               signal: controller.signal,

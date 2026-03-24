@@ -96,13 +96,22 @@ function convertStoredMessages(messages: ChatMessage[]): UIMessage[] {
       })
       .filter(Boolean) as UIToolCall[]
 
-    if (text || toolCalls.length) {
+    // Extract thinking blocks from message content
+    const thinkingBlocks: UIThinkingBlock[] = msg.content
+      .filter((c) => c.type === 'thinking')
+      .map((c, idx) => {
+        if (c.type !== 'thinking') return null
+        return { id: uid(), text: c.thinkingText || '', isOpen: false, sequence: idx }
+      })
+      .filter(Boolean) as UIThinkingBlock[]
+
+    if (text || toolCalls.length || thinkingBlocks.length) {
       result.push({
         id: msg.id,
         role: msg.role as 'user' | 'assistant',
         text,
         toolCalls,
-        thinkingBlocks: [],
+        thinkingBlocks,
         isStreaming: false,
         timestamp: msg.timestamp,
       })
