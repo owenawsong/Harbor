@@ -103,11 +103,11 @@
     "agent_mode": "에이전트",
     "chat_mode": "채팅",
     "more": "더보기",
-    "multiline_hint": "여러 줄 메시지는 Shift+Enter를 사용하세요"
+    "multiline_hint": "여러 줄 메시지는 Shift+Enter를 사용하세요",
     "correction_title": "Correction or Additional Info",
     "correction_description": "You can add corrections, clarifications, or additional information. The agent will incorporate this and adjust its execution.",
     "correction_placeholder": "e.g., 'Wait, use this URL instead...' or 'The password is different, let me give you the correct one...'",
-    "send_correction": "Send Info",
+    "send_correction": "Send Info"
   },
   "settings": {
     "title": "설정",

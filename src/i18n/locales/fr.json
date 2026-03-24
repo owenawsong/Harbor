@@ -103,11 +103,11 @@
     "agent_mode": "Agent",
     "chat_mode": "Chat",
     "more": "Plus",
-    "multiline_hint": "Utilisez Shift+Entrée pour les messages multi-lignes"
+    "multiline_hint": "Utilisez Shift+Entrée pour les messages multi-lignes",
     "correction_title": "Correction or Additional Info",
     "correction_description": "You can add corrections, clarifications, or additional information. The agent will incorporate this and adjust its execution.",
     "correction_placeholder": "e.g., 'Wait, use this URL instead...' or 'The password is different, let me give you the correct one...'",
-    "send_correction": "Send Info",
+    "send_correction": "Send Info"
   },
   "settings": {
     "title": "Paramètres",
