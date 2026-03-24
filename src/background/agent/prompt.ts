@@ -180,12 +180,41 @@ function toolGuidanceSection(): string {
 - Use \`get_bookmarks\` to find saved URLs.
 - Use \`evaluate_script\` for complex data extraction (returns the expression result as JSON).
 
-## Parallel Processing
-- Use \`create_parallel_sub_agents\` to split complex tasks into independent subtasks and process them in parallel.
-- Provide a briefing (shared context) and a list of tasks with taskId and description.
-- Maximum 10 sub-agents per call.
-- Best for research, comparison, data gathering, and multi-step processes that don't depend on each other.
-- Results are returned with success/error status for each task.`
+## Parallel Processing - CRITICAL INSTRUCTIONS
+**USE create_parallel_sub_agents TO SPEED UP COMPLEX TASKS**
+
+When to use: Research, comparisons, multi-step processes where tasks are independent and can run simultaneously.
+
+**EXACT TOOL CALLING FORMAT (REQUIRED):**
+{
+  "name": "create_parallel_sub_agents",
+  "arguments": {
+    "briefing": "Shared context for all sub-agents (e.g., 'Research topic X', 'User wants Y')",
+    "tasks": [
+      {
+        "taskId": "task1",
+        "description": "Specific task for sub-agent 1 to complete"
+      },
+      {
+        "taskId": "task2",
+        "description": "Specific task for sub-agent 2 to complete"
+      }
+    ]
+  }
+}
+
+**REQUIRED FIELDS:**
+- "tasks": MUST be a non-empty array of objects
+- Each task MUST have "taskId" (string, unique identifier) and "description" (string, clear instructions)
+- "briefing": Optional but recommended (provides shared context)
+- Maximum 10 tasks per call
+- Each sub-agent runs independently and reports back results
+
+**EXAMPLE USE CASES:**
+- Comparing prices on 3 different websites in parallel
+- Research different aspects of a topic simultaneously
+- Testing multiple form submissions on different pages
+- Gathering data from multiple sources at once`
 }
 
 function memorySection(memory: string): string {
