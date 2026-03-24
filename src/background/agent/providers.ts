@@ -739,8 +739,18 @@ export const harborFreeProvider: ProviderAdapter = {
 
 export const poeProvider: ProviderAdapter = {
   name: 'poe',
-  complete: (options) =>
-    openAICompatibleComplete('https://api.poe.com/v1', options.settings.provider.apiKey ?? '', options),
+  async *complete(options: CompletionOptions) {
+    const { settings } = options
+
+    if (!settings.provider.apiKey) {
+      yield { type: 'error', error: 'Poe API key is not set. Please add your key in Settings.' }
+      return
+    }
+
+    // Note: Poe API endpoint - some users may need to use a different endpoint
+    // The openAICompatibleComplete function handles the streaming response
+    yield* openAICompatibleComplete('https://api.poe.com/v1', settings.provider.apiKey, options)
+  },
 }
 
 // ─── Provider Registry ────────────────────────────────────────────────────────

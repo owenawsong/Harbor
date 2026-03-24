@@ -19,7 +19,7 @@
     "appearanceHint": "Sie können dies jederzeit in den Einstellungen ändern.",
     "language": "Bevorzugte Sprache",
     "languageHint": "Harbor antwortet in der von Ihnen gewählten Sprache.",
-    "welcome_step": "Willkommen, {{name}}.",
+    "welcome_step": "Willkommen, {name}.",
     "welcome_alt": "Sie sind alle bereit.",
     "welcome_ready": "Harbor ist bereit zu helfen.",
     "setup_summary": "Ihre Einrichtung",
@@ -355,19 +355,19 @@
     "weekend_2": "Weekend time. Let's help.",
     "weekend_3": "Weekend projects have my support.",
     "weekend_4": "Weekend time for exploration.",
-    "named_morning_1": "Good morning, {{name}}. Anything on your mind for today?",
-    "named_morning_2": "{{name}}, morning — ready for today?",
-    "named_morning_3": "{{name}}, let's tackle with morning clarity.",
-    "named_morning_4": "Good morning, {{name}}. What's your goal today?",
-    "named_afternoon_1": "Hey, {{name}}. How can I help?",
-    "named_afternoon_2": "{{name}}, afternoon — how's it going?",
-    "named_afternoon_3": "{{name}}, sweet spot of the day.",
-    "named_evening_1": "Evening, {{name}}. Anything on your mind tonight?",
-    "named_evening_2": "{{name}}, evening — let's help.",
-    "named_evening_3": "{{name}}, evening brings good questions.",
-    "named_night_1": "{{name}}, late night work. What do you need?",
-    "named_night_2": "{{name}}, you're up late. Anything I can help with?",
-    "named_night_3": "{{name}}, late night focus."
+    "named_morning_1": "Good morning, {name}. Anything on your mind for today?",
+    "named_morning_2": "{name}, morning — ready for today?",
+    "named_morning_3": "{name}, let's tackle with morning clarity.",
+    "named_morning_4": "Good morning, {name}. What's your goal today?",
+    "named_afternoon_1": "Hey, {name}. How can I help?",
+    "named_afternoon_2": "{name}, afternoon — how's it going?",
+    "named_afternoon_3": "{name}, sweet spot of the day.",
+    "named_evening_1": "Evening, {name}. Anything on your mind tonight?",
+    "named_evening_2": "{name}, evening — let's help.",
+    "named_evening_3": "{name}, evening brings good questions.",
+    "named_night_1": "{name}, late night work. What do you need?",
+    "named_night_2": "{name}, you're up late. Anything I can help with?",
+    "named_night_3": "{name}, late night focus."
   },
   "suggestions": {
     "try_asking": "Versuchen Sie zu fragen",
@@ -497,7 +497,12 @@
     "save_model_preset": "Modellvoreinstellung speichern",
     "press_shortcut": "Verknüpfung drücken…",
     "set_button": "Einstellen",
-    "cancel_button": "Abbrechen"
+    "cancel_button": "Abbrechen",
+    "help_title": "Help & Tips",
+    "help_section": "Keyboard shortcuts and usage tips",
+    "keyboard_shortcuts_title": "Keyboard Shortcuts",
+    "pro_tips_title": "Pro Tips",
+    "read_full_docs": "Read Full Documentation"
   },
   "help_section": {
     "agent_vs_chat": {
@@ -507,7 +512,13 @@
     "model_presets": {
       "title": "Modellvoreinstellungen",
       "description": "Speichern Sie Ihre bevorzugten Modellkonfigurationen für sofortiges Umschalten in den Einstellungen."
-    }
+    },
+    "memory_system": "Memory System",
+    "memory_system_desc": "Link conversations to your memory for better context across chats.",
+    "pin_chats": "Pin Important Chats",
+    "pin_chats_desc": "Keep important conversations at the top for quick access.",
+    "export_convos": "Export Conversations",
+    "export_convos_desc": "Download any chat as Markdown for archiving or sharing."
   },
   "settings_nav": {
     "general": "General",
@@ -627,5 +638,11 @@
   "keyboard_shortcuts_content": {
     "title": "Keyboard Shortcuts"
   },
-  "add_information_placeholder": "E.g., 'The password is 12345' or 'Skip this step, try logging in instead'"
+  "add_information_placeholder": "E.g., 'The password is 12345' or 'Skip this step, try logging in instead'",
+  "keyboard_shortcuts": {
+    "open_harbor": "Open Harbor",
+    "send_message": "Send message",
+    "new_line": "New line",
+    "close_dialog": "Close dialog"
+  }
 }

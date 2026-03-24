@@ -37,7 +37,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   const modelButtonRef = useRef<HTMLDivElement>(null)
 
   // Voice input
-  const { isListening, isSupported: isVoiceSupported, interimTranscript, startListening, stopListening } = useVoiceInput({
+  const { isListening, isSupported: isVoiceSupported, interimTranscript, permissionError, startListening, stopListening } = useVoiceInput({
     onTranscribed: (text) => {
       if (text.trim()) {
         setValue((prev) => (prev ? prev + ' ' + text : text))
@@ -48,6 +48,13 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
       }
     },
   })
+
+  // Show permission error if voice input fails
+  useEffect(() => {
+    if (permissionError) {
+      console.warn('Voice input error:', permissionError)
+    }
+  }, [permissionError])
 
   const handleVoiceToggle = useCallback(() => {
     if (isListening) {

@@ -571,8 +571,11 @@
     "memory_description": "Harbor remembers your conversation history to provide better context.",
     "privacy_title": "Privacy",
     "privacy_section": "Your Data & Security",
-    "help_title": "Help",
-    "help_section": "Getting Started",
+    "help_title": "Help & Tips",
+    "help_section": "Keyboard shortcuts and usage tips",
+    "keyboard_shortcuts_title": "Keyboard Shortcuts",
+    "pro_tips_title": "Pro Tips",
+    "read_full_docs": "Read Full Documentation",
     "about_title": "About",
     "about_version": "Version"
   },
@@ -584,7 +587,13 @@
     "model_presets": {
       "title": "Model Presets",
       "description": "Save your favorite model configs for instant switching in Settings."
-    }
+    },
+    "memory_system": "Memory System",
+    "memory_system_desc": "Link conversations to your memory for better context across chats.",
+    "pin_chats": "Pin Important Chats",
+    "pin_chats_desc": "Keep important conversations at the top for quick access.",
+    "export_convos": "Export Conversations",
+    "export_convos_desc": "Download any chat as Markdown for archiving or sharing."
   },
   "settings_nav": {
     "general": "General",
@@ -703,6 +712,12 @@
   },
   "keyboard_shortcuts_content": {
     "title": "Keyboard Shortcuts"
+  },
+  "keyboard_shortcuts": {
+    "open_harbor": "Open Harbor",
+    "send_message": "Send message",
+    "new_line": "New line",
+    "close_dialog": "Close dialog"
   },
   "add_information_placeholder": "E.g., 'The password is 12345' or 'Skip this step, try logging in instead'"
 }

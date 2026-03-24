@@ -506,7 +506,7 @@ function SectionGeneral({
       />
 
       {/* Language */}
-      <FormField label={t('settings_extended.language')}>
+      <FormField label={t('settings_labels.language')}>
         <select
           value={language}
           onChange={(e) => onLanguageChange(e.target.value)}
@@ -748,7 +748,7 @@ function SectionIdentity({ userName, tone, verbosity, useEmoji, customPersonalit
           type="text"
           value={userName}
           onChange={(e) => onUserNameChange(e.target.value)}
-          placeholder="Optional — for personalized greetings"
+          placeholder={t('settings_labels.optional_for_greetings')}
           className="harbor-input text-xs"
           maxLength={40}
         />
@@ -808,17 +808,17 @@ function SectionIdentity({ userName, tone, verbosity, useEmoji, customPersonalit
       </FormField>
 
       <ToggleRow
-        label="Use Emoji"
-        description="Include emoji in responses"
+        label={t('settings_extended.use_emoji_label')}
+        description={t('settings_labels.include_emoji_in_responses')}
         value={useEmoji}
         onChange={onUseEmojiChange}
       />
 
-      <FormField label="Custom Personality">
+      <FormField label={t('settings_extended.custom_personality_label')}>
         <textarea
           value={customPersonality}
           onChange={(e) => onCustomPersonalityChange(e.target.value)}
-          placeholder="Add extra instructions for Harbor (optional)…"
+          placeholder={t('settings_labels.add_extra_instructions')}
           className="harbor-input text-xs resize-none min-h-[80px]"
           maxLength={500}
         />
@@ -835,9 +835,10 @@ function SectionIdentity({ userName, tone, verbosity, useEmoji, customPersonalit
 function SectionModels({ provider, model, customModel, apiKey, baseUrl, showKey,
   models, needsKey, needsUrl, keyLink,
   onProviderChange, onModelChange, onCustomModelChange, onApiKeyChange, onBaseUrlChange, onShowKeyToggle }: any) {
+  const { t } = useTranslation()
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <SectionHeader title="Models" description="Configure AI provider and model settings." />
+      <SectionHeader title={t('settings_labels.models_section')} description={t('settings_labels.configure_ai_provider')} />
       <SectionGeneral
         provider={provider} model={model} customModel={customModel}
         apiKey={apiKey} baseUrl={baseUrl} maxTokens={8192} enableMemory={false} showKey={showKey}
@@ -855,6 +856,7 @@ function SectionModels({ provider, model, customModel, apiKey, baseUrl, showKey,
 // ─── Section: Memory ──────────────────────────────────────────────────────────
 
 function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: boolean; onEnableMemoryChange: (v: boolean) => void }) {
+  const { t } = useTranslation()
   const [memoryCount, setMemoryCount] = useState(0)
   const [showClearConfirm, setShowClearConfirm] = useState(false)
 
@@ -873,11 +875,11 @@ function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: b
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <SectionHeader title="Memory" description="Control how Harbor remembers things." />
+      <SectionHeader title={t('settings_labels.memory_section')} description={t('settings_labels.control_how_harbor_remembers')} />
 
       <ToggleRow
-        label="Enable Memory"
-        description="Remember context across conversations"
+        label={t('settings_labels.enable_memory')}
+        description={t('settings_labels.remember_context')}
         value={enableMemory}
         onChange={onEnableMemoryChange}
       />
@@ -887,7 +889,7 @@ function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: b
         style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
       >
         <div>
-          <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>Stored memories</p>
+          <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{t('settings_labels.stored_memories')}</p>
           <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
             {memoryCount} entr{memoryCount === 1 ? 'y' : 'ies'}
           </p>
@@ -898,15 +900,15 @@ function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: b
             className="text-xs px-2.5 py-1 rounded-lg"
             style={{ color: '#ef4444', border: '1px solid rgb(239 68 68 / 0.3)' }}
           >
-            Clear all
+            {t('settings_labels.clear_all')}
           </button>
         )}
       </div>
       {showClearConfirm && (
         <ConfirmDialog
-          title="Clear all memories"
-          description="All stored memories will be permanently deleted. This cannot be undone."
-          confirmText="Clear memories"
+          title={t('settings_labels.clear_all_memories')}
+          description={t('settings_labels.clear_all_memories') + " will be permanently deleted. This cannot be undone."}
+          confirmText={t('settings_labels.clear_all')}
           isDangerous
           onConfirm={clearMemory}
           onCancel={() => setShowClearConfirm(false)}
@@ -919,14 +921,15 @@ function SectionMemory({ enableMemory, onEnableMemoryChange }: { enableMemory: b
 // ─── Section: Notifications ───────────────────────────────────────────────────
 
 function SectionNotifications({ enabled, agentComplete, errors, onEnabledChange, onAgentCompleteChange, onErrorsChange }: any) {
+  const { t } = useTranslation()
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <SectionHeader title="Notifications" />
-      <ToggleRow label="Enable Notifications" description="Show in-app alerts" value={enabled} onChange={onEnabledChange} />
+      <SectionHeader title={t('settings_labels.notifications_section')} />
+      <ToggleRow label={t('settings_labels.enable_notifications')} description={t('settings_labels.show_in_app_alerts')} value={enabled} onChange={onEnabledChange} />
       {enabled && (
         <>
-          <ToggleRow label="Task Complete" description="When an agent task finishes" value={agentComplete} onChange={onAgentCompleteChange} />
-          <ToggleRow label="Errors" description="When something goes wrong" value={errors} onChange={onErrorsChange} />
+          <ToggleRow label={t('settings_labels.task_complete')} description={t('settings_labels.when_agent_task_finishes')} value={agentComplete} onChange={onAgentCompleteChange} />
+          <ToggleRow label={t('settings_labels.errors')} description={t('settings_labels.when_something_goes_wrong')} value={errors} onChange={onErrorsChange} />
         </>
       )}
     </div>
@@ -936,6 +939,7 @@ function SectionNotifications({ enabled, agentComplete, errors, onEnabledChange,
 // ─── Section: Privacy ─────────────────────────────────────────────────────────
 
 function SectionPrivacy() {
+  const { t } = useTranslation()
   const [showResetConfirm, setShowResetConfirm] = useState(false)
 
   const clearAll = () => {
@@ -944,10 +948,9 @@ function SectionPrivacy() {
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <SectionHeader title="Privacy" />
+      <SectionHeader title={t('settings_labels.privacy_section')} />
       <InfoBox>
-        Harbor processes everything locally or via the AI API you configure.
-        No data is sent to Harbor's servers. Your conversations and memories stay in your browser.
+        {t('settings_labels.processes_locally')} {t('settings_labels.no_data_sent')}
       </InfoBox>
       <div className="flex flex-col gap-2">
         <button
@@ -955,13 +958,13 @@ function SectionPrivacy() {
           className="text-xs px-3 py-2.5 rounded-xl border font-medium"
           style={{ color: '#ef4444', borderColor: 'rgb(239 68 68 / 0.3)', background: 'rgb(239 68 68 / 0.05)' }}
         >
-          Reset all data
+          {t('settings_labels.reset_all_data')}
         </button>
       </div>
       {showResetConfirm && (
         <ConfirmDialog
-          title="Reset all Harbor data"
-          description="This will permanently erase your settings, memory entries, and all conversations. This cannot be undone."
+          title={t('settings_labels.reset_all_data')}
+          description={t('settings_labels.reset_description')}
           confirmText="Reset everything"
           isDangerous
           onConfirm={clearAll}
@@ -977,28 +980,28 @@ function SectionPrivacy() {
 function SectionHelp() {
   const { t } = useTranslation()
   const shortcuts = [
-    { keys: ['Ctrl', 'Shift', 'Y'], mac: ['Cmd', 'Shift', 'Y'], action: 'Open Harbor' },
-    { keys: ['Enter'], mac: ['Enter'], action: 'Send message' },
-    { keys: ['Shift', 'Enter'], mac: ['Shift', 'Enter'], action: 'New line' },
-    { keys: ['Escape'], mac: ['Escape'], action: 'Close dialog' },
+    { keys: ['Ctrl', 'Shift', 'Y'], mac: ['Cmd', 'Shift', 'Y'], action: t('keyboard_shortcuts.open_harbor') || 'Open Harbor' },
+    { keys: ['Enter'], mac: ['Enter'], action: t('keyboard_shortcuts.send_message') || 'Send message' },
+    { keys: ['Shift', 'Enter'], mac: ['Shift', 'Enter'], action: t('keyboard_shortcuts.new_line') || 'New line' },
+    { keys: ['Escape'], mac: ['Escape'], action: t('keyboard_shortcuts.close_dialog') || 'Close dialog' },
   ]
 
   const tips = [
     { title: t('help_section.agent_vs_chat.title'), desc: t('help_section.agent_vs_chat.description') },
-    { title: 'Memory System', desc: 'Link conversations to your memory for better context across chats.' },
+    { title: t('help_section.memory_system'), desc: t('help_section.memory_system_desc') },
     { title: t('help_section.model_presets.title'), desc: t('help_section.model_presets.description') },
-    { title: 'Pin Important Chats', desc: 'Keep important conversations at the top for quick access.' },
-    { title: 'Export Conversations', desc: 'Download any chat as Markdown for archiving or sharing.' },
+    { title: t('help_section.pin_chats'), desc: t('help_section.pin_chats_desc') },
+    { title: t('help_section.export_convos'), desc: t('help_section.export_convos_desc') },
   ]
 
   return (
     <div className="px-4 py-4 flex flex-col gap-6">
-      <SectionHeader title="Help & Tips" description="Keyboard shortcuts and usage tips" />
+      <SectionHeader title={t('settings_extended.help_title')} description={t('settings_extended.help_section')} />
 
       {/* Keyboard Shortcuts */}
       <div>
         <p className="text-xs font-semibold mb-3" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-          Keyboard Shortcuts
+          {t('settings_extended.keyboard_shortcuts_title')}
         </p>
         <div className="space-y-2">
           {shortcuts.map(({ keys, mac, action }) => (
@@ -1029,7 +1032,7 @@ function SectionHelp() {
       {/* Tips */}
       <div>
         <p className="text-xs font-semibold mb-3" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-          Pro Tips
+          {t('settings_extended.pro_tips_title')}
         </p>
         <div className="space-y-2">
           {tips.map(({ title, desc }) => (
@@ -1053,7 +1056,7 @@ function SectionHelp() {
           background: 'rgb(var(--harbor-surface-2))',
         }}
       >
-        <Info size={13} /> Read Full Documentation
+        <Info size={13} /> {t('settings_extended.read_full_docs')}
       </a>
     </div>
   )
@@ -1062,9 +1065,10 @@ function SectionHelp() {
 // ─── Section: About ───────────────────────────────────────────────────────────
 
 function SectionAbout() {
+  const { t } = useTranslation()
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <SectionHeader title="About" />
+      <SectionHeader title={t('settings_extended.about_title')} />
       <div className="flex flex-col gap-2">
         <div
           className="flex items-center gap-3 p-3 rounded-xl border"
@@ -1073,11 +1077,11 @@ function SectionAbout() {
           <img src="/icons/logo.png" alt="Harbor" className="w-10 h-10 rounded-xl" />
           <div>
             <p className="text-sm font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>Harbor</p>
-            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>v1.24.0 — AI Browser Agent</p>
+            <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{t('settings_labels.version')}</p>
           </div>
         </div>
         <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-          An open-source AI browser agent. Licensed under MIT.
+          {t('settings_labels.open_source')}
         </p>
         <a
           href="https://github.com/owenawsong/Harbor-Extension"
@@ -1086,7 +1090,7 @@ function SectionAbout() {
           className="flex items-center gap-1.5 text-xs"
           style={{ color: 'rgb(var(--harbor-accent))' }}
         >
-          <ExternalLink size={11} /> View on GitHub
+          <ExternalLink size={11} /> {t('settings_labels.view_on_github')}
         </a>
       </div>
     </div>

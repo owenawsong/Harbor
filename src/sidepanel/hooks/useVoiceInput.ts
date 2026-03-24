@@ -8,6 +8,7 @@ interface UseVoiceInputOptions {
 export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInputOptions) {
   const [isListening, setIsListening] = useState(false)
   const [isSupported, setIsSupported] = useState(false)
+  const [permissionError, setPermissionError] = useState<string | null>(null)
   const recognitionRef = useRef<any>(null)
   const [interimTranscript, setInterimTranscript] = useState('')
   const onTranscribedRef = useRef(onTranscribed)
@@ -52,6 +53,19 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
     recognition.onerror = (event: any) => {
       console.error('Speech recognition error:', event.error)
       setIsListening(false)
+
+      // Handle different error types
+      if (event.error === 'no-speech') {
+        setPermissionError('No speech detected. Please try again.')
+      } else if (event.error === 'network') {
+        setPermissionError('Network error. Please check your connection.')
+      } else if (event.error === 'permission-denied') {
+        setPermissionError('Microphone permission denied. Please allow access in browser settings.')
+      } else if (event.error === 'not-allowed') {
+        setPermissionError('Microphone access not allowed.')
+      } else {
+        setPermissionError(`Speech recognition error: ${event.error}`)
+      }
     }
 
     recognition.onend = () => {
@@ -82,11 +96,32 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
     }
   }, [])
 
+  const startListeningWithPermission = useCallback(async () => {
+    setPermissionError(null)
+    try {
+      // For Chrome extensions, we can request microphone permission
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      // Stop the stream immediately, we just needed permission
+      stream.getTracks().forEach(track => track.stop())
+      startListening()
+    } catch (err) {
+      const error = err as Error
+      if (error.name === 'NotAllowedError') {
+        setPermissionError('Microphone permission denied. Please allow access in browser settings.')
+      } else if (error.name === 'NotFoundError') {
+        setPermissionError('No microphone found. Please check your audio device.')
+      } else {
+        setPermissionError(`Failed to access microphone: ${error.message}`)
+      }
+    }
+  }, [startListening])
+
   return {
     isListening,
     isSupported,
     interimTranscript,
-    startListening,
+    permissionError,
+    startListening: startListeningWithPermission,
     stopListening,
   }
 }
