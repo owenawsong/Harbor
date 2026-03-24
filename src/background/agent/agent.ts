@@ -25,9 +25,12 @@ async function executeSubAgents(
   const briefing = input.briefing as string | undefined
 
   if (!tasks || !Array.isArray(tasks) || tasks.length === 0) {
+    // Provide detailed error message for debugging
+    const inputKeys = Object.keys(input).join(', ')
+    const debugInfo = `Received: { ${inputKeys} }. Expected: { tasks: [...], briefing?: string }`
     return {
       success: false,
-      error: 'Invalid input: tasks must be a non-empty array',
+      error: `Invalid input: tasks must be a non-empty array. ${debugInfo}`,
     }
   }
 
