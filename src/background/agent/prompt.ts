@@ -16,12 +16,15 @@ export function buildSystemPrompt(options: BuildPromptOptions = {}): string {
 
   sections.push(roleSection(options.chatMode || false))
   sections.push(securitySection())
-  // 🚀 ALWAYS require planning for browser actions (not just when enablePlanning is set)
+  // Include planning section only if user hasn't disabled it (default to enabled)
   if (!options.chatMode) {
-    sections.push(planningSection())
+    if (options.enablePlanning !== false) {  // enablePlanning defaults to true
+      sections.push(planningSection())
+    }
     sections.push(taskExecutionSection())
     sections.push(observeActVerifySection())
     sections.push(errorRecoverySection())
+    sections.push(userCorrectionSection())
     sections.push(toolGuidanceSection())
   } else {
     sections.push(chatModeSection())
@@ -199,6 +202,26 @@ When something goes wrong:
 - **Content not found**: Try a different search query or URL.`
 }
 
+function userCorrectionSection(): string {
+  return `# Handling User Corrections
+
+While you're executing a task, the user may provide corrections or additional information using the Correction button. These arrive wrapped in \`<user_correction>...</user_correction>\` tags.
+
+When you receive a correction:
+1. **Stop current execution immediately** - don't continue with the original plan
+2. **Read the correction carefully** - understand what the user wants changed
+3. **Acknowledge the correction** - let them know you've incorporated it
+4. **Adjust your approach** - modify your task execution based on their input
+5. **Continue from where you paused** - or restart with the new direction
+
+Example:
+- You're typing "AI news" in a search box
+- User provides: \`<user_correction>Actually, search for "latest tech breakthroughs"</user_correction>\`
+- You should: Clear the current input, type the new search term, and proceed
+
+Corrections are the user's way to guide execution in real-time. Always treat them as high-priority guidance.`
+}
+
 function toolGuidanceSection(): string {
   return `# Tool Guidance
 
@@ -280,20 +303,33 @@ ${memory}
 - Reference their active projects when relevant
 - Respect their timezone and working hours
 
-## Learning and Growth
-As you interact with the user, you'll discover new information about them:
-- Their work habits and preferences (when they work, communication style)
-- Technical skills and knowledge gaps
-- Projects they're working on
-- People and contexts important to them
-- Personal preferences and quirks
+## Memory Management Tools (Read, Modify, Delete)
 
-When you discover something worth remembering:
-1. Mentally note it as you work
-2. If the user shares a clear preference, habit, or important detail, suggest saving it
-3. Use natural language like: "I've noted that you prefer [detail] - I'll remember this for next time!"
+You have full control over the user's stored memory with these tools:
 
-This helps build an increasingly accurate and personalized profile over time, making Harbor smarter about serving your needs.`
+### read_user_memory
+- Read the entire user profile or filter by category (personal, preferences, work, goals, other)
+- Use this to check what's already stored before adding duplicates
+- Example: "Let me check what I've already recorded about your preferences"
+
+### update_user_memory
+- Modify existing facts when information changes
+- Example: If the user says "Actually, I prefer detailed responses now", update that preference
+- Use old_fact to find what to change, new_fact for the replacement
+
+### delete_user_memory
+- Remove facts that are no longer relevant
+- Delete by specific fact or entire category
+- Example: "Let me remove that outdated project deadline"
+
+## Learning and Growth Strategy
+1. **At session start**: Call \`read_user_memory\` to review what you know about the user
+2. **During conversation**: Use memory to personalize responses
+3. **When learning new info**: Save important facts with \`save_to_memory\`
+4. **When updating**: Use \`update_user_memory\` when information changes (not just adding)
+5. **When cleaning up**: Use \`delete_user_memory\` to remove outdated information
+
+This creates a living, evolving profile that gets smarter with each interaction.`
 }
 
 function chatModeSection(): string {
