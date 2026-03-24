@@ -29,15 +29,7 @@ type SettingsSection =
   | 'help'
   | 'about'
 
-const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
-  { id: 'provider',   label: 'General',    icon: Cpu },
-  { id: 'appearance', label: 'Appearance',  icon: Palette },
-  { id: 'identity',   label: 'Identity',    icon: User },
-  { id: 'memory',     label: 'Memory',      icon: Brain },
-  { id: 'privacy',    label: 'Privacy',     icon: Shield },
-  { id: 'help',       label: 'Help',        icon: HelpCircle },
-  { id: 'about',      label: 'About',       icon: Info },
-]
+// NAV_ITEMS will be defined inside Settings component where t() is available
 
 const KEY_LINKS: Partial<Record<ProviderName, string>> = {
   anthropic:  'https://console.anthropic.com/settings/keys',
@@ -80,6 +72,16 @@ const LANGUAGES = [
 
 export default function Settings({ settings, theme, identity, onSave, onBack }: Props) {
   const { t, i18n } = useTranslation()
+
+  const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
+    { id: 'provider',   label: t('settings_extended.general_section'),    icon: Cpu },
+    { id: 'appearance', label: t('settings_extended.appearance_title'),  icon: Palette },
+    { id: 'identity',   label: t('settings_extended.identity_title'),    icon: User },
+    { id: 'memory',     label: t('settings_extended.memory_title'),      icon: Brain },
+    { id: 'privacy',    label: t('settings_extended.privacy_title'),     icon: Shield },
+    { id: 'help',       label: t('settings_extended.help_title'),        icon: HelpCircle },
+    { id: 'about',      label: t('settings_extended.about_title'),       icon: Info },
+  ]
 
   const [activeSection, setActiveSection] = useState<SettingsSection>('provider')
   const [savedIndicator, setSavedIndicator] = useState(false)
