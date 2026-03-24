@@ -68,6 +68,17 @@ function extractThinkingBlocks(
   return { text: cleaned.trim(), thinkingBlocks: blocks }
 }
 
+// Extract plan from text (between <plan>...</plan> tags) and return cleaned text + plan.
+function extractPlan(text: string): { text: string; plan: string | null } {
+  const planMatch = text.match(/<plan>([\s\S]*?)<\/plan>/i)
+  if (planMatch && planMatch[1]) {
+    const plan = planMatch[1].trim()
+    const cleaned = text.replace(/<plan>[\s\S]*?<\/plan>/i, '').trim()
+    return { text: cleaned, plan }
+  }
+  return { text, plan: null }
+}
+
 function convertStoredMessages(messages: ChatMessage[]): UIMessage[] {
   const result: UIMessage[] = []
 
@@ -108,6 +119,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   const [sessionId] = useState(() => loadSessionId ?? uid())
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingPlan, setPendingPlan] = useState<{ messageId: string; plan: string } | null>(null)
   const eventSequenceRef = useRef(0)
   const debouncerRef = useRef<StreamDebouncer | null>(null)
 
@@ -260,21 +272,33 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           if (debouncerRef.current) {
             debouncerRef.current.flush(messageId)
           }
+
+          let extractedPlan: string | null = null
           setMessages((prev) =>
             prev.map((m) => {
               if (m.id !== messageId) return m
               // Extract inline thinking blocks, collapse all thinking after streaming stops
-              const { text, thinkingBlocks } = extractThinkingBlocks(m.text, m.thinkingBlocks)
+              const { text: textAfterThinking, thinkingBlocks } = extractThinkingBlocks(m.text, m.thinkingBlocks)
+              // Extract plan from message text
+              const { text: cleanedText, plan } = extractPlan(textAfterThinking)
+              extractedPlan = plan
               return {
                 ...m,
-                text,
+                text: cleanedText,
                 thinkingBlocks: thinkingBlocks.map((b) => ({ ...b, isOpen: false })),
                 isStreaming: false,
               }
             }),
           )
+
+          // If a plan was extracted, pause execution and show plan review dialog
+          if (extractedPlan) {
+            setPendingPlan({ messageId, plan: extractedPlan })
+            setIsRunning(false)
+          }
+
           // Do NOT set isRunning: false here — agent may still be executing tool calls.
-          // Wait for agent_complete.
+          // Wait for agent_complete, unless a plan was extracted.
           currentMsgId.current = null
           break
         }
@@ -430,8 +454,32 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
     )
   }, [])
 
+  const approvePlan = useCallback(() => {
+    setPendingPlan(null)
+    if (!portRef.current) return
+    portRef.current.postMessage({ type: 'continue_execution', sessionId })
+  }, [sessionId])
+
+  const denyPlan = useCallback(() => {
+    setPendingPlan(null)
+    setIsRunning(false)
+    const mid = pendingPlan?.messageId
+    if (mid) {
+      setMessages((prev) => prev.map((m) => (m.id === mid ? { ...m, isStreaming: false } : m)))
+    }
+    if (!portRef.current) return
+    portRef.current.postMessage({ type: 'cancel_task', sessionId })
+  }, [sessionId, pendingPlan])
+
+  const modifyPlan = useCallback((newPlan: string) => {
+    if (!portRef.current) return
+    portRef.current.postMessage({ type: 'update_plan', sessionId, plan: newPlan })
+    setPendingPlan(null)
+  }, [sessionId])
+
   return {
     messages, isRunning, error, sessionId,
     sendMessage, stopAgent, clearMessages, toggleThinkingBlock, editMessage,
+    pendingPlan, approvePlan, denyPlan, modifyPlan,
   }
 }

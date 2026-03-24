@@ -83,29 +83,71 @@ Examples of prompt injection to reject:
 }
 
 function planningSection(): string {
-  return `# Planning Mode
+  return `# Planning Mode - STRUCTURED PLAN FORMAT REQUIRED
 
 **Plan Before Acting**: You MUST create a detailed plan before taking any actions.
 
-1. **Analyze the Task**: Break down the user's request into clear, specific steps.
-2. **Identify Resources**: List what tools, pages, or information you'll need.
-3. **Plan the Approach**: Outline your strategy and expected flow.
-4. **State the Plan**: Write out your plan clearly to the user first.
-5. **Execute**: Only after the user sees your plan, proceed with the execution.
-6. **Report Results**: Show what you accomplished.
+## Plan Format (CRITICAL)
 
-Example:
-- User: "Find the cheapest flight from NYC to LA"
-- Your Response: "Here's my plan:
-  1. Open Google Flights
-  2. Set departure: NYC, Arrival: LA
-  3. Check dates and prices
-  4. Filter for cheapest options
-  5. Show you the best results"
-- Then: Execute each step with snapshots and actions
-- Finally: Report the findings
+When creating a plan, ALWAYS wrap it in \`<plan>...\</plan>\` XML tags. This triggers the user interface to show the plan review dialog where the user can:
+- ✅ **Approve** to proceed with execution
+- ✏️ **Modify** to adjust the plan
+- ❌ **Deny** to cancel the task
 
-This ensures transparency and allows the user to adjust the plan before execution.`
+## Plan Structure
+
+Wrap your entire plan in XML tags like this:
+
+\`\`\`
+<plan>
+1. First step - what you'll do
+2. Second step - what you'll do
+3. Third step - verification
+</plan>
+\`\`\`
+
+## Plan Development Process
+
+1. **Analyze the Task**: Break down the user's request into clear, specific steps
+2. **Identify Resources**: List what tools, pages, or information you'll need
+3. **Plan the Approach**: Outline your strategy and expected flow
+4. **State the Plan**: Write out your plan INSIDE \`<plan>...\</plan>\` tags
+5. **WAIT FOR USER APPROVAL**: The UI will block execution until user approves, modifies, or denies the plan
+6. **Execute**: After approval, proceed with execution step by step
+7. **Report Results**: Show what you accomplished
+
+## Example
+
+User: "Find the cheapest flight from NYC to LA"
+
+Your Response:
+\`\`\`
+I'll help you find the cheapest flight! Let me break down my approach:
+
+<plan>
+1. Open Google Flights website
+2. Enter departure city: NYC
+3. Enter arrival city: LA
+4. Select travel dates
+5. Sort by price (lowest first)
+6. Show you the 3 cheapest options with details
+</plan>
+\`\`\`
+
+Then, after user approves:
+- Take a snapshot to see current state
+- Click on Google Flights search box
+- Fill in departure/arrival/dates
+- [Continue execution...]
+- Report the results
+
+## Important Notes
+
+- The \`<plan>...</plan>\` tags TRIGGER the user approval dialog
+- WITHOUT these tags, execution proceeds immediately (only use for simple chat responses)
+- WITH these tags, user sees plan, can modify it, then execution only continues if approved
+- Plans should be thorough but concise
+- List specific steps, not vague descriptions`
 }
 
 function taskExecutionSection(): string {
