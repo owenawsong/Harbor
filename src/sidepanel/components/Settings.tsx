@@ -47,24 +47,24 @@ const KEY_LINKS: Partial<Record<ProviderName, string>> = {
   poe:        'https://poe.com/api_key',
 }
 
-const THEME_OPTIONS = [
-  { value: 'light' as const,  label: 'Light' },
-  { value: 'dark' as const,   label: 'Dark' },
-  { value: 'system' as const, label: 'Auto' },
+const getThemeOptions = (t: any) => [
+  { value: 'light' as const,  label: t('settings_extended.theme_light') },
+  { value: 'dark' as const,   label: t('settings_extended.theme_dark') },
+  { value: 'system' as const, label: t('settings_extended.theme_auto') },
 ]
 
-const TONES: { id: ToneStyle; label: string }[] = [
-  { id: 'professional', label: 'Professional' },
-  { id: 'friendly',     label: 'Friendly' },
-  { id: 'concise',      label: 'Concise' },
-  { id: 'detailed',     label: 'Detailed' },
-  { id: 'playful',      label: 'Playful' },
+const getTones = (t: any): { id: ToneStyle; label: string }[] => [
+  { id: 'professional', label: t('settings_extended.tone_professional') },
+  { id: 'friendly',     label: t('settings_extended.tone_friendly') },
+  { id: 'concise',      label: t('settings_extended.tone_concise') },
+  { id: 'detailed',     label: t('settings_extended.tone_detailed') },
+  { id: 'playful',      label: t('settings_extended.tone_playful') },
 ]
 
-const VERBOSITY: { id: VerbosityLevel; label: string; description: string }[] = [
-  { id: 'brief',    label: 'Brief',    description: 'Short, focused answers' },
-  { id: 'balanced', label: 'Balanced', description: 'Standard level of detail' },
-  { id: 'thorough', label: 'Thorough', description: 'In-depth explanations' },
+const getVerbosity = (t: any): { id: VerbosityLevel; label: string; description: string }[] => [
+  { id: 'brief',    label: t('settings_extended.verbosity_brief'),    description: t('settings_extended.verbosity_brief_desc') },
+  { id: 'balanced', label: t('settings_extended.verbosity_balanced'), description: t('settings_extended.verbosity_balanced_desc') },
+  { id: 'thorough', label: t('settings_extended.verbosity_thorough'), description: t('settings_extended.verbosity_thorough_desc') },
 ]
 
 const LANGUAGES = [
@@ -603,6 +603,7 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
   currentTheme: 'light' | 'dark' | 'system'
   onThemeChange: (t: 'light' | 'dark' | 'system') => void
 }) {
+  const { t } = useTranslation()
   const [shortcut, setShortcut] = useState('Ctrl+Alt+H')
   const [fontSize, setFontSize] = useState<'xs' | 'sm' | 'base' | 'lg' | 'xl'>('base')
   const [compactMode, setCompactMode] = useState(false)
@@ -649,20 +650,20 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
   }
 
   const fontSizeOptions = [
-    { value: 'xs' as const, label: 'Extra Small' },
-    { value: 'sm' as const, label: 'Small' },
-    { value: 'base' as const, label: 'Normal' },
-    { value: 'lg' as const, label: 'Large' },
-    { value: 'xl' as const, label: 'Extra Large' },
+    { value: 'xs' as const, label: t('settings_extended.font_extra_small') },
+    { value: 'sm' as const, label: t('settings_extended.font_small') },
+    { value: 'base' as const, label: t('settings_extended.font_normal') },
+    { value: 'lg' as const, label: t('settings_extended.font_large') },
+    { value: 'xl' as const, label: t('settings_extended.font_extra_large') },
   ]
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <SectionHeader title="Appearance" />
+      <SectionHeader title={t('settings_extended.appearance_title')} />
 
-      <FormField label="Theme">
+      <FormField label={t('settings_extended.theme_label')}>
         <div className="grid grid-cols-3 gap-2">
-          {THEME_OPTIONS.map(({ value, label }) => (
+          {getThemeOptions(t).map(({ value, label }) => (
             <button
               key={value}
               onClick={() => onThemeChange(value)}
@@ -680,7 +681,7 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
         </div>
       </FormField>
 
-      <FormField label="Font Size">
+      <FormField label={t('settings_extended.font_size_label')}>
         <div className="grid grid-cols-2 gap-2">
           {fontSizeOptions.map(({ value, label }) => (
             <button
@@ -700,7 +701,7 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
         </div>
       </FormField>
 
-      <FormField label="Compact Mode">
+      <FormField label={t('settings_extended.compact_mode_label')}>
         <button
           onClick={() => handleCompactModeChange(!compactMode)}
           className="py-2 px-3 rounded-xl border text-xs font-medium transition-all flex items-center gap-2"
@@ -711,7 +712,7 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
           }}
         >
           {compactMode && <Check size={10} />}
-          {compactMode ? 'Enabled' : 'Disabled'} - Reduces spacing between messages
+          {compactMode ? t('settings_extended.enabled_text') : t('settings_extended.disabled_text')} - {t('settings_extended.compact_mode_desc')}
         </button>
       </FormField>
     </div>
@@ -722,11 +723,12 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
 
 function SectionIdentity({ userName, tone, verbosity, language, useEmoji, customPersonality,
   onUserNameChange, onToneChange, onVerbosityChange, onLanguageChange, onUseEmojiChange, onCustomPersonalityChange }: any) {
+  const { t } = useTranslation()
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
-      <SectionHeader title="Identity" description="Customize how Harbor speaks to you." />
+      <SectionHeader title={t('settings_extended.identity_title')} description={t('settings_extended.identity_section')} />
 
-      <FormField label="Your Name">
+      <FormField label={t('settings_extended.your_name_label')}>
         <input
           type="text"
           value={userName}
@@ -737,53 +739,53 @@ function SectionIdentity({ userName, tone, verbosity, language, useEmoji, custom
         />
       </FormField>
 
-      <FormField label="Communication Tone">
+      <FormField label={t('settings_extended.tone_label')}>
         <div className="flex flex-col gap-1.5">
-          {TONES.map((t) => (
+          {getTones(t).map((tone_opt) => (
             <button
-              key={t.id}
-              onClick={() => onToneChange(t.id)}
+              key={tone_opt.id}
+              onClick={() => onToneChange(tone_opt.id)}
               className="flex items-center gap-2 px-3 py-2 rounded-lg border text-left transition-all"
               style={{
-                borderColor: tone === t.id ? 'rgb(var(--harbor-accent) / 0.5)' : 'rgb(var(--harbor-border))',
-                background: tone === t.id ? 'rgb(var(--harbor-accent-light))' : 'transparent',
+                borderColor: tone === tone_opt.id ? 'rgb(var(--harbor-accent) / 0.5)' : 'rgb(var(--harbor-border))',
+                background: tone === tone_opt.id ? 'rgb(var(--harbor-accent-light))' : 'transparent',
               }}
             >
               <div
                 className="w-3 h-3 rounded-full border-2 flex-shrink-0"
                 style={{
-                  borderColor: tone === t.id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
-                  background: tone === t.id ? 'rgb(var(--harbor-accent))' : 'transparent',
+                  borderColor: tone === tone_opt.id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
+                  background: tone === tone_opt.id ? 'rgb(var(--harbor-accent))' : 'transparent',
                 }}
               />
-              <span className="text-xs" style={{ color: 'rgb(var(--harbor-text))' }}>{t.label}</span>
+              <span className="text-xs" style={{ color: 'rgb(var(--harbor-text))' }}>{tone_opt.label}</span>
             </button>
           ))}
         </div>
       </FormField>
 
-      <FormField label="Response Length">
+      <FormField label={t('settings_extended.verbosity_label')}>
         <div className="flex flex-col gap-1.5">
-          {VERBOSITY.map((v) => (
+          {getVerbosity(t).map((verb) => (
             <button
-              key={v.id}
-              onClick={() => onVerbosityChange(v.id)}
+              key={verb.id}
+              onClick={() => onVerbosityChange(verb.id)}
               className="flex items-start gap-2.5 px-3 py-2 rounded-lg border text-left transition-all"
               style={{
-                borderColor: verbosity === v.id ? 'rgb(var(--harbor-accent) / 0.5)' : 'rgb(var(--harbor-border))',
-                background: verbosity === v.id ? 'rgb(var(--harbor-accent-light))' : 'transparent',
+                borderColor: verbosity === verb.id ? 'rgb(var(--harbor-accent) / 0.5)' : 'rgb(var(--harbor-border))',
+                background: verbosity === verb.id ? 'rgb(var(--harbor-accent-light))' : 'transparent',
               }}
             >
               <div
                 className="w-3 h-3 rounded-full border-2 flex-shrink-0 mt-0.5"
                 style={{
-                  borderColor: verbosity === v.id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
-                  background: verbosity === v.id ? 'rgb(var(--harbor-accent))' : 'transparent',
+                  borderColor: verbosity === verb.id ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
+                  background: verbosity === verb.id ? 'rgb(var(--harbor-accent))' : 'transparent',
                 }}
               />
               <div>
-                <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{v.label}</p>
-                <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{v.description}</p>
+                <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{verb.label}</p>
+                <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{verb.description}</p>
               </div>
             </button>
           ))}
