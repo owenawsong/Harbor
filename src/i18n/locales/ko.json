@@ -102,7 +102,8 @@
     "switch_agent_mode": "에이전트 모드로 전환",
     "agent_mode": "에이전트",
     "chat_mode": "채팅",
-    "more": "더보기"
+    "more": "더보기",
+    "multiline_hint": "여러 줄 메시지는 Shift+Enter를 사용하세요"
   },
   "settings": {
     "title": "설정",
@@ -275,5 +276,156 @@
     "edit": "편집",
     "close": "닫기",
     "ok": "확인"
+  },
+  "greetings": {
+    "morning_1": "좋은 아침. 무엇을 생각하고 계세요?",
+    "morning_2": "아침 — 하루를 맞이할 준비가 되셨나요?",
+    "morning_3": "아침은 가능성으로 가득합니다. 무엇을 탐색할까요?",
+    "afternoon_1": "안녕하세요. 어떻게 도와드릴까요?",
+    "afternoon_2": "오후 — 진행 중이신가요?",
+    "afternoon_3": "오후는 명확함을 가져옵니다. 당신의 초점은 무엇인가요?",
+    "evening_1": "안녕하세요. 오늘 밤 무엇을 생각하고 계세요?",
+    "evening_2": "저녁 — 휴식하고 계신가요, 아니면 여전히 진행 중인가요?",
+    "evening_3": "저녁은 좋은 질문을 가져옵니다. 당신의 질문은 무엇인가요?"
+  },
+  "suggestions": {
+    "try_asking": "묻기를 시도해보세요",
+    "agent": {
+      "summarize": "이 페이지 요약",
+      "research": "주제 조사",
+      "compare": "가격 비교",
+      "extract": "데이터 추출",
+      "find_alternatives": "대안 찾기",
+      "organize": "내 탭 정리"
+    },
+    "chat": {
+      "research": "주제를 조사해주세요",
+      "explain": "개념 설명",
+      "recommend": "추천 받기",
+      "brainstorm": "아이디어 브레인스토밍",
+      "analyze": "이미지 분석",
+      "organize": "정보 정리"
+    },
+    "full_prompts": {
+      "summarize_page": "이 페이지 요약",
+      "research_topic": "주제를 조사해주세요",
+      "compare_prices": "이 제품의 가격 비교",
+      "extract_data": "이 페이지에서 데이터 추출",
+      "find_alternatives": "이것에 대한 대안 찾기",
+      "organize_tabs": "내 탭 정리",
+      "deep_research": "깊은 연구: 이 주제 설명",
+      "screenshot_walkthrough": "스크린샷 둘러보기 만들기"
+    }
+  },
+  "empty_state": {
+    "agent_description": "작업을 자동화하고, 페이지를 탐색하고, 더 똑똑하게 검색하세요.",
+    "chat_description": "무엇이든 물어보고, 답변을 얻고, 아이디어를 탐색하세요."
+  },
+  "skills": {
+    "header": "기술",
+    "create_skill": "기술 만들기",
+    "search_placeholder": "기술 검색…",
+    "no_skills_found": "기술을 찾을 수 없음",
+    "instructions": "지침",
+    "run_skill": "기술 실행",
+    "enable": "활성화",
+    "disable": "비활성화",
+    "off": "끄기",
+    "used_count": "{{count}}회 사용됨",
+    "clear_search": "검색 지우기",
+    "create_skill_form": {
+      "title": "사용자 정의 기술 만들기",
+      "name_placeholder": "기술 이름",
+      "description_placeholder": "짧은 설명",
+      "instructions_placeholder": "Harbor에 대한 지침 (이 기술을 실행할 때 무엇을 해야 하는지 설명)…",
+      "create": "만들기",
+      "cancel": "취소"
+    },
+    "skill_definitions": {
+      "compare_prices": {
+        "name": "가격 비교",
+        "description": "여러 매장에서 제품 가격을 즉시 비교하고 최고의 거래를 찾으세요."
+      },
+      "deep_research": {
+        "name": "심층 연구",
+        "description": "종합된 통찰력과 인용문이 포함된 포괄적인 다중 소스 연구."
+      },
+      "extract_data": {
+        "name": "데이터 추출",
+        "description": "웹 페이지에서 구조화된 데이터 추출 — 표, 목록, 가격, 연락처."
+      },
+      "fill_form": {
+        "name": "양식 채우기",
+        "description": "프로필의 맥락이나 제공된 정보를 사용하여 양식을 지능적으로 채우세요."
+      },
+      "find_alternatives": {
+        "name": "대안 찾기",
+        "description": "모든 제품이나 서비스에 대한 더 나은, 더 저렴하거나 윤리적인 대안을 발견하세요."
+      },
+      "manage_bookmarks": {
+        "name": "북마크 관리",
+        "description": "브라우저 북마크를 지능적으로 정리, 태그 지정 및 정리하세요."
+      },
+      "monitor_page": {
+        "name": "페이지 모니터링",
+        "description": "가격 인하, 콘텐츠 변경 또는 가용성 업데이트에 대한 페이지를 감시하세요."
+      },
+      "organize_tabs": {
+        "name": "탭 정리",
+        "description": "열려있는 모든 브라우저 탭을 정렬, 그룹화, 중복 제거 및 정리하세요."
+      },
+      "read_later": {
+        "name": "나중에 읽기",
+        "description": "기사와 페이지를 요약과 함께 선별된 읽기 목록에 저장하세요."
+      },
+      "save_page": {
+        "name": "페이지 저장",
+        "description": "향후 참조를 위해 모든 페이지의 전체 콘텐츠를 저장하고 보관하세요."
+      },
+      "screenshot_walkthrough": {
+        "name": "스크린샷 둘러보기",
+        "description": "모든 프로세스 또는 워크플로우의 단계별 시각적 가이드를 만드세요."
+      },
+      "summarize_page": {
+        "name": "페이지 요약",
+        "description": "모든 기사, 문서 또는 웹 페이지의 스마트하고 구조화된 요약을 얻으세요."
+      }
+    },
+    "categories": {
+      "research": "연구",
+      "productivity": "생산성",
+      "data": "데이터",
+      "shopping": "쇼핑",
+      "navigation": "네비게이션",
+      "content": "콘텐츠",
+      "custom": "사용자 정의"
+    }
+  },
+  "settings_extended": {
+    "general_section": "일반",
+    "api_key_label": "API 키",
+    "provider_label": "제공자",
+    "model_label": "모델",
+    "stored_locally": "로컬에 저장되며 공유되지 않습니다.",
+    "base_url_label": "기본 URL",
+    "run_ollama": "Ollama 실행",
+    "for_browser_access": "브라우저 액세스용.",
+    "minimax_description": "API 키가 필요하지 않습니다. 텍스트에는 MiniMax-m2.5를 사용하고 이미지나 비디오가 첨부되면 자동으로 Qwen3.5-122B로 전환합니다.",
+    "enable_memory_label": "메모리 활성화",
+    "persist_context": "대화 간 컨텍스트 유지",
+    "save_model_preset": "모델 사전 설정 저장",
+    "press_shortcut": "바로가기를 누르세요…",
+    "set_button": "설정",
+    "cancel_button": "취소"
+  },
+  "help_section": {
+    "agent_vs_chat": {
+      "title": "에이전트 vs 채팅",
+      "description": "에이전트 모드를 사용하여 작업을 자동화하고, 채팅 모드를 토론에 사용하세요."
+    },
+    "model_presets": {
+      "title": "모델 사전 설정",
+      "description": "좋아하는 모델 구성을 저장하여 설정에서 즉시 전환하세요."
+    }
   }
 }

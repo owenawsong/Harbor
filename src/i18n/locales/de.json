@@ -102,7 +102,8 @@
     "switch_agent_mode": "Zu Agent-Modus wechseln",
     "agent_mode": "Agent",
     "chat_mode": "Chat",
-    "more": "Mehr"
+    "more": "Mehr",
+    "multiline_hint": "Verwenden Sie Shift+Enter für mehrzeilige Nachrichten"
   },
   "settings": {
     "title": "Einstellungen",
@@ -275,5 +276,156 @@
     "edit": "Bearbeiten",
     "close": "Schließen",
     "ok": "OK"
+  },
+  "greetings": {
+    "morning_1": "Guten Morgen. Was beschäftigt Sie?",
+    "morning_2": "Morgen — bereit, den Tag zu meistern?",
+    "morning_3": "Der Morgen ist voller Möglichkeiten. Was wollen wir erkunden?",
+    "afternoon_1": "Guten Nachmittag. Wie kann ich helfen?",
+    "afternoon_2": "Nachmittag — macht man Fortschritte?",
+    "afternoon_3": "Der Nachmittag bringt Klarheit. Was ist Ihr Fokus?",
+    "evening_1": "Guten Abend. Was beschäftigt Sie heute Abend?",
+    "evening_2": "Abend — entspannen oder noch stark?",
+    "evening_3": "Der Abend bringt gute Fragen. Was ist Ihre?"
+  },
+  "suggestions": {
+    "try_asking": "Versuchen Sie zu fragen",
+    "agent": {
+      "summarize": "Diese Seite zusammenfassen",
+      "research": "Ein Thema recherchieren",
+      "compare": "Preise vergleichen",
+      "extract": "Daten extrahieren",
+      "find_alternatives": "Alternativen finden",
+      "organize": "Meine Registerkarten organisieren"
+    },
+    "chat": {
+      "research": "Ein Thema für mich recherchieren",
+      "explain": "Ein Konzept erklären",
+      "recommend": "Empfehlungen erhalten",
+      "brainstorm": "Ideen sammeln",
+      "analyze": "Ein Bild analysieren",
+      "organize": "Informationen organisieren"
+    },
+    "full_prompts": {
+      "summarize_page": "Diese Seite zusammenfassen",
+      "research_topic": "Ein Thema für mich recherchieren",
+      "compare_prices": "Preise für dieses Produkt vergleichen",
+      "extract_data": "Daten von dieser Seite extrahieren",
+      "find_alternatives": "Alternativen dazu finden",
+      "organize_tabs": "Meine Registerkarten organisieren",
+      "deep_research": "Tiefgreifende Recherche: Dieses Thema erklären",
+      "screenshot_walkthrough": "Eine Screenshot-Anleitung erstellen"
+    }
+  },
+  "empty_state": {
+    "agent_description": "Automatisieren Sie Aufgaben, navigieren Sie auf Seiten und surfen Sie intelligenter.",
+    "chat_description": "Fragen Sie etwas, erhalten Sie Antworten, erkunden Sie Ideen."
+  },
+  "skills": {
+    "header": "Fähigkeiten",
+    "create_skill": "Fähigkeit erstellen",
+    "search_placeholder": "Fähigkeiten suchen…",
+    "no_skills_found": "Keine Fähigkeiten gefunden",
+    "instructions": "Anweisungen",
+    "run_skill": "Fähigkeit ausführen",
+    "enable": "Aktivieren",
+    "disable": "Deaktivieren",
+    "off": "Aus",
+    "used_count": "{{count}} mal verwendet",
+    "clear_search": "Suche löschen",
+    "create_skill_form": {
+      "title": "Benutzerdefinierte Fähigkeit erstellen",
+      "name_placeholder": "Fähigkeitsname",
+      "description_placeholder": "Kurzbeschreibung",
+      "instructions_placeholder": "Anweisungen für Harbor (beschreiben Sie, was es tun soll, wenn diese Fähigkeit ausgeführt wird)…",
+      "create": "Erstellen",
+      "cancel": "Abbrechen"
+    },
+    "skill_definitions": {
+      "compare_prices": {
+        "name": "Preise vergleichen",
+        "description": "Vergleichen Sie sofort Produktpreise in mehreren Geschäften und finden Sie das beste Angebot."
+      },
+      "deep_research": {
+        "name": "Tiefgreifende Recherche",
+        "description": "Umfassende Multi-Source-Recherche mit synthetisierten Erkenntnissen und Zitaten."
+      },
+      "extract_data": {
+        "name": "Daten extrahieren",
+        "description": "Extrahieren Sie strukturierte Daten aus jeder Webseite — Tabellen, Listen, Preise, Kontakte."
+      },
+      "fill_form": {
+        "name": "Formular ausfüllen",
+        "description": "Füllen Sie Formulare intelligent mit Kontext aus Ihrem Profil oder bereitgestellten Informationen aus."
+      },
+      "find_alternatives": {
+        "name": "Alternativen finden",
+        "description": "Entdecken Sie bessere, billigere oder ethischere Alternativen zu jedem Produkt oder Service."
+      },
+      "manage_bookmarks": {
+        "name": "Lesezeichen verwalten",
+        "description": "Organisieren, kategorisieren und bereinigen Sie Ihre Browser-Lesezeichen intelligent."
+      },
+      "monitor_page": {
+        "name": "Seite überwachen",
+        "description": "Überwachen Sie eine Seite auf Preisrückgänge, Inhaltsänderungen oder Verfügbarkeitsaktualisierungen."
+      },
+      "organize_tabs": {
+        "name": "Registerkarten organisieren",
+        "description": "Sortieren, gruppieren, deduplizieren und bereinigen Sie alle offenen Browser-Registerkarten."
+      },
+      "read_later": {
+        "name": "Später lesen",
+        "description": "Speichern Sie Artikel und Seiten in einer kuratierten Leseliste mit Zusammenfassungen."
+      },
+      "save_page": {
+        "name": "Seite speichern",
+        "description": "Speichern und archivieren Sie den vollständigen Inhalt jeder Seite zur zukünftigen Referenz."
+      },
+      "screenshot_walkthrough": {
+        "name": "Screenshot-Anleitung",
+        "description": "Erstellen Sie eine Schritt-für-Schritt-Anleitung für jeden Prozess oder Workflow."
+      },
+      "summarize_page": {
+        "name": "Seite zusammenfassen",
+        "description": "Erhalten Sie eine intelligente, strukturierte Zusammenfassung von Artikeln, Dokumentationen oder Webseiten."
+      }
+    },
+    "categories": {
+      "research": "Recherche",
+      "productivity": "Produktivität",
+      "data": "Daten",
+      "shopping": "Shopping",
+      "navigation": "Navigation",
+      "content": "Inhalte",
+      "custom": "Benutzerdefiniert"
+    }
+  },
+  "settings_extended": {
+    "general_section": "Allgemein",
+    "api_key_label": "API-Schlüssel",
+    "provider_label": "Anbieter",
+    "model_label": "Modell",
+    "stored_locally": "Lokal gespeichert, nie geteilt.",
+    "base_url_label": "Basis-URL",
+    "run_ollama": "Führen Sie Ollama aus mit",
+    "for_browser_access": "für Browserzugriff.",
+    "minimax_description": "Kein API-Schlüssel erforderlich. Verwendet MiniMax-m2.5 für Text und wechselt automatisch zu Qwen3.5-122B, wenn Bilder oder Videos angehängt werden.",
+    "enable_memory_label": "Speicher aktivieren",
+    "persist_context": "Kontext zwischen Unterhaltungen beibehalten",
+    "save_model_preset": "Modellvoreinstellung speichern",
+    "press_shortcut": "Verknüpfung drücken…",
+    "set_button": "Einstellen",
+    "cancel_button": "Abbrechen"
+  },
+  "help_section": {
+    "agent_vs_chat": {
+      "title": "Agent vs Chat",
+      "description": "Verwenden Sie Agent-Modus zur Automatisierung von Aufgaben, Chat-Modus für Diskussionen."
+    },
+    "model_presets": {
+      "title": "Modellvoreinstellungen",
+      "description": "Speichern Sie Ihre bevorzugten Modellkonfigurationen für sofortiges Umschalten in den Einstellungen."
+    }
   }
 }

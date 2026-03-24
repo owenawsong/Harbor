@@ -102,7 +102,8 @@
     "switch_agent_mode": "Switch to Agent Mode",
     "agent_mode": "Agent",
     "chat_mode": "Chat",
-    "more": "More"
+    "more": "More",
+    "multiline_hint": "Use Shift+Enter for multi-line messages"
   },
   "settings": {
     "title": "Settings",
@@ -275,5 +276,156 @@
     "edit": "Edit",
     "close": "Close",
     "ok": "OK"
+  },
+  "greetings": {
+    "morning_1": "Good morning. What's on your mind?",
+    "morning_2": "Morning — ready to tackle the day?",
+    "morning_3": "The morning is full of possibilities. What shall we explore?",
+    "afternoon_1": "Good afternoon. How can I help?",
+    "afternoon_2": "Afternoon — getting things done?",
+    "afternoon_3": "The afternoon brings clarity. What's your focus?",
+    "evening_1": "Good evening. What's on your mind tonight?",
+    "evening_2": "Evening — winding down or still going strong?",
+    "evening_3": "The evening brings good questions. What's yours?"
+  },
+  "suggestions": {
+    "try_asking": "Try asking",
+    "agent": {
+      "summarize": "Summarize this page",
+      "research": "Research a topic",
+      "compare": "Compare prices",
+      "extract": "Extract data",
+      "find_alternatives": "Find alternatives",
+      "organize": "Organize my tabs"
+    },
+    "chat": {
+      "research": "Research a topic for me",
+      "explain": "Explain a concept",
+      "recommend": "Get recommendations",
+      "brainstorm": "Brainstorm ideas",
+      "analyze": "Analyze an image",
+      "organize": "Organize information"
+    },
+    "full_prompts": {
+      "summarize_page": "Summarize this page",
+      "research_topic": "Research a topic for me",
+      "compare_prices": "Compare prices for this product",
+      "extract_data": "Extract data from this page",
+      "find_alternatives": "Find alternatives to this",
+      "organize_tabs": "Organize my tabs",
+      "deep_research": "Deep research: explain this topic",
+      "screenshot_walkthrough": "Create a screenshot walkthrough"
+    }
+  },
+  "empty_state": {
+    "agent_description": "Automate tasks, navigate pages, and browse smarter.",
+    "chat_description": "Ask anything, get answers, explore ideas."
+  },
+  "skills": {
+    "header": "Skills",
+    "create_skill": "Create skill",
+    "search_placeholder": "Search skills…",
+    "no_skills_found": "No skills found",
+    "instructions": "Instructions",
+    "run_skill": "Run skill",
+    "enable": "Enable",
+    "disable": "Disable",
+    "off": "Off",
+    "used_count": "Used {{count}} times",
+    "clear_search": "Clear search",
+    "create_skill_form": {
+      "title": "Create Custom Skill",
+      "name_placeholder": "Skill name",
+      "description_placeholder": "Short description",
+      "instructions_placeholder": "Instructions for Harbor (describe what it should do when running this skill)…",
+      "create": "Create",
+      "cancel": "Cancel"
+    },
+    "skill_definitions": {
+      "compare_prices": {
+        "name": "Compare Prices",
+        "description": "Instantly compare product prices across multiple stores and find the best deal."
+      },
+      "deep_research": {
+        "name": "Deep Research",
+        "description": "Comprehensive multi-source research with synthesized insights and citations."
+      },
+      "extract_data": {
+        "name": "Extract Data",
+        "description": "Extract structured data from any web page — tables, lists, prices, contacts."
+      },
+      "fill_form": {
+        "name": "Fill Form",
+        "description": "Intelligently fill out forms using context from your profile or provided information."
+      },
+      "find_alternatives": {
+        "name": "Find Alternatives",
+        "description": "Discover better, cheaper, or more ethical alternatives to any product or service."
+      },
+      "manage_bookmarks": {
+        "name": "Manage Bookmarks",
+        "description": "Organize, tag, and clean up your browser bookmarks intelligently."
+      },
+      "monitor_page": {
+        "name": "Monitor Page",
+        "description": "Watch a page for price drops, content changes, or availability updates."
+      },
+      "organize_tabs": {
+        "name": "Organize Tabs",
+        "description": "Sort, group, deduplicate, and clean up all your open browser tabs."
+      },
+      "read_later": {
+        "name": "Read Later",
+        "description": "Save articles and pages to a curated reading list with summaries."
+      },
+      "save_page": {
+        "name": "Save Page",
+        "description": "Save and archive the full content of any page for future reference."
+      },
+      "screenshot_walkthrough": {
+        "name": "Screenshot Walkthrough",
+        "description": "Create a step-by-step visual guide of any process or workflow."
+      },
+      "summarize_page": {
+        "name": "Summarize Page",
+        "description": "Get a smart, structured summary of any article, documentation, or webpage."
+      }
+    },
+    "categories": {
+      "research": "Research",
+      "productivity": "Productivity",
+      "data": "Data",
+      "shopping": "Shopping",
+      "navigation": "Navigation",
+      "content": "Content",
+      "custom": "Custom"
+    }
+  },
+  "settings_extended": {
+    "general_section": "General",
+    "api_key_label": "API Key",
+    "provider_label": "Provider",
+    "model_label": "Model",
+    "stored_locally": "Stored locally, never shared.",
+    "base_url_label": "Base URL",
+    "run_ollama": "Run Ollama with",
+    "for_browser_access": "for browser access.",
+    "minimax_description": "No API key needed. Uses MiniMax-m2.5 for text and auto-switches to Qwen3.5-122B when images or video are attached.",
+    "enable_memory_label": "Enable Memory",
+    "persist_context": "Persist context across conversations",
+    "save_model_preset": "Save Model Preset",
+    "press_shortcut": "Press shortcut…",
+    "set_button": "Set",
+    "cancel_button": "Cancel"
+  },
+  "help_section": {
+    "agent_vs_chat": {
+      "title": "Agent vs Chat",
+      "description": "Use Agent mode to automate tasks, Chat mode for discussions."
+    },
+    "model_presets": {
+      "title": "Model Presets",
+      "description": "Save your favorite model configs for instant switching in Settings."
+    }
   }
 }

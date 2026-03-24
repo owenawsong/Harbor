@@ -102,7 +102,8 @@
     "switch_agent_mode": "Mudar para modo Agente",
     "agent_mode": "Agente",
     "chat_mode": "Chat",
-    "more": "Mais"
+    "more": "Mais",
+    "multiline_hint": "Use Shift+Enter para mensagens multi-linhas"
   },
   "settings": {
     "title": "Configurações",
@@ -275,5 +276,156 @@
     "edit": "Editar",
     "close": "Fechar",
     "ok": "OK"
+  },
+  "greetings": {
+    "morning_1": "Bom dia. O que tem em mente?",
+    "morning_2": "Manhã — pronto para enfrentar o dia?",
+    "morning_3": "A manhã está cheia de possibilidades. O que vamos explorar?",
+    "afternoon_1": "Boa tarde. Como posso ajudar?",
+    "afternoon_2": "Tarde — fazendo progresso?",
+    "afternoon_3": "A tarde traz clareza. Qual é seu foco?",
+    "evening_1": "Boa noite. O que tem em mente esta noite?",
+    "evening_2": "Noite — se relaxando ou ainda forte?",
+    "evening_3": "A noite traz boas perguntas. Qual é a sua?"
+  },
+  "suggestions": {
+    "try_asking": "Tente perguntar",
+    "agent": {
+      "summarize": "Resumir esta página",
+      "research": "Pesquisar um tópico",
+      "compare": "Comparar preços",
+      "extract": "Extrair dados",
+      "find_alternatives": "Encontrar alternativas",
+      "organize": "Organizar minhas abas"
+    },
+    "chat": {
+      "research": "Pesquisar um tópico para mim",
+      "explain": "Explicar um conceito",
+      "recommend": "Obter recomendações",
+      "brainstorm": "Brainstorm de ideias",
+      "analyze": "Analisar uma imagem",
+      "organize": "Organizar informações"
+    },
+    "full_prompts": {
+      "summarize_page": "Resumir esta página",
+      "research_topic": "Pesquisar um tópico para mim",
+      "compare_prices": "Comparar preços deste produto",
+      "extract_data": "Extrair dados desta página",
+      "find_alternatives": "Encontrar alternativas para isso",
+      "organize_tabs": "Organizar minhas abas",
+      "deep_research": "Pesquisa profunda: explicar este tópico",
+      "screenshot_walkthrough": "Criar um guia visual de captura de tela"
+    }
+  },
+  "empty_state": {
+    "agent_description": "Automatize tarefas, navegue por páginas e navegue de forma mais inteligente.",
+    "chat_description": "Pergunte qualquer coisa, obtenha respostas, explore ideias."
+  },
+  "skills": {
+    "header": "Habilidades",
+    "create_skill": "Criar habilidade",
+    "search_placeholder": "Pesquisar habilidades…",
+    "no_skills_found": "Nenhuma habilidade encontrada",
+    "instructions": "Instruções",
+    "run_skill": "Executar habilidade",
+    "enable": "Ativar",
+    "disable": "Desativar",
+    "off": "Desligado",
+    "used_count": "Usado {{count}} vezes",
+    "clear_search": "Limpar pesquisa",
+    "create_skill_form": {
+      "title": "Criar Habilidade Personalizada",
+      "name_placeholder": "Nome da habilidade",
+      "description_placeholder": "Descrição breve",
+      "instructions_placeholder": "Instruções para Harbor (descreva o que deve fazer ao executar esta habilidade)…",
+      "create": "Criar",
+      "cancel": "Cancelar"
+    },
+    "skill_definitions": {
+      "compare_prices": {
+        "name": "Comparar Preços",
+        "description": "Compare instantaneamente preços de produtos em várias lojas e encontre a melhor oferta."
+      },
+      "deep_research": {
+        "name": "Pesquisa Profunda",
+        "description": "Pesquisa multifonte abrangente com insights sintetizados e citações."
+      },
+      "extract_data": {
+        "name": "Extrair Dados",
+        "description": "Extraia dados estruturados de qualquer página da web — tabelas, listas, preços, contatos."
+      },
+      "fill_form": {
+        "name": "Preencher Formulário",
+        "description": "Preencha formulários inteligentemente usando contexto do seu perfil ou informações fornecidas."
+      },
+      "find_alternatives": {
+        "name": "Encontrar Alternativas",
+        "description": "Descubra alternativas melhores, mais baratas ou mais éticas para qualquer produto ou serviço."
+      },
+      "manage_bookmarks": {
+        "name": "Gerenciar Marcadores",
+        "description": "Organize, rotule e limpe seus favoritos do navegador de forma inteligente."
+      },
+      "monitor_page": {
+        "name": "Monitorar Página",
+        "description": "Monitore uma página para quedas de preço, mudanças de conteúdo ou atualizações de disponibilidade."
+      },
+      "organize_tabs": {
+        "name": "Organizar Abas",
+        "description": "Classifique, agrupe, remova duplicatas e limpe todas as suas abas abertas do navegador."
+      },
+      "read_later": {
+        "name": "Ler Mais Tarde",
+        "description": "Salve artigos e páginas em uma lista de leitura curada com resumos."
+      },
+      "save_page": {
+        "name": "Salvar Página",
+        "description": "Salve e arquive o conteúdo completo de qualquer página para referência futura."
+      },
+      "screenshot_walkthrough": {
+        "name": "Guia Visual de Captura de Tela",
+        "description": "Crie um guia visual passo a passo de qualquer processo ou fluxo de trabalho."
+      },
+      "summarize_page": {
+        "name": "Resumir Página",
+        "description": "Obtenha um resumo inteligente e estruturado de qualquer artigo, documentação ou página da web."
+      }
+    },
+    "categories": {
+      "research": "Pesquisa",
+      "productivity": "Produtividade",
+      "data": "Dados",
+      "shopping": "Compras",
+      "navigation": "Navegação",
+      "content": "Conteúdo",
+      "custom": "Personalizado"
+    }
+  },
+  "settings_extended": {
+    "general_section": "Geral",
+    "api_key_label": "Chave de API",
+    "provider_label": "Provedor",
+    "model_label": "Modelo",
+    "stored_locally": "Armazenado localmente, nunca compartilhado.",
+    "base_url_label": "URL Base",
+    "run_ollama": "Executar Ollama com",
+    "for_browser_access": "para acesso no navegador.",
+    "minimax_description": "Nenhuma chave de API necessária. Usa MiniMax-m2.5 para texto e muda automaticamente para Qwen3.5-122B quando imagens ou vídeos são anexados.",
+    "enable_memory_label": "Habilitar Memória",
+    "persist_context": "Persistir contexto entre conversas",
+    "save_model_preset": "Salvar Predefinição de Modelo",
+    "press_shortcut": "Pressione o atalho…",
+    "set_button": "Definir",
+    "cancel_button": "Cancelar"
+  },
+  "help_section": {
+    "agent_vs_chat": {
+      "title": "Agente vs Chat",
+      "description": "Use o modo Agente para automatizar tarefas, o modo Chat para discussões."
+    },
+    "model_presets": {
+      "title": "Predefinições de Modelo",
+      "description": "Salve suas configurações de modelo favoritas para troca instantânea em Configurações."
+    }
   }
 }

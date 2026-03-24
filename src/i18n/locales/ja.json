@@ -102,7 +102,8 @@
     "switch_agent_mode": "エージェントモードに切り替え",
     "agent_mode": "エージェント",
     "chat_mode": "チャット",
-    "more": "詳細"
+    "more": "詳細",
+    "multiline_hint": "Shift+Enterで複数行メッセージを入力"
   },
   "settings": {
     "title": "設定",
@@ -275,5 +276,156 @@
     "edit": "編集",
     "close": "閉じる",
     "ok": "OK"
+  },
+  "greetings": {
+    "morning_1": "おはよう。今日何か考えていることはありますか?",
+    "morning_2": "朝です — 今日に向けて準備はできていますか?",
+    "morning_3": "朝は可能性に満ちています。何を探索しましょうか?",
+    "afternoon_1": "こんにちは。どのようにお手伝いしましょうか?",
+    "afternoon_2": "午後です — 進めていますか?",
+    "afternoon_3": "午後は明確性をもたらします。あなたの焦点は何ですか?",
+    "evening_1": "こんばんは。今夜何か考えていることはありますか?",
+    "evening_2": "夜です — ゆっくり過ごしていますか、それともまだ続けていますか?",
+    "evening_3": "夜は良い質問をもたらします。あなたの質問は何ですか?"
+  },
+  "suggestions": {
+    "try_asking": "試しに聞いてみてください",
+    "agent": {
+      "summarize": "このページを要約",
+      "research": "トピックを研究",
+      "compare": "価格を比較",
+      "extract": "データを抽出",
+      "find_alternatives": "代替案を見つける",
+      "organize": "タブを整理"
+    },
+    "chat": {
+      "research": "トピックを調べてください",
+      "explain": "概念を説明する",
+      "recommend": "推奨事項を取得",
+      "brainstorm": "アイデアを出す",
+      "analyze": "画像を分析",
+      "organize": "情報を整理"
+    },
+    "full_prompts": {
+      "summarize_page": "このページを要約",
+      "research_topic": "トピックを調べてください",
+      "compare_prices": "この商品の価格を比較",
+      "extract_data": "このページからデータを抽出",
+      "find_alternatives": "これの代替案を見つける",
+      "organize_tabs": "タブを整理",
+      "deep_research": "深い研究：このトピックを説明",
+      "screenshot_walkthrough": "スクリーンショット ウォークスルーを作成"
+    }
+  },
+  "empty_state": {
+    "agent_description": "タスクを自動化し、ページをナビゲートして、より賢くブラウズします。",
+    "chat_description": "何でも質問してください、答えを得て、アイデアを探索してください。"
+  },
+  "skills": {
+    "header": "スキル",
+    "create_skill": "スキルを作成",
+    "search_placeholder": "スキルを検索…",
+    "no_skills_found": "スキルが見つかりません",
+    "instructions": "命令",
+    "run_skill": "スキルを実行",
+    "enable": "有効にする",
+    "disable": "無効にする",
+    "off": "オフ",
+    "used_count": "{{count}}回使用",
+    "clear_search": "検索をクリア",
+    "create_skill_form": {
+      "title": "カスタム スキルを作成",
+      "name_placeholder": "スキル名",
+      "description_placeholder": "短い説明",
+      "instructions_placeholder": "Harbor用の命令(このスキルを実行するときに何をすべきかを説明してください)…",
+      "create": "作成",
+      "cancel": "キャンセル"
+    },
+    "skill_definitions": {
+      "compare_prices": {
+        "name": "価格を比較",
+        "description": "複数の店舗で製品の価格を即座に比較して、最高の取引を見つけます。"
+      },
+      "deep_research": {
+        "name": "深い研究",
+        "description": "統合されたインサイトと引用を含む包括的なマルチソース研究。"
+      },
+      "extract_data": {
+        "name": "データを抽出",
+        "description": "任意のWebページからテーブル、リスト、価格、連絡先などの構造化されたデータを抽出します。"
+      },
+      "fill_form": {
+        "name": "フォームに記入",
+        "description": "プロフィールの情報または提供された情報を使用してフォームにインテリジェントに記入します。"
+      },
+      "find_alternatives": {
+        "name": "代替案を見つける",
+        "description": "任意の製品またはサービスに対して、より優れた、より安い、またはより倫理的な代替案を発見します。"
+      },
+      "manage_bookmarks": {
+        "name": "ブックマークを管理",
+        "description": "ブラウザのブックマークをインテリジェントに整理、タグ付け、クリーンアップします。"
+      },
+      "monitor_page": {
+        "name": "ページを監視",
+        "description": "価格の低下、コンテンツの変更、または利用可能性の更新についてページを監視します。"
+      },
+      "organize_tabs": {
+        "name": "タブを整理",
+        "description": "開いているすべてのブラウザタブをソート、グループ化、重複排除、クリーンアップします。"
+      },
+      "read_later": {
+        "name": "後で読む",
+        "description": "記事とページを要約を含む厳選された読書リストに保存します。"
+      },
+      "save_page": {
+        "name": "ページを保存",
+        "description": "将来の参照のために任意のページの完全なコンテンツを保存およびアーカイブします。"
+      },
+      "screenshot_walkthrough": {
+        "name": "スクリーンショット ウォークスルー",
+        "description": "任意のプロセスまたはワークフローのステップバイステップの視覚的なガイドを作成します。"
+      },
+      "summarize_page": {
+        "name": "ページを要約",
+        "description": "任意の記事、ドキュメンテーション、またはWebページのスマート構造化サマリーを取得します。"
+      }
+    },
+    "categories": {
+      "research": "リサーチ",
+      "productivity": "生産性",
+      "data": "データ",
+      "shopping": "ショッピング",
+      "navigation": "ナビゲーション",
+      "content": "コンテンツ",
+      "custom": "カスタム"
+    }
+  },
+  "settings_extended": {
+    "general_section": "一般",
+    "api_key_label": "APIキー",
+    "provider_label": "プロバイダ",
+    "model_label": "モデル",
+    "stored_locally": "ローカルに保存され、共有されません。",
+    "base_url_label": "ベースURL",
+    "run_ollama": "Ollamaを実行",
+    "for_browser_access": "ブラウザアクセス用。",
+    "minimax_description": "APIキー不要。MiniMax-m2.5をテキストに使用し、画像またはビデオが添付されたときにQwen3.5-122Bに自動切り替え。",
+    "enable_memory_label": "メモリを有効にする",
+    "persist_context": "会話全体でコンテキストを保持",
+    "save_model_preset": "モデル プリセットを保存",
+    "press_shortcut": "ショートカットを押してください…",
+    "set_button": "設定",
+    "cancel_button": "キャンセル"
+  },
+  "help_section": {
+    "agent_vs_chat": {
+      "title": "エージェント対チャット",
+      "description": "エージェント モードでタスクを自動化し、チャット モードで議論します。"
+    },
+    "model_presets": {
+      "title": "モデル プリセット",
+      "description": "お気に入りのモデル構成を保存して、設定で即座に切り替えます。"
+    }
   }
 }
