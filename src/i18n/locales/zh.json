@@ -86,13 +86,31 @@
   },
   "settings": {
     "title": "设置",
+    "general": "常规",
+    "appearance": "外观",
+    "identity": "身份",
+    "memory": "记忆",
+    "privacy": "隐私",
+    "help": "帮助",
+    "about": "关于",
     "api_key": "API 密钥",
     "provider": "提供者",
+    "model": "模型",
     "theme": "主题",
     "language": "语言",
     "font_size": "字体大小",
     "compact_mode": "紧凑模式",
-    "memory": "启用记忆",
-    "screenshots": "启用截图"
+    "enable_memory": "启用记忆",
+    "enable_screenshots": "启用截图",
+    "name": "名字",
+    "tone": "语气",
+    "verbosity": "详细程度",
+    "emoji": "使用表情符号",
+    "personality": "自定义人格",
+    "save": "已保存",
+    "back": "返回",
+    "light": "浅色",
+    "dark": "深色",
+    "auto": "自动"
   }
 }

@@ -277,7 +277,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         <h2 className="font-semibold text-sm flex-1" style={{ color: 'rgb(var(--harbor-text))' }}>{t('settings.title')}</h2>
         {savedIndicator && (
           <span className="flex items-center gap-1 text-[11px] text-emerald-500 animate-fade-in">
-            <Check size={11} /> Saved
+            <Check size={11} /> {t('settings.save')}
           </span>
         )}
       </div>
@@ -299,9 +299,23 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
   activeSection: SettingsSection
   onSectionChange: (section: SettingsSection) => void
 }) {
+  const { t } = useTranslation()
   const tabsRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const getTranslatedLabel = (id: SettingsSection): string => {
+    const translations: Record<SettingsSection, string> = {
+      provider: t('settings.general'),
+      appearance: t('settings.appearance'),
+      identity: t('settings.identity'),
+      memory: t('settings.memory'),
+      privacy: t('settings.privacy'),
+      help: t('settings.help'),
+      about: t('settings.about'),
+    }
+    return translations[id]
+  }
 
   const checkScroll = useCallback(() => {
     if (tabsRef.current) {
@@ -348,7 +362,7 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
         style={{ scrollbarWidth: 'none' }}
         onScroll={checkScroll}
       >
-        {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+        {NAV_ITEMS.map(({ id, icon: Icon }) => (
           <button
             key={id}
             onClick={() => onSectionChange(id)}
@@ -361,7 +375,7 @@ function SettingsTabBar({ activeSection, onSectionChange }: {
             }}
           >
             <Icon size={12} />
-            {label}
+            {getTranslatedLabel(id)}
           </button>
         ))}
       </div>
