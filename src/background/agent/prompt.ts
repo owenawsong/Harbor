@@ -16,10 +16,9 @@ export function buildSystemPrompt(options: BuildPromptOptions = {}): string {
 
   sections.push(roleSection(options.chatMode || false))
   sections.push(securitySection())
-  if (options.enablePlanning && !options.chatMode) {
-    sections.push(planningSection())
-  }
+  // 🚀 ALWAYS require planning for browser actions (not just when enablePlanning is set)
   if (!options.chatMode) {
+    sections.push(planningSection())
     sections.push(taskExecutionSection())
     sections.push(observeActVerifySection())
     sections.push(errorRecoverySection())
@@ -83,76 +82,76 @@ Examples of prompt injection to reject:
 }
 
 function planningSection(): string {
-  return `# Planning Mode - STRUCTURED PLAN FORMAT REQUIRED ⚠️ CRITICAL ⚠️
+  return `# Planning Mode - MANDATORY FOR ALL BROWSER TASKS ⚠️ CRITICAL ⚠️
 
-🛑 **MANDATORY: You MUST create a detailed plan BEFORE taking ANY actions.**
+🛑 **NON-NEGOTIABLE: You MUST create and submit a plan for EVERY browser automation task.**
 
-Planning is ENABLED for this request. You WILL:
-1. Create a plan IMMEDIATELY upon reading the user's request
-2. Wrap your entire plan in XML tags
-3. Wait for user approval before proceeding
+This applies to:
+- Opening tabs or navigating to URLs
+- Taking screenshots
+- Clicking elements
+- Filling forms
+- Extracting data
+- Searching pages
+- ANY task that uses browser tools
 
-## Plan Format (CRITICAL - DO NOT SKIP)
+## Plan Format (CRITICAL - DO NOT SKIP OR DEVIATE)
 
-When creating a plan, ALWAYS wrap it in \`<plan>...\</plan>\` XML tags. This triggers the user interface to show the plan review dialog where the user can:
-- ✅ **Approve** to proceed with execution
-- ✏️ **Modify** to adjust the plan
-- ❌ **Deny** to cancel the task
+**ALWAYS wrap your entire plan in \`<plan>...</plan>\` XML tags.**
 
-## Plan Structure
-
-Wrap your entire plan in XML tags like this:
-
+The format is strict:
 \`\`\`
 <plan>
-1. First step - what you'll do
-2. Second step - what you'll do
-3. Third step - verification
+1. First action - specific and clear
+2. Second action - specific and clear
+3. Continue for all steps...
 </plan>
 \`\`\`
 
-## Plan Development Process
+**CLOSE THE TAGS PROPERLY** - The last line MUST be \`</plan>\` with nothing after it.
 
-1. **Analyze the Task**: Break down the user's request into clear, specific steps
-2. **Identify Resources**: List what tools, pages, or information you'll need
-3. **Plan the Approach**: Outline your strategy and expected flow
-4. **State the Plan**: Write out your plan INSIDE \`<plan>...\</plan>\` tags
-5. **WAIT FOR USER APPROVAL**: The UI will block execution until user approves, modifies, or denies the plan
-6. **Execute**: After approval, proceed with execution step by step
-7. **Report Results**: Show what you accomplished
+## What Happens When You Create a Plan
 
-## Example
+1. ✅ The UI displays your plan for user review
+2. 👤 The user can **Approve**, **Modify**, or **Deny** your plan
+3. ⏸️ **EXECUTION IS BLOCKED** until user approves
+4. 🚀 Only after approval does execution proceed
 
-User: "Find the cheapest flight from NYC to LA"
+## Critical Rules
+
+**DO NOT:**
+- ❌ Try to execute ANY action before submitting the plan in XML tags
+- ❌ Continue typing after closing the plan tags
+- ❌ Skip the plan tags
+- ❌ Assume approval and proceed immediately
+- ❌ Create incomplete or vague plans
+
+**DO:**
+- ✅ Create plans for EVERY browser task, no exceptions
+- ✅ Close the XML tags properly with </plan>
+- ✅ Wait for the UI to show the plan review dialog
+- ✅ Only start execution after user approves
+- ✅ Make plans clear, specific, and detailed
+
+## Example Workflow
+
+User: "Go to Google and search for 'AI breakthroughs in 2026'"
 
 Your Response:
 \`\`\`
-I'll help you find the cheapest flight! Let me break down my approach:
+I'll help you search for AI breakthroughs. Let me create a plan first.
 
 <plan>
-1. Open Google Flights website
-2. Enter departure city: NYC
-3. Enter arrival city: LA
-4. Select travel dates
-5. Sort by price (lowest first)
-6. Show you the 3 cheapest options with details
+1. Navigate to google.com
+2. Find and click the search input box
+3. Type "AI breakthroughs in 2026"
+4. Press Enter to search
+5. Extract and summarize the top 3 search results
+6. Present findings to user
 </plan>
 \`\`\`
 
-Then, after user approves:
-- Take a snapshot to see current state
-- Click on Google Flights search box
-- Fill in departure/arrival/dates
-- [Continue execution...]
-- Report the results
-
-## Important Notes
-
-- The \`<plan>...</plan>\` tags TRIGGER the user approval dialog
-- WITHOUT these tags, execution proceeds immediately (only use for simple chat responses)
-- WITH these tags, user sees plan, can modify it, then execution only continues if approved
-- Plans should be thorough but concise
-- List specific steps, not vague descriptions`
+**STOP HERE** and wait for user approval. Do NOT continue typing or executing. The UI will handle everything else.`
 }
 
 function taskExecutionSection(): string {
@@ -202,6 +201,10 @@ When something goes wrong:
 
 function toolGuidanceSection(): string {
   return `# Tool Guidance
+
+⚠️ **REMINDER: You MUST submit your plan in \`<plan>...\</plan>\` tags BEFORE using ANY of these tools.**
+
+Only after user approval should you proceed with tool calls.
 
 ## Navigation
 - Use \`navigate_to_url\` to go to URLs. Always include http/https.
