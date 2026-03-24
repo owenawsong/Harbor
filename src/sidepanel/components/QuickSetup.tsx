@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Zap, ExternalLink, X, Check, Eye, EyeOff } from 'lucide-react'
 import type { ProviderName } from '../../shared/types'
 import { PROVIDER_LABELS } from '../../shared/constants'
