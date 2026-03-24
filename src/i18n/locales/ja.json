@@ -686,9 +686,9 @@
   },
   "add_information_placeholder": "例：'パスワードは12345'または'このステップをスキップして、代わりにログインしてみてください'",
   "keyboard_shortcuts": {
-    "open_harbor": "Open Harbor",
-    "send_message": "Send message",
-    "new_line": "New line",
-    "close_dialog": "Close dialog"
+    "open_harbor": "Harbor を開く",
+    "send_message": "メッセージを送信",
+    "new_line": "新しい行",
+    "close_dialog": "ダイアログを閉じる"
   }
 }

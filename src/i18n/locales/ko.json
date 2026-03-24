@@ -686,9 +686,9 @@
   },
   "add_information_placeholder": "E.g., 'The password is 12345' or 'Skip this step, try logging in instead'",
   "keyboard_shortcuts": {
-    "open_harbor": "Open Harbor",
-    "send_message": "Send message",
-    "new_line": "New line",
-    "close_dialog": "Close dialog"
+    "open_harbor": "Harbor 열기",
+    "send_message": "메시지 보내기",
+    "new_line": "새 줄",
+    "close_dialog": "대화 닫기"
   }
 }
