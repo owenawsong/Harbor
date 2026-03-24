@@ -296,6 +296,17 @@ export default function Onboarding({ onComplete }: Props) {
             t={t}
           />
         )}
+        {step === 6 && (
+          <StepReview
+            userName={userName}
+            useCases={useCases}
+            tone={tone}
+            theme={theme}
+            language={language}
+            languages={LANGUAGES}
+            t={t}
+          />
+        )}
         {step === 7 && (
           <StepWelcome
             userName={userName}
@@ -415,40 +426,41 @@ function StepUseCases({ selected, onToggle, useCases, icons, t }: any) {
 
 function StepTone({ selected, onSelect, tones, t }: any) {
   return (
-    <div className="flex flex-col gap-3 animate-step-in">
+    <div className="flex flex-col gap-4 animate-step-in">
       <div>
-        <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
           {t('onboarding.tone')}
         </h2>
-        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        <p className="text-sm mt-2" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
           {t('onboarding.toneHint')}
         </p>
       </div>
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-3">
         {tones.map((tone: any) => {
           const isSelected = selected === tone.id
           return (
             <button
               key={tone.id}
               onClick={() => onSelect(tone.id)}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl border text-left transition-all duration-150 hover:scale-105"
+              className="flex items-center gap-3 px-4 py-4 rounded-2xl border text-left transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
                 background: isSelected ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
-                borderColor: isSelected ? 'rgb(var(--harbor-accent) / 0.5)' : 'rgb(var(--harbor-border))',
+                borderColor: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+                boxShadow: isSelected ? '0 8px 24px rgb(var(--harbor-accent) / 0.15)' : 'none',
               }}
             >
               <div
-                className="w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
+                className="w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center"
                 style={{
                   borderColor: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
                   background: isSelected ? 'rgb(var(--harbor-accent))' : 'transparent',
                 }}
               >
-                {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                {isSelected && <div className="w-2 h-2 rounded-full bg-white" />}
               </div>
               <div>
-                <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{tone.label}</p>
-                <p className="text-[11px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{tone.description}</p>
+                <p className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{tone.label}</p>
+                <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-muted))' }}>{tone.description}</p>
               </div>
             </button>
           )
@@ -460,30 +472,31 @@ function StepTone({ selected, onSelect, tones, t }: any) {
 
 function StepTheme({ selected, onSelect, themes, t }: any) {
   return (
-    <div className="flex flex-col gap-3 animate-step-in">
+    <div className="flex flex-col gap-4 animate-step-in">
       <div>
-        <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
           {t('onboarding.appearance')}
         </h2>
-        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        <p className="text-sm mt-2" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
           {t('onboarding.appearanceHint')}
         </p>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-3">
         {themes.map((theme: any) => {
           const isSelected = selected === theme.id
           return (
             <button
               key={theme.id}
               onClick={() => onSelect(theme.id)}
-              className="flex flex-col items-center gap-2 p-3 rounded-xl border transition-all duration-150 hover:scale-105"
+              className="flex flex-col items-center gap-3 p-4 rounded-2xl border transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
                 background: isSelected ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
                 borderColor: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+                boxShadow: isSelected ? '0 8px 24px rgb(var(--harbor-accent) / 0.15)' : 'none',
               }}
             >
               <div
-                className="w-10 h-7 rounded-lg border"
+                className="w-12 h-8 rounded-lg border-2 shadow-md"
                 style={{
                   background:
                     theme.id === 'sunlight' ? '#f9f8f4' :
@@ -493,19 +506,19 @@ function StepTheme({ selected, onSelect, themes, t }: any) {
                     theme.id === 'sunset' ? '#2d1810' :
                     theme.id === 'ocean' ? '#0f2b3e' :
                     'linear-gradient(135deg, #f9f8f4 50%, #07070e 50%)',
-                  borderColor: 'rgb(var(--harbor-border))',
+                  borderColor: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
                 }}
               />
-              <span className="text-[11px] font-medium" style={{ color: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))' }}>
+              <span className="text-xs font-medium" style={{ color: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))' }}>
                 {theme.label}
               </span>
             </button>
           )
         })}
       </div>
-      {themes.map((t: any) => t.id === selected && (
-        <p key={t.id} className="text-[11px] text-center" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-          {t.description}
+      {themes.map((theme: any) => theme.id === selected && (
+        <p key={theme.id} className="text-sm text-center" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+          {theme.description}
         </p>
       ))}
     </div>
@@ -514,32 +527,32 @@ function StepTheme({ selected, onSelect, themes, t }: any) {
 
 function StepLanguage({ selected, onSelect, languages, t }: any) {
   return (
-    <div className="flex flex-col gap-3 animate-step-in">
+    <div className="flex flex-col gap-4 animate-step-in">
       <div>
-        <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
           {t('onboarding.language')}
         </h2>
-        <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        <p className="text-sm mt-2" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
           {t('onboarding.languageHint')}
         </p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-3">
         {languages.map((lang: any) => {
           const isSelected = selected === lang.code
           return (
             <button
               key={lang.code}
               onClick={() => onSelect(lang.code)}
-              className="flex items-center gap-2 px-3 py-2.5 rounded-xl border text-left transition-all duration-150 hover:scale-105"
+              className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border text-center transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
                 background: isSelected ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
-                borderColor: isSelected ? 'rgb(var(--harbor-accent) / 0.5)' : 'rgb(var(--harbor-border))',
+                borderColor: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+                color: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text))',
+                boxShadow: isSelected ? '0 8px 24px rgb(var(--harbor-accent) / 0.15)' : 'none',
               }}
             >
-              <span className="text-xs font-medium" style={{ color: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text))' }}>
-                {lang.label}
-              </span>
-              {isSelected && <Check size={11} className="ml-auto flex-shrink-0" style={{ color: 'rgb(var(--harbor-accent))' }} />}
+              <span className="text-sm font-medium">{lang.label}</span>
+              {isSelected && <Check size={14} className="flex-shrink-0" />}
             </button>
           )
         })}
@@ -553,67 +566,137 @@ function StepWelcome({
 }: any) {
   const name = userName.trim()
   return (
-    <div className="flex flex-col items-center gap-6 py-4 text-center animate-onboard-reveal">
-      <div className="flex flex-col items-center gap-3">
-        <div
-          className="w-14 h-14 rounded-full flex items-center justify-center animate-bounce-slow"
-          style={{ background: 'rgb(var(--harbor-accent-light))' }}
-        >
-          <Check size={24} style={{ color: 'rgb(var(--harbor-accent))' }} />
-        </div>
-        <div>
-          <h2 className="harbor-serif text-xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
-            {name ? t('onboarding.welcome_step', { name }) : t('onboarding.welcome_alt')}
-          </h2>
-          <p className="text-xs mt-0.5" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            {t('onboarding.welcome_ready')}
-          </p>
-        </div>
+    <div className="flex flex-col items-center gap-8 py-4 text-center animate-onboard-reveal">
+      {/* Celebration checkmark */}
+      <div
+        className="w-20 h-20 rounded-full flex items-center justify-center animate-bounce-slow"
+        style={{
+          background: 'rgb(var(--harbor-accent-light))',
+          boxShadow: '0 20px 50px rgb(var(--harbor-accent) / 0.25)',
+        }}
+      >
+        <Check size={40} style={{ color: 'rgb(var(--harbor-accent))' }} />
       </div>
 
-      {/* Summary */}
+      {/* Celebration text */}
+      <div>
+        <h2 className="harbor-serif text-3xl font-light mb-2" style={{ color: 'rgb(var(--harbor-text))' }}>
+          {name ? t('onboarding.welcome_step', { name }) : t('onboarding.welcome_alt')}
+        </h2>
+        <p className="text-sm" style={{ color: 'rgb(var(--harbor-accent))' }}>
+          {t('onboarding.welcome_ready')}
+        </p>
+      </div>
+
+      {/* Summary card */}
       <div
-        className="w-full rounded-2xl p-4 border text-left"
-        style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}
+        className="w-full rounded-2xl p-5 border text-left"
+        style={{
+          background: 'rgb(var(--harbor-surface))',
+          borderColor: 'rgb(var(--harbor-border))',
+          boxShadow: '0 8px 24px rgb(var(--harbor-accent) / 0.08)',
+        }}
       >
-        <p className="harbor-section-label mb-3">{t('onboarding.setup_summary')}</p>
-        <div className="flex flex-col gap-2">
+        <p className="harbor-section-label mb-4 uppercase">{t('onboarding.setup_summary')}</p>
+        <div className="flex flex-col gap-3">
           {name && (
-            <div className="flex justify-between text-xs">
-              <span style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.name_label')}</span>
-              <span style={{ color: 'rgb(var(--harbor-text))' }}>{name}</span>
+            <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+              <span className="text-sm" style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.name_label')}</span>
+              <span className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{name}</span>
             </div>
           )}
           {useCases.length > 0 && (
-            <div className="flex justify-between text-xs">
-              <span style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.focus_areas')}</span>
-              <span style={{ color: 'rgb(var(--harbor-text))' }}>{useCases.length} selected</span>
+            <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+              <span className="text-sm" style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.focus_areas')}</span>
+              <span className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{useCases.length} selected</span>
             </div>
           )}
-          <div className="flex justify-between text-xs">
-            <span style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.tone_label')}</span>
-            <span style={{ color: 'rgb(var(--harbor-text))' }} className="capitalize">{tone}</span>
+          <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+            <span className="text-sm" style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.tone_label')}</span>
+            <span className="text-sm font-medium capitalize" style={{ color: 'rgb(var(--harbor-text))' }}>{tone}</span>
           </div>
-          <div className="flex justify-between text-xs">
-            <span style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.theme_label')}</span>
-            <span style={{ color: 'rgb(var(--harbor-text))' }} className="capitalize">{theme}</span>
+          <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+            <span className="text-sm" style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.theme_label')}</span>
+            <span className="text-sm font-medium capitalize" style={{ color: 'rgb(var(--harbor-text))' }}>{theme}</span>
           </div>
-          <div className="flex justify-between text-xs">
-            <span style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.language_label')}</span>
-            <span style={{ color: 'rgb(var(--harbor-text))' }}>
+          <div className="flex justify-between items-center py-2">
+            <span className="text-sm" style={{ color: 'rgb(var(--harbor-text-muted))' }}>{t('onboarding.language_label')}</span>
+            <span className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>
               {languages.find((l: any) => l.code === language)?.label ?? language}
             </span>
           </div>
         </div>
       </div>
 
-      <p className="text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+      <p className="text-sm" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
         {t('onboarding.settings_adjustable')}
       </p>
 
-      <button onClick={onComplete} className="harbor-btn-primary w-full text-base hover:scale-105 transition-transform">
+      <button
+        onClick={onComplete}
+        className="harbor-btn-primary w-full text-base py-3 font-medium shadow-lg hover:scale-105 active:scale-95 transition-all"
+      >
         {t('onboarding.start_using')}
+        <ChevronRight size={18} />
       </button>
+    </div>
+  )
+}
+
+function StepReview({
+  userName, useCases, tone, theme, language, languages, t,
+}: any) {
+  const name = userName.trim()
+  return (
+    <div className="flex flex-col gap-5 animate-step-in">
+      <div>
+        <h2 className="harbor-serif text-2xl font-light" style={{ color: 'rgb(var(--harbor-text))' }}>
+          {t('onboarding.review')}
+        </h2>
+        <p className="text-sm mt-2" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+          {t('onboarding.reviewHint', 'Review your settings before completing setup')}
+        </p>
+      </div>
+
+      <div
+        className="w-full rounded-2xl p-5 border space-y-3"
+        style={{
+          background: 'rgb(var(--harbor-surface))',
+          borderColor: 'rgb(var(--harbor-border))',
+          boxShadow: '0 8px 24px rgb(var(--harbor-accent) / 0.08)',
+        }}
+      >
+        <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+          <span className="text-xs font-medium uppercase" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{t('onboarding.language_label')}</span>
+          <span className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>
+            {languages.find((l: any) => l.code === language)?.label ?? language}
+          </span>
+        </div>
+
+        {name && (
+          <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+            <span className="text-xs font-medium uppercase" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{t('onboarding.name_label')}</span>
+            <span className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{name}</span>
+          </div>
+        )}
+
+        {useCases.length > 0 && (
+          <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+            <span className="text-xs font-medium uppercase" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{t('onboarding.focus_areas')}</span>
+            <span className="text-sm font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>{useCases.length}</span>
+          </div>
+        )}
+
+        <div className="flex justify-between items-center py-2 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
+          <span className="text-xs font-medium uppercase" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{t('onboarding.tone_label')}</span>
+          <span className="text-sm font-medium capitalize" style={{ color: 'rgb(var(--harbor-text))' }}>{tone}</span>
+        </div>
+
+        <div className="flex justify-between items-center py-2">
+          <span className="text-xs font-medium uppercase" style={{ color: 'rgb(var(--harbor-text-faint))' }}>{t('onboarding.theme_label')}</span>
+          <span className="text-sm font-medium capitalize" style={{ color: 'rgb(var(--harbor-text))' }}>{theme}</span>
+        </div>
+      </div>
     </div>
   )
 }
