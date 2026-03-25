@@ -218,6 +218,12 @@ chrome.runtime.onConnect.addListener((port) => {
           }
 
           if (assistantText) {
+            // CRITICAL FIX: Ensure incomplete plans have closing tag before storage!
+            // If text has <plan> but no </plan>, add it to prevent data loss on reload
+            if (assistantText.includes('<plan>') && !assistantText.includes('</plan>')) {
+              console.log('[STORAGE] Incomplete plan detected, adding closing tag before storage')
+              assistantText += '\n</plan>'
+            }
             assistantMsg.content = [{ type: 'text', text: assistantText }]
           }
 
