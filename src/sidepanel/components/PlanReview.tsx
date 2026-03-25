@@ -176,20 +176,25 @@ export default function PlanReview({ plan, onAccept, onDecline, onModify }: Plan
               </div>
             )}
 
-            {/* Full plan for reference */}
-            {!isEditing && (
-              <div
-                className="p-3 rounded-lg text-xs border whitespace-pre-wrap"
-                style={{
-                  background: 'rgb(var(--harbor-surface))',
-                  borderColor: 'rgb(var(--harbor-border))',
-                  color: 'rgb(var(--harbor-text-faint))',
-                  fontSize: '11px',
-                  maxHeight: '120px',
-                  overflow: 'auto',
-                }}
-              >
-                {plan}
+            {/* Full plan for reference - only show when editing */}
+            {isEditing && (
+              <div className="mb-4">
+                <p className="text-xs mb-2" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+                  Raw plan:
+                </p>
+                <div
+                  className="p-3 rounded-lg text-xs border whitespace-pre-wrap"
+                  style={{
+                    background: 'rgb(var(--harbor-surface))',
+                    borderColor: 'rgb(var(--harbor-border))',
+                    color: 'rgb(var(--harbor-text-faint))',
+                    fontSize: '11px',
+                    maxHeight: '120px',
+                    overflow: 'auto',
+                  }}
+                >
+                  {plan}
+                </div>
               </div>
             )}
           </>
@@ -198,28 +203,70 @@ export default function PlanReview({ plan, onAccept, onDecline, onModify }: Plan
 
       {/* Action Buttons */}
       <div className="px-4 py-3 border-t flex gap-2" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
-        <button
-          onClick={onAccept}
-          disabled={isEditing}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-medium text-sm transition disabled:opacity-50 disabled:cursor-not-allowed text-white"
-          style={{
-            backgroundColor: 'rgb(var(--harbor-accent))',
-          }}
-        >
-          <CheckCircle2 size={16} />
-          Approve plan
-        </button>
-        <button
-          onClick={handleModifyClick}
-          className="flex-1 px-3 py-2.5 rounded-lg border font-medium text-sm transition"
-          style={{
-            borderColor: 'rgb(var(--harbor-border))',
-            color: 'rgb(var(--harbor-text-muted))',
-          }}
-        >
-          <Edit2 size={14} className="inline mr-1.5" />
-          {isEditing ? 'Save' : 'Make changes'}
-        </button>
+        {!isEditing && (
+          <>
+            <button
+              onClick={onAccept}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-medium text-sm transition text-white"
+              style={{
+                backgroundColor: 'rgb(var(--harbor-accent))',
+              }}
+            >
+              <CheckCircle2 size={16} />
+              Approve plan
+            </button>
+            <button
+              onClick={handleModifyClick}
+              className="flex-1 px-3 py-2.5 rounded-lg border font-medium text-sm transition"
+              style={{
+                borderColor: 'rgb(var(--harbor-border))',
+                color: 'rgb(var(--harbor-text-muted))',
+              }}
+            >
+              <Edit2 size={14} className="inline mr-1.5" />
+              Make changes
+            </button>
+            <button
+              onClick={onDecline}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg border font-medium text-sm transition"
+              style={{
+                borderColor: 'rgb(var(--harbor-border))',
+                color: 'rgb(var(--harbor-text-muted))',
+              }}
+            >
+              <X size={14} />
+              Reject
+            </button>
+          </>
+        )}
+        {isEditing && (
+          <>
+            <button
+              onClick={() => {
+                onModify(editedPlan)
+                setIsEditing(false)
+              }}
+              className="flex-1 px-3 py-2.5 rounded-lg font-medium text-sm transition text-white"
+              style={{
+                backgroundColor: 'rgb(var(--harbor-accent))',
+              }}
+            >
+              <CheckCircle2 size={14} className="inline mr-1.5" />
+              Save changes
+            </button>
+            <button
+              onClick={() => setIsEditing(false)}
+              className="flex-1 px-3 py-2.5 rounded-lg border font-medium text-sm transition"
+              style={{
+                borderColor: 'rgb(var(--harbor-border))',
+                color: 'rgb(var(--harbor-text-muted))',
+              }}
+            >
+              <X size={14} className="inline mr-1.5" />
+              Cancel
+            </button>
+          </>
+        )}
       </div>
 
       {/* Info text */}

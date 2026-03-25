@@ -461,7 +461,18 @@ async function* openAICompatibleComplete(
       if (baseUrl.includes('poe')) {
         console.log('[POE-HTTP] ✗ API returned error in stream:', errorMsg)
       }
-      yield { type: 'error', error: `API error: ${errorMsg}` }
+      // Provide more helpful error message for common Poe issues
+      let userMsg = `API error: ${errorMsg}`
+      if (baseUrl.includes('poe')) {
+        if (errorMsg.includes('Internal server error')) {
+          userMsg = `Poe service error: The model you selected may not be available or your API key may not have access to it. Check your model name in settings.`
+        } else if (errorMsg.includes('Authentication') || errorMsg.includes('Unauthorized')) {
+          userMsg = 'Poe API authentication failed. Please verify your API key is correct.'
+        } else if (errorMsg.includes('Not found') || errorMsg.includes('invalid')) {
+          userMsg = 'Poe model not found. Please check the model name is correct.'
+        }
+      }
+      yield { type: 'error', error: userMsg }
       return
     }
 
