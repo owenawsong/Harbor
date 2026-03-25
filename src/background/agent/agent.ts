@@ -396,11 +396,14 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       return
     }
 
-    // Check if message contains a plan - if so, DON'T execute tools yet, wait for approval
-    const containsPlan = /<plan>[\s\S]*?<\/plan>/i.test(currentText)
+    // Check if message contains a COMPLETE plan (both opening and closing tags)
+    const containsCompletePlan = /<plan>[\s\S]*?<\/plan>/i.test(currentText)
 
-    if (containsPlan && completedToolCalls.length > 0) {
-      // Plan detected and tools were called - pause execution for user approval
+    // Check if message contains an INCOMPLETE plan (opening tag but no closing tag)
+    const hasIncompletePlan = currentText.includes('<plan>') && !currentText.includes('</plan>')
+
+    if (containsCompletePlan && completedToolCalls.length > 0) {
+      // Complete plan detected and tools were called - pause execution for user approval
       onEvent({
         type: 'message_complete',
         messageId,
@@ -408,11 +411,11 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       })
     }
 
-    // Add assistant message to history
+    // Add assistant message to history ONLY if plan is complete (not incomplete)
     const assistantParts: Array<TextPart | ToolCallPart> = []
-    if (currentText) assistantParts.push({ type: 'text', text: currentText })
+    if (currentText && !hasIncompletePlan) assistantParts.push({ type: 'text', text: currentText })
     // Only add tool calls to history if we're not waiting for plan approval
-    if (!containsPlan) {
+    if (!containsCompletePlan) {
       for (const tc of completedToolCalls) {
         assistantParts.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
       }
@@ -421,8 +424,14 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       normalizedHistory.push({ role: 'assistant', content: assistantParts })
     }
 
-    // If plan was detected, exit loop to wait for user approval
-    if (containsPlan) {
+    // If incomplete plan detected, keep looping to get the closing tag
+    if (hasIncompletePlan) {
+      console.log('[AGENT] Incomplete plan detected, continuing to get closing tag...')
+      continue
+    }
+
+    // If complete plan was detected, exit loop to wait for user approval
+    if (containsCompletePlan) {
       break
     }
 
