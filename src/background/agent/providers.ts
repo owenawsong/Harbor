@@ -419,10 +419,20 @@ async function* openAICompatibleComplete(
     return
   }
 
+  // Debug: Log Poe API details
+  if (baseUrl.includes('poe')) {
+    console.log('[POE-HTTP] Response status:', response.status, 'Content-Type:', response.headers.get('content-type'))
+  }
+
   const toolCallBuffers: Record<number, { id: string; name: string; args: string }> = {}
   const thinkState: ThinkParseState = { inThink: false, buf: '' }
 
+  let sseEventCount = 0
   for await (const data of parseSSE(response, signal)) {
+    sseEventCount++
+    if (baseUrl.includes('poe') && sseEventCount === 1) {
+      console.log('[POE-HTTP] First SSE event data:', data.substring(0, 100))
+    }
     let chunk: Record<string, unknown>
     try {
       chunk = JSON.parse(data)
