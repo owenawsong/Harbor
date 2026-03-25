@@ -454,6 +454,17 @@ async function* openAICompatibleComplete(
       continue
     }
 
+    // Check for error response in the stream (Poe returns error objects in SSE stream)
+    if ((chunk as any).error) {
+      const errorObj = (chunk as any).error
+      const errorMsg = typeof errorObj === 'object' ? errorObj.message || JSON.stringify(errorObj) : String(errorObj)
+      if (baseUrl.includes('poe')) {
+        console.log('[POE-HTTP] ✗ API returned error in stream:', errorMsg)
+      }
+      yield { type: 'error', error: `API error: ${errorMsg}` }
+      return
+    }
+
     const choices = chunk.choices as Array<Record<string, unknown>>
     if (!choices || choices.length === 0) {
       if (baseUrl.includes('poe') && sseEventCount <= 3) {

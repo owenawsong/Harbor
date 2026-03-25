@@ -77,6 +77,7 @@ function extractThinkingBlocks(
 }
 
 // Extract plan from text (between <plan>...</plan> tags) and return cleaned text + plan.
+// Also handles incomplete plans (missing closing tag).
 function extractPlan(text: string): { text: string; plan: string | null } {
   // Try to match plan tags - prefer strict closing tag on its own line
   const planMatch = text.match(/<plan>([\s\S]*?)<\/plan>\s*$/im)
@@ -88,6 +89,22 @@ function extractPlan(text: string): { text: string; plan: string | null } {
     const cleaned = text.replace(/<plan>[\s\S]*?<\/plan>\s*/i, '').trim()
     return { text: cleaned, plan }
   }
+
+  // Fallback: if no complete plan found, check for incomplete plan (missing closing tag)
+  // This handles cases where AI starts a plan but doesn't finish it
+  const incompletePlanMatch = text.match(/<plan>([\s\S]+)$/i)
+  if (incompletePlanMatch && incompletePlanMatch[1]) {
+    const incompletePlan = incompletePlanMatch[1].trim()
+    // Only treat as plan if it has substantial content (at least 20 chars)
+    if (incompletePlan.length >= 20) {
+      console.log('[PLAN] Incomplete plan detected (no closing tag), using it anyway')
+      const cleaned = text.replace(/<plan>[\s\S]*$/i, '').trim()
+      // Add closing tag for consistency
+      const completePlan = incompletePlan.endsWith('</plan>') ? incompletePlan : incompletePlan + '\n</plan>'
+      return { text: cleaned, plan: completePlan }
+    }
+  }
+
   return { text, plan: null }
 }
 
