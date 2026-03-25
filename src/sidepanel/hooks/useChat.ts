@@ -349,27 +349,24 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             debouncerRef.current.flush(messageId)
           }
 
+          // Extract plan BEFORE clearing accumulator (synchronously!)
+          let extractedPlan: string | null = null
+          if (planAccumulatorRef.current?.messageId === messageId && planAccumulatorRef.current?.content) {
+            const { plan } = extractPlan(planAccumulatorRef.current.content)
+            extractedPlan = plan
+          }
+
           // Clear plan accumulator
           if (planAccumulatorRef.current?.messageId === messageId) {
             planAccumulatorRef.current = null
           }
 
-          let extractedPlan: string | null = null
-
-          // Process message and extract plan
+          // Update messages (collapse thinking blocks, mark plan as complete)
           setMessages((prev) =>
             prev.map((m) => {
               if (m.id !== messageId) return m
               // Extract inline thinking blocks, collapse all thinking after streaming stops
               const { text: textAfterThinking, thinkingBlocks } = extractThinkingBlocks(m.text, m.thinkingBlocks)
-
-              // Extract plan from planCreation field if available
-              if (m.planCreation?.content) {
-                const { plan: extractedFromMarkdown } = extractPlan(m.planCreation.content)
-                if (extractedFromMarkdown) {
-                  extractedPlan = extractedFromMarkdown
-                }
-              }
 
               return {
                 ...m,
