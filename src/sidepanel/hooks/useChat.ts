@@ -382,19 +382,33 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           )
 
           // If a plan was extracted OR backend says stopReason is 'plan_pending', show approval dialog
+          console.log('[PLAN] message_complete handler:', {
+            extractedPlan: !!extractedPlan,
+            stopReason,
+            hasAccumulator: !!planAccumulatorRef.current?.content,
+            accumulatorContent: planAccumulatorRef.current?.content?.substring(0, 100),
+          })
+
           if (extractedPlan) {
-            console.log('[PLAN] Showing plan approval dialog')
+            console.log('[PLAN] ✓ Showing plan approval dialog (extracted)')
             setPendingPlan({ messageId, plan: extractedPlan })
             setIsRunning(false)
-          } else if (stopReason === 'plan_pending' && planAccumulatorRef.current?.content) {
-            // Backend detected plan_pending, use accumulated plan content
-            console.log('[PLAN] Backend says plan_pending, using accumulated content')
-            const { plan } = extractPlan(planAccumulatorRef.current.content)
-            if (plan) {
-              setPendingPlan({ messageId, plan })
-              setIsRunning(false)
-              planAccumulatorRef.current = null
+          } else if (stopReason === 'plan_pending') {
+            // Backend detected plan_pending, try to use accumulated content
+            console.log('[PLAN] ✓ Backend says plan_pending, stopReason detected')
+            if (planAccumulatorRef.current?.content) {
+              const { plan } = extractPlan(planAccumulatorRef.current.content)
+              console.log('[PLAN] Extracted from accumulator:', !!plan)
+              if (plan) {
+                setPendingPlan({ messageId, plan })
+                setIsRunning(false)
+                planAccumulatorRef.current = null
+              }
+            } else {
+              console.log('[PLAN] ⚠ plan_pending but no accumulator content!')
             }
+          } else {
+            console.log('[PLAN] No plan detected, no stopReason')
           }
 
           currentMsgId.current = null
