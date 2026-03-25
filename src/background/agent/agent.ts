@@ -396,14 +396,34 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       return
     }
 
+    // Check if message contains a plan - if so, DON'T execute tools yet, wait for approval
+    const containsPlan = /<plan>[\s\S]*?<\/plan>/i.test(currentText)
+
+    if (containsPlan && completedToolCalls.length > 0) {
+      // Plan detected and tools were called - pause execution for user approval
+      onEvent({
+        type: 'message_complete',
+        messageId,
+        stopReason: 'plan_pending'
+      })
+    }
+
     // Add assistant message to history
     const assistantParts: Array<TextPart | ToolCallPart> = []
     if (currentText) assistantParts.push({ type: 'text', text: currentText })
-    for (const tc of completedToolCalls) {
-      assistantParts.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
+    // Only add tool calls to history if we're not waiting for plan approval
+    if (!containsPlan) {
+      for (const tc of completedToolCalls) {
+        assistantParts.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
+      }
     }
     if (assistantParts.length > 0) {
       normalizedHistory.push({ role: 'assistant', content: assistantParts })
+    }
+
+    // If plan was detected, exit loop to wait for user approval
+    if (containsPlan) {
+      break
     }
 
     // Execute any tool calls that were made

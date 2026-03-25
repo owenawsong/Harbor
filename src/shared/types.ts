@@ -199,7 +199,12 @@ export interface PortMessageClearSession {
   sessionId: string
 }
 
-export type PortMessage = PortMessageChat | PortMessageStop | PortMessageClearSession
+export interface PortMessageContinueExecution {
+  type: 'continue_execution'
+  sessionId: string
+}
+
+export type PortMessage = PortMessageChat | PortMessageStop | PortMessageClearSession | PortMessageContinueExecution
 
 // ─── Identity / Personality ───────────────────────────────────────────────────
 
