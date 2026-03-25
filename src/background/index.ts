@@ -241,6 +241,13 @@ chrome.runtime.onConnect.addListener((port) => {
           await deleteSession(message.sessionId)
           break
         }
+
+        case 'continue_execution': {
+          // Plan was approved by user - continue execution
+          // Note: The agent loop will continue naturally when it tries to get the next provider response
+          // This message is mainly for synchronization; the actual resumption happens through normal agent flow
+          break
+        }
       }
     } catch (err) {
       send({ type: 'error', error: err instanceof Error ? err.message : String(err) })

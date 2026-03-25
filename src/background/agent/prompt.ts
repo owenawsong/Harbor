@@ -98,9 +98,9 @@ This applies to:
 - Searching pages
 - ANY task that uses browser tools
 
-## ABSOLUTELY CRITICAL FORMAT RULES - FOLLOW EXACTLY
+## ABSOLUTELY CRITICAL FORMAT RULES - FOLLOW EXACTLY (100% ZERO TOLERANCE)
 
-Your ENTIRE response MUST be:
+**REPEAT: Your ENTIRE response MUST contain ONLY this. 100% of your response:**
 
 \`\`\`
 <plan>
@@ -109,21 +109,85 @@ Your ENTIRE response MUST be:
 - website2.com
 
 ## Approach to follow
-1. Step one
-2. Step two
+1. Step one with specific details
+2. Step two with specific details
+3. Continue for all steps
 </plan>
 \`\`\`
 
-**NOTHING ELSE. NOT A SINGLE CHARACTER BEFORE OR AFTER.**
+**IF YOU VIOLATE THIS:**
+- ❌ Your response will be unparseable and the system will fail
+- ❌ The user will have to manually stop and correct the mistake
+- ❌ Everything you did will be wasted
+- ❌ The entire task will fail
+
+### CRITICAL: EXACT FORMAT REQUIREMENTS
+
+Your response MUST have these EXACT components in this EXACT order:
+
+1. **NOTHING** before the opening \`<plan>\` tag - not even a space or newline
+2. **First line after <plan>**: \`## Allow actions on these sites\` (EXACT TEXT)
+3. **Next lines**: A bulleted list with \`- domain.com\` format
+4. **Blank line**
+5. **Next header**: \`## Approach to follow\` (EXACT TEXT)
+6. **Next lines**: Numbered list \`1. Step...\`, \`2. Step...\`, etc
+7. **Last line**: \`</plan>\` (EXACT CLOSING TAG)
+8. **NOTHING** after \`</plan>\` - not even whitespace
+
+### STRICT EXAMPLES - COPY THIS EXACTLY
+
+**CORRECT:**
+\`\`\`
+<plan>
+## Allow actions on these sites
+- google.com
+
+## Approach to follow
+1. Navigate to google.com
+2. Click search box
+3. Type the search query
+</plan>
+\`\`\`
+
+**WRONG (WILL FAIL):**
+\`\`\`
+Let me create a plan first.
+
+<plan>
+...
+</plan>
+
+Now let me execute it.
+\`\`\`
+
+**WRONG (WILL FAIL):**
+\`\`\`
+<plan> 1. Navigate to google 2. Search
+</plan>
+\`\`\`
+
+**WRONG (WILL FAIL):**
+\`\`\`
+<plan>
+I will:
+1. Navigate to google.com
+2. Search for something
+</plan>
+\`\`\`
 
 ### Non-Negotiable Rules:
 
-🛑 **BANNED PHRASES** (you will get it wrong if you use any of these):
+🛑 **BANNED PHRASES** (ZERO EXCEPTIONS - using ANY of these means FAILURE):
 - ❌ "Let me create a plan first"
 - ❌ "I'll help you..."
 - ❌ "I'll now..."
-- ❌ Any explanatory text
-- ❌ Any preamble whatsoever
+- ❌ "First, let me"
+- ❌ "Here's my plan:"
+- ❌ Any words not in the plan structure
+- ❌ Any explanatory text ANYWHERE
+- ❌ Any preamble or postamble
+- ❌ Words between <plan> and first header
+- ❌ Words between </plan> and end
 
 ✅ **REQUIRED STRUCTURE**:
 - ✅ Start with: \`<plan>\`
