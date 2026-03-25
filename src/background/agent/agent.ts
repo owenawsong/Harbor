@@ -374,7 +374,8 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
             rateLimitManager.markSuccess()
             // Emit message_complete so the frontend stops the streaming cursor on this message.
             // NOTE: isRunning stays true — agent_complete is emitted at the end of the full loop.
-            onEvent({ type: 'message_complete', messageId, stopReason: event.stopReason })
+            // Include currentText so frontend can extract plan from it
+            onEvent({ type: 'message_complete', messageId, stopReason: event.stopReason, text: currentText })
             break
 
           case 'error':
@@ -416,10 +417,12 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
     if (shouldPauseForPlan) {
       // Plan detected and tools were called - pause execution for user approval
+      // Include currentText so frontend can extract plan from it
       onEvent({
         type: 'message_complete',
         messageId,
-        stopReason: 'plan_pending'
+        stopReason: 'plan_pending',
+        text: currentText
       })
     }
 

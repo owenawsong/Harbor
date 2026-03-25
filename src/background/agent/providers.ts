@@ -415,37 +415,61 @@ async function* openAICompatibleComplete(
 
   if (!response.ok) {
     const errorText = await response.text()
-    yield { type: 'error', error: `API error ${response.status}: ${errorText}` }
+    const errorMsg = `API error ${response.status}: ${errorText}`
+    if (baseUrl.includes('poe')) {
+      console.log('[POE-HTTP] ERROR - Status:', response.status)
+      console.log('[POE-HTTP] ERROR - Headers:', {
+        'content-type': response.headers.get('content-type'),
+        'content-length': response.headers.get('content-length'),
+      })
+      console.log('[POE-HTTP] ERROR - Body:', errorText.substring(0, 200))
+    }
+    yield { type: 'error', error: errorMsg }
     return
   }
 
   // Debug: Log Poe API details
   if (baseUrl.includes('poe')) {
-    console.log('[POE-HTTP] Response status:', response.status, 'Content-Type:', response.headers.get('content-type'))
+    console.log('[POE-HTTP] ✓ Response OK - Status:', response.status, 'Content-Type:', response.headers.get('content-type'))
   }
 
   const toolCallBuffers: Record<number, { id: string; name: string; args: string }> = {}
   const thinkState: ThinkParseState = { inThink: false, buf: '' }
 
   let sseEventCount = 0
+  let totalDataSize = 0
   for await (const data of parseSSE(response, signal)) {
     sseEventCount++
-    if (baseUrl.includes('poe') && sseEventCount === 1) {
-      console.log('[POE-HTTP] First SSE event data:', data.substring(0, 100))
+    totalDataSize += data.length
+    if (baseUrl.includes('poe') && sseEventCount <= 3) {
+      console.log(`[POE-HTTP] SSE event ${sseEventCount} (${data.length} bytes):`, data.substring(0, 100))
     }
     let chunk: Record<string, unknown>
     try {
       chunk = JSON.parse(data)
-    } catch {
+    } catch (e) {
+      if (baseUrl.includes('poe')) {
+        console.log('[POE-HTTP] Failed to parse JSON:', data.substring(0, 100))
+      }
       continue
     }
 
     const choices = chunk.choices as Array<Record<string, unknown>>
-    if (!choices || choices.length === 0) continue
+    if (!choices || choices.length === 0) {
+      if (baseUrl.includes('poe') && sseEventCount <= 3) {
+        console.log('[POE-HTTP] No choices in chunk:', JSON.stringify(chunk).substring(0, 100))
+      }
+      continue
+    }
 
     const choice = choices[0]
     const delta = choice.delta as Record<string, unknown>
-    if (!delta) continue
+    if (!delta) {
+      if (baseUrl.includes('poe') && sseEventCount <= 3) {
+        console.log('[POE-HTTP] No delta in choice:', JSON.stringify(choice).substring(0, 100))
+      }
+      continue
+    }
 
     // reasoning_content: used by DeepSeek R1, Poe reasoning models, and others
     if (delta.reasoning_content) {
@@ -502,6 +526,15 @@ async function* openAICompatibleComplete(
       }
       yield { type: 'message_complete', stopReason: finishReason }
     }
+  }
+
+  // Log final SSE stats for Poe
+  if (baseUrl.includes('poe')) {
+    console.log('[POE-HTTP] ✓ SSE parsing complete -', {
+      eventCount: sseEventCount,
+      totalDataSize,
+      avgEventSize: sseEventCount > 0 ? Math.round(totalDataSize / sseEventCount) : 0,
+    })
   }
 }
 
@@ -758,18 +791,33 @@ export const poeProvider: ProviderAdapter = {
     }
 
     console.log('[POE] Starting Poe provider with model:', settings.provider.model)
+    console.log('[POE] API Key prefix:', settings.provider.apiKey.substring(0, 10) + '***')
 
-    // Note: Poe API endpoint - some users may need to use a different endpoint
-    // The openAICompatibleComplete function handles the streaming response
+    // Poe API endpoint - OpenAI-compatible format
     let eventCount = 0
-    for await (const event of openAICompatibleComplete('https://api.poe.com/v1', settings.provider.apiKey, options)) {
-      eventCount++
-      if (eventCount === 1 || event.type === 'error') {
-        console.log('[POE] First event or error:', event)
+    let hasError = false
+    try {
+      for await (const event of openAICompatibleComplete('https://api.poe.com/v1', settings.provider.apiKey, options)) {
+        eventCount++
+        if (eventCount === 1) {
+          console.log('[POE] First event received:', event.type)
+        }
+        if (event.type === 'error') {
+          hasError = true
+          console.log('[POE] ERROR:', event.error)
+        }
+        yield event
       }
-      yield event
+    } catch (err) {
+      console.log('[POE] Exception thrown:', err instanceof Error ? err.message : String(err))
+      hasError = true
+      yield { type: 'error', error: `Poe provider error: ${err instanceof Error ? err.message : String(err)}` }
     }
-    console.log('[POE] Provider finished, total events:', eventCount)
+
+    console.log('[POE] Provider finished - eventCount:', eventCount, 'hasError:', hasError)
+    if (eventCount === 0 && !hasError) {
+      console.log('[POE] WARNING: No events yielded and no error emitted - possible response stream issue')
+    }
   },
 }
 

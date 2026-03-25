@@ -345,7 +345,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
 
         // ── Message complete (one provider turn done, agent may still be running) ──
         case 'message_complete': {
-          const { messageId, stopReason } = event
+          const { messageId, stopReason, text: eventText } = event as any
           // Flush any remaining buffered text
           if (debouncerRef.current) {
             debouncerRef.current.flush(messageId)
@@ -362,6 +362,16 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             planAccumulatorRef.current = null
           } else if (planAccumulatorRef.current?.content) {
             console.log('[PLAN] Plan incomplete, waiting for more:', planAccumulatorRef.current.content.substring(0, 100))
+          }
+
+          // Fallback: try to extract plan from event.text if provided
+          if (!extractedPlan && eventText) {
+            console.log('[PLAN] Trying to extract from event.text:', eventText.substring(0, 100))
+            const { plan } = extractPlan(eventText)
+            if (plan) {
+              console.log('[PLAN] ✓ Extracted plan from event.text')
+              extractedPlan = plan
+            }
           }
 
           // Update messages (collapse thinking blocks, mark plan as complete)
