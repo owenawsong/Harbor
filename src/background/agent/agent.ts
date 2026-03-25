@@ -278,6 +278,8 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
   let iterations = 0
   const messageId = generateId()
+  let planRetries = 0
+  const MAX_PLAN_RETRIES = 3
 
   while (iterations < MAX_TOOL_ITERATIONS) {
     if (signal?.aborted) {
@@ -411,9 +413,9 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       })
     }
 
-    // Add assistant message to history ONLY if plan is complete (not incomplete)
+    // Add assistant message to history
     const assistantParts: Array<TextPart | ToolCallPart> = []
-    if (currentText && !hasIncompletePlan) assistantParts.push({ type: 'text', text: currentText })
+    if (currentText) assistantParts.push({ type: 'text', text: currentText })
     // Only add tool calls to history if we're not waiting for plan approval
     if (!containsCompletePlan) {
       for (const tc of completedToolCalls) {
@@ -424,10 +426,17 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       normalizedHistory.push({ role: 'assistant', content: assistantParts })
     }
 
-    // If incomplete plan detected, keep looping to get the closing tag
+    // If incomplete plan detected, keep looping to get the closing tag (max 3 retries)
+    // NOTE: Plan text is already in history, so provider can see it and continue
     if (hasIncompletePlan) {
-      console.log('[AGENT] Incomplete plan detected, continuing to get closing tag...')
-      continue
+      planRetries++
+      if (planRetries >= MAX_PLAN_RETRIES) {
+        console.log('[AGENT] Max plan retries reached, accepting incomplete plan')
+        // Break and let it be processed anyway
+      } else {
+        console.log(`[AGENT] Incomplete plan detected (attempt ${planRetries}/${MAX_PLAN_RETRIES}), continuing to get closing tag...`)
+        continue
+      }
     }
 
     // If complete plan was detected, exit loop to wait for user approval
