@@ -52,6 +52,13 @@ export default function Chat({
     pendingPlan, approvePlan, denyPlan, modifyPlan,
   } = useChat(settings, currentSessionId)
 
+  // Debug logging
+  useEffect(() => {
+    if (pendingPlan) {
+      console.log('[CHAT] pendingPlan set:', pendingPlan)
+    }
+  }, [pendingPlan])
+
   const [showNotifications, setShowNotifications] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [showAddInfoDialog, setShowAddInfoDialog] = useState(false)
