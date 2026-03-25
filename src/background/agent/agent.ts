@@ -404,8 +404,11 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     // Check if message contains an INCOMPLETE plan (opening tag but no closing tag)
     const hasIncompletePlan = currentText.includes('<plan>') && !currentText.includes('</plan>')
 
-    if (containsCompletePlan && completedToolCalls.length > 0) {
-      // Complete plan detected and tools were called - pause execution for user approval
+    // Check if we should pause for plan approval (complete or accepted incomplete)
+    const shouldPauseForPlan = (containsCompletePlan || (hasIncompletePlan && planRetries >= MAX_PLAN_RETRIES)) && completedToolCalls.length > 0
+
+    if (shouldPauseForPlan) {
+      // Plan detected and tools were called - pause execution for user approval
       onEvent({
         type: 'message_complete',
         messageId,
@@ -417,7 +420,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     const assistantParts: Array<TextPart | ToolCallPart> = []
     if (currentText) assistantParts.push({ type: 'text', text: currentText })
     // Only add tool calls to history if we're not waiting for plan approval
-    if (!containsCompletePlan) {
+    if (!shouldPauseForPlan) {
       for (const tc of completedToolCalls) {
         assistantParts.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
       }
@@ -426,12 +429,16 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       normalizedHistory.push({ role: 'assistant', content: assistantParts })
     }
 
+    // Track if we've accepted an incomplete plan (after max retries)
+    let acceptedIncompletePlan = false
+
     // If incomplete plan detected, keep looping to get the closing tag (max 3 retries)
     // NOTE: Plan text is already in history, so provider can see it and continue
     if (hasIncompletePlan) {
       planRetries++
       if (planRetries >= MAX_PLAN_RETRIES) {
         console.log('[AGENT] Max plan retries reached, accepting incomplete plan')
+        acceptedIncompletePlan = true
         // Break and let it be processed anyway
       } else {
         console.log(`[AGENT] Incomplete plan detected (attempt ${planRetries}/${MAX_PLAN_RETRIES}), continuing to get closing tag...`)
@@ -439,8 +446,8 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       }
     }
 
-    // If complete plan was detected, exit loop to wait for user approval
-    if (containsCompletePlan) {
+    // If complete plan OR accepted incomplete plan was detected, exit loop to wait for user approval
+    if (containsCompletePlan || acceptedIncompletePlan) {
       break
     }
 
