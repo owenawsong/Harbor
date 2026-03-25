@@ -98,52 +98,50 @@ This applies to:
 - Searching pages
 - ANY task that uses browser tools
 
-## Plan Format (CRITICAL - DO NOT SKIP OR DEVIATE)
+## ABSOLUTELY CRITICAL FORMAT RULES - FOLLOW EXACTLY
 
-**ALWAYS wrap your entire plan in \`<plan>...</plan>\` XML tags WITH PROPER CLOSING.**
-
-Your plan MUST have two structured sections using markdown headers (##):
+Your ENTIRE response MUST be:
 
 \`\`\`
 <plan>
 ## Allow actions on these sites
 - website1.com
 - website2.com
-- website3.com
 
 ## Approach to follow
-1. First specific action with clear details
-2. Second specific action with clear details
-3. Continue for all remaining steps...
+1. Step one
+2. Step two
 </plan>
 \`\`\`
 
-### CRITICAL REQUIREMENTS:
-- ✅ ALWAYS include "## Allow actions on these sites" section with a bulleted list of domains
-- ✅ ALWAYS include "## Approach to follow" section with numbered steps
-- ✅ Use markdown format: ## for headers, - for bullet points, numbers for steps
-- ✅ Wrap everything in \`<plan>\` and \`</plan>\` tags
-- ✅ Your response MUST END with closing \`</plan>\` tag
-- ❌ DO NOT write anything after \`</plan>\`
-- ❌ DO NOT use different section headers—use EXACTLY these names
-- ❌ DO NOT skip either section
+**NOTHING ELSE. NOT A SINGLE CHARACTER BEFORE OR AFTER.**
 
-### What each section should contain:
-- **Allow actions on these sites**: List ALL domains/websites the plan will access (extract from URLs you'll navigate to)
-- **Approach to follow**: Numbered list of steps. Be specific and clear about what each step does.
+### Non-Negotiable Rules:
 
-## What Happens When You Create a Plan
+🛑 **BANNED PHRASES** (you will get it wrong if you use any of these):
+- ❌ "Let me create a plan first"
+- ❌ "I'll help you..."
+- ❌ "I'll now..."
+- ❌ Any explanatory text
+- ❌ Any preamble whatsoever
 
-1. ✅ The UI displays your plan with beautiful formatting
-2. 👤 The user can **Approve**, **Modify**, or **Deny** your plan
-3. ⏸️ **EXECUTION IS BLOCKED** until user approves
-4. 🚀 Only after approval does execution proceed
+✅ **REQUIRED STRUCTURE**:
+- ✅ Start with: \`<plan>\`
+- ✅ Section 1: \`## Allow actions on these sites\` with bulleted list
+- ✅ Section 2: \`## Approach to follow\` with numbered steps
+- ✅ End with: \`</plan>\`
+- ✅ Nothing before \`<plan>\`
+- ✅ Nothing after \`</plan>\`
 
-## Example Workflow
+### What each section contains:
+- **Allow actions on these sites**: ALL domains the plan will access (one per line with - prefix)
+- **Approach to follow**: Clear, numbered steps (one per line with number. prefix)
 
-User: "Go to Google and search for 'AI breakthroughs in 2026'"
+## EXAMPLE 1 - SEARCH
 
-Your Response (just the plan, no preamble):
+User: "Search Google for AI news"
+
+Your ONLY response (literally nothing else):
 \`\`\`
 <plan>
 ## Allow actions on these sites
@@ -151,45 +149,45 @@ Your Response (just the plan, no preamble):
 
 ## Approach to follow
 1. Navigate to google.com
-2. Find and click the search input box
-3. Type "AI breakthroughs in 2026"
-4. Press Enter to search
-5. Extract and summarize the top 3 search results
-6. Present findings to user
+2. Click the search box
+3. Type "AI news"
+4. Press Enter
+5. Read the top 3 results
+6. Summarize findings
 </plan>
 \`\`\`
 
-**CRITICAL**:
-- ❌ DO NOT say "Let me create a plan first" or "I'll help you..."
-- ❌ DO NOT add preamble text
-- ✅ Output ONLY the \`<plan>...</plan>\` block
-- ✅ The UI shows "Creating plan..." automatically
-- ✅ Stop immediately after closing the tag
+## EXAMPLE 2 - MULTI-SITE
 
-## Another Example
+User: "Compare prices on Amazon and eBay"
 
-User: "Compare prices on these laptops across Amazon, Best Buy, and Newegg"
-
-Your Response (JUST the plan):
+Your ONLY response (literally nothing else):
 \`\`\`
 <plan>
 ## Allow actions on these sites
 - amazon.com
-- bestbuy.com
-- newegg.com
+- ebay.com
 
 ## Approach to follow
-1. Navigate to Amazon and search for the laptop model
-2. Record the price and key specs
-3. Navigate to Best Buy and search for the same model
-4. Record the price and key specs
-5. Navigate to Newegg and search for the same model
-6. Record the price and key specs
-7. Compare all prices and present findings to user
+1. Navigate to Amazon
+2. Search for the item
+3. Record the price
+4. Navigate to eBay
+5. Search for the same item
+6. Record the price
+7. Compare and report
 </plan>
 \`\`\`
 
-**NO PREAMBLE. NO EXPLANATION. JUST THE PLAN.**`
+## EXECUTION FLOW:
+1. User sends a task
+2. YOU IMMEDIATELY recognize it needs a plan
+3. YOU OUTPUT ONLY THE \`<plan>...</plan>\` BLOCK (no preamble, no explanation)
+4. THE UI SHOWS "Creating plan..."
+5. THE PLAN DIALOG APPEARS with your plan formatted beautifully
+6. USER APPROVES OR DENIES
+7. IF APPROVED: you execute
+8. IF DENIED: you stop`
 }
 
 function taskExecutionSection(): string {
