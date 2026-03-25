@@ -454,28 +454,6 @@ async function* openAICompatibleComplete(
       continue
     }
 
-    // Check for error response in the stream (Poe returns error objects in SSE stream)
-    if ((chunk as any).error) {
-      const errorObj = (chunk as any).error
-      const errorMsg = typeof errorObj === 'object' ? errorObj.message || JSON.stringify(errorObj) : String(errorObj)
-      if (baseUrl.includes('poe')) {
-        console.log('[POE-HTTP] ✗ API returned error in stream:', errorMsg)
-      }
-      // Provide more helpful error message for common Poe issues
-      let userMsg = `API error: ${errorMsg}`
-      if (baseUrl.includes('poe')) {
-        if (errorMsg.includes('Internal server error')) {
-          userMsg = `Poe service error: The model you selected may not be available or your API key may not have access to it. Check your model name in settings.`
-        } else if (errorMsg.includes('Authentication') || errorMsg.includes('Unauthorized')) {
-          userMsg = 'Poe API authentication failed. Please verify your API key is correct.'
-        } else if (errorMsg.includes('Not found') || errorMsg.includes('invalid')) {
-          userMsg = 'Poe model not found. Please check the model name is correct.'
-        }
-      }
-      yield { type: 'error', error: userMsg }
-      return
-    }
-
     const choices = chunk.choices as Array<Record<string, unknown>>
     if (!choices || choices.length === 0) {
       if (baseUrl.includes('poe') && sseEventCount <= 3) {
