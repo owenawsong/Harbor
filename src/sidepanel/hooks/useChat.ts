@@ -345,7 +345,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
 
         // ── Message complete (one provider turn done, agent may still be running) ──
         case 'message_complete': {
-          const { messageId } = event
+          const { messageId, stopReason } = event
           // Flush any remaining buffered text
           if (debouncerRef.current) {
             debouncerRef.current.flush(messageId)
@@ -381,10 +381,20 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             }),
           )
 
-          // If a plan was extracted, pause execution and show plan review dialog
+          // If a plan was extracted OR backend says stopReason is 'plan_pending', show approval dialog
           if (extractedPlan) {
+            console.log('[PLAN] Showing plan approval dialog')
             setPendingPlan({ messageId, plan: extractedPlan })
             setIsRunning(false)
+          } else if (stopReason === 'plan_pending' && planAccumulatorRef.current?.content) {
+            // Backend detected plan_pending, use accumulated plan content
+            console.log('[PLAN] Backend says plan_pending, using accumulated content')
+            const { plan } = extractPlan(planAccumulatorRef.current.content)
+            if (plan) {
+              setPendingPlan({ messageId, plan })
+              setIsRunning(false)
+              planAccumulatorRef.current = null
+            }
           }
 
           currentMsgId.current = null
