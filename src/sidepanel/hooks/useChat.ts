@@ -352,8 +352,12 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           // Extract plan BEFORE clearing accumulator (synchronously!)
           let extractedPlan: string | null = null
           if (planAccumulatorRef.current?.messageId === messageId && planAccumulatorRef.current?.content) {
+            console.log('[PLAN] Accumulator content:', planAccumulatorRef.current.content.substring(0, 100))
             const { plan } = extractPlan(planAccumulatorRef.current.content)
+            console.log('[PLAN] Extracted plan:', plan ? 'YES' : 'NO', plan?.substring(0, 50))
             extractedPlan = plan
+          } else {
+            console.log('[PLAN] No accumulator or mismatch', { hasAccumulator: !!planAccumulatorRef.current, messageId, accId: planAccumulatorRef.current?.messageId })
           }
 
           // Clear plan accumulator
