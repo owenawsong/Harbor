@@ -355,6 +355,8 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           }
 
           let extractedPlan: string | null = null
+
+          // Process message and extract plan
           setMessages((prev) =>
             prev.map((m) => {
               if (m.id !== messageId) return m
@@ -362,10 +364,11 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
               const { text: textAfterThinking, thinkingBlocks } = extractThinkingBlocks(m.text, m.thinkingBlocks)
 
               // Extract plan from planCreation field if available
-              let plan = null
-              if (m.planCreation?.isComplete) {
+              if (m.planCreation?.content) {
                 const { plan: extractedFromMarkdown } = extractPlan(m.planCreation.content)
-                plan = extractedFromMarkdown
+                if (extractedFromMarkdown) {
+                  extractedPlan = extractedFromMarkdown
+                }
               }
 
               return {
@@ -378,26 +381,12 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             }),
           )
 
-          // Extract plan for review dialog
-          setMessages((prev) => {
-            const msg = prev.find((m) => m.id === messageId)
-            if (msg?.planCreation?.isComplete) {
-              const { plan } = extractPlan(msg.planCreation.content)
-              if (plan) {
-                extractedPlan = plan
-              }
-            }
-            return prev
-          })
-
-          // If a plan was extracted, show plan review dialog
+          // If a plan was extracted, pause execution and show plan review dialog
           if (extractedPlan) {
             setPendingPlan({ messageId, plan: extractedPlan })
             setIsRunning(false)
           }
 
-          // Do NOT set isRunning: false here — agent may still be executing tool calls.
-          // Wait for agent_complete, unless a plan was extracted.
           currentMsgId.current = null
           break
         }
