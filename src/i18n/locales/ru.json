@@ -121,6 +121,10 @@
     "correction_placeholder": "e.g., 'Wait, use this URL instead...' or 'The password is different, let me give you the correct one...'",
     "send_correction": "Send Info"
   },
+  "plan": {
+    "creating_plan": "Creating plan",
+    "plan_created": "Plan created"
+  },
   "settings": {
     "title": "Настройки",
     "general": "Основное",

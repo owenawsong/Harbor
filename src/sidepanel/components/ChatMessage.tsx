@@ -55,6 +55,52 @@ function ThinkingBlock({
   )
 }
 
+// ─── Plan Creation Block ──────────────────────────────────────────────────────
+
+import type { UIPlanCreation } from '../hooks/useChat'
+
+function PlanCreationBlock({
+  planCreation,
+}: {
+  planCreation: UIPlanCreation
+}) {
+  const { t } = useTranslation()
+  const [isOpen, setIsOpen] = useState(true)
+
+  return (
+    <div className="rounded-lg border border-[rgb(var(--harbor-border))] overflow-hidden text-xs animate-fade-in">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center gap-1.5 w-full px-2.5 py-1.5 bg-[rgb(var(--harbor-surface-2))] hover:bg-[rgb(var(--harbor-border))] text-left transition-colors duration-150"
+      >
+        <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 text-[rgb(var(--harbor-text-faint))]">
+          {planCreation.isComplete ? '✓' : '⧗'}
+        </div>
+        <span className="font-medium text-[rgb(var(--harbor-text-muted))] flex-1">
+          {planCreation.isComplete ? t('plan.plan_created') : t('plan.creating_plan')}
+        </span>
+        <ChevronDown
+          size={11}
+          className="text-[rgb(var(--harbor-text-faint))] flex-shrink-0"
+          style={{
+            transform: isOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+            transition: 'transform 200ms cubic-bezier(0.16, 1, 0.3, 1)',
+          }}
+        />
+      </button>
+      {/* Animated expand/collapse */}
+      {isOpen && (
+        <div className="px-3 py-2 border-t border-[rgb(var(--harbor-border))] max-h-48 overflow-y-auto harbor-scroll text-xs text-[rgb(var(--harbor-text-muted))] bg-[rgb(var(--harbor-surface-1))]">
+          {/* Show simplified view of plan (no raw markdown) */}
+          <div className="whitespace-pre-wrap font-mono">
+            {planCreation.content.replace(/<\/?plan>/gi, '').trim()}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Message ──────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -242,7 +288,7 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
 
   // Assistant message
   const hasContent =
-    message.text || message.thinkingBlocks.length > 0 || message.toolCalls.length > 0 || message.error
+    message.text || message.thinkingBlocks.length > 0 || message.toolCalls.length > 0 || message.planCreation || message.error
 
   if (!hasContent && !message.isStreaming) return null
 
@@ -253,9 +299,9 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
 
       {/* Content with action buttons */}
       <div className="flex-1 min-w-0 flex flex-col gap-2 select-text relative group">
-        {/* Thinking blocks and tool calls, interleaved by sequence */}
+        {/* Thinking blocks, plan creation, and tool calls, interleaved by sequence */}
         {(() => {
-          const events: Array<{ type: 'thinking' | 'tool'; sequence: number; block?: UIThinkingBlock; toolCall?: typeof message.toolCalls[0]; index?: number }> = []
+          const events: Array<{ type: 'thinking' | 'tool' | 'plan'; sequence: number; block?: UIThinkingBlock; toolCall?: typeof message.toolCalls[0]; planCreation?: typeof message.planCreation; index?: number }> = []
 
           message.thinkingBlocks.forEach((block) => {
             events.push({ type: 'thinking', sequence: block.sequence, block })
@@ -264,6 +310,10 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
           message.toolCalls.forEach((tc, i) => {
             events.push({ type: 'tool', sequence: tc.sequence, toolCall: tc, index: i })
           })
+
+          if (message.planCreation) {
+            events.push({ type: 'plan', sequence: message.planCreation.sequence, planCreation: message.planCreation })
+          }
 
           // Sort by sequence (order events were emitted)
           events.sort((a, b) => a.sequence - b.sequence)
@@ -276,6 +326,11 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
                     key={event.block.id}
                     block={event.block}
                     onToggle={() => onToggleThinking?.(message.id, event.block!.id)}
+                  />
+                ) : event.type === 'plan' && event.planCreation ? (
+                  <PlanCreationBlock
+                    key={event.planCreation.id}
+                    planCreation={event.planCreation}
                   />
                 ) : event.type === 'tool' && event.toolCall ? (
                   <div key={event.toolCall.id} className="animate-fade-in" style={{ animationDelay: `${event.index! * 40}ms` }}>
