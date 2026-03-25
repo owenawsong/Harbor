@@ -21,12 +21,20 @@ export interface UIToolCall {
   sequence: number
 }
 
+export interface UIPlanCreation {
+  id: string
+  content: string  // Raw plan markdown being accumulated
+  isComplete: boolean
+  sequence: number
+}
+
 export interface UIMessage {
   id: string
   role: 'user' | 'assistant'
   text: string
   toolCalls: UIToolCall[]
   thinkingBlocks: UIThinkingBlock[]
+  planCreation?: UIPlanCreation  // Plan being created
   isStreaming: boolean
   error?: string
   timestamp: number
@@ -155,6 +163,8 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   const currentMsgId = useRef<string | null>(null)
   // Holds the reconnect function so sendMessage can call it
   const connectPortRef = useRef<(() => void) | null>(null)
+  // Track plan creation state across deltas
+  const planAccumulatorRef = useRef<{ messageId: string; content: string } | null>(null)
 
   useEffect(() => {
     try {
@@ -163,20 +173,73 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
         debouncerRef.current = new StreamDebouncer((debouncedDelta) => {
           try {
             const { text, messageId } = debouncedDelta
+
+            // Handle plan content streaming
+            let regularText = text
+            let planContent = ''
+
+            // Check if we're currently accumulating a plan
+            if (planAccumulatorRef.current?.messageId === messageId) {
+              planAccumulatorRef.current.content += text
+              regularText = ''
+              planContent = planAccumulatorRef.current.content
+            } else if (text.includes('<plan>')) {
+              // Starting a new plan
+              const planStart = text.indexOf('<plan>')
+              regularText = text.substring(0, planStart)
+              planContent = text.substring(planStart)
+
+              if (!text.includes('</plan>')) {
+                // Plan is not complete, accumulate it
+                planAccumulatorRef.current = { messageId, content: planContent }
+              } else {
+                // Plan is complete in this delta
+                planAccumulatorRef.current = null
+              }
+            }
+
             setMessages((prev) => {
               const last = prev[prev.length - 1]
               if (last?.id === messageId && last.role === 'assistant') {
-                return [...prev.slice(0, -1), { ...last, text: last.text + text, isStreaming: true }]
+                const updated = { ...last, isStreaming: true }
+
+                // Add regular text
+                if (regularText) {
+                  updated.text = last.text + regularText
+                }
+
+                // Handle plan creation
+                if (planContent) {
+                  const isComplete = planContent.includes('</plan>')
+                  const seq = ++eventSequenceRef.current
+
+                  if (!updated.planCreation) {
+                    updated.planCreation = { id: uid(), content: planContent, isComplete: false, sequence: seq }
+                  } else {
+                    updated.planCreation = { ...updated.planCreation, content: planContent, isComplete }
+                  }
+                }
+
+                return [...prev.slice(0, -1), updated]
               }
-              // If the last message is a streaming assistant msg with thinking blocks,
-              // reasoning_content arrived before text — merge into that message instead
-              if (last?.role === 'assistant' && last.isStreaming && last.thinkingBlocks.length > 0 && !last.text) {
-                return [...prev.slice(0, -1), { ...last, id: messageId, text, isStreaming: true }]
-              }
-              return [...prev, {
-                id: messageId, role: 'assistant', text, toolCalls: [],
+
+              // Create new message
+              const newMsg: UIMessage = {
+                id: messageId, role: 'assistant', text: regularText, toolCalls: [],
                 thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
-              }]
+              }
+
+              if (planContent) {
+                const isComplete = planContent.includes('</plan>')
+                newMsg.planCreation = {
+                  id: uid(),
+                  content: planContent,
+                  isComplete,
+                  sequence: ++eventSequenceRef.current,
+                }
+              }
+
+              return [...prev, newMsg]
             })
           } catch (err) {
             // Error handling in debouncer
@@ -286,25 +349,48 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             debouncerRef.current.flush(messageId)
           }
 
+          // Clear plan accumulator
+          if (planAccumulatorRef.current?.messageId === messageId) {
+            planAccumulatorRef.current = null
+          }
+
           let extractedPlan: string | null = null
           setMessages((prev) =>
             prev.map((m) => {
               if (m.id !== messageId) return m
               // Extract inline thinking blocks, collapse all thinking after streaming stops
               const { text: textAfterThinking, thinkingBlocks } = extractThinkingBlocks(m.text, m.thinkingBlocks)
-              // Extract plan from message text
-              const { text: cleanedText, plan } = extractPlan(textAfterThinking)
-              extractedPlan = plan
+
+              // Extract plan from planCreation field if available
+              let plan = null
+              if (m.planCreation?.isComplete) {
+                const { plan: extractedFromMarkdown } = extractPlan(m.planCreation.content)
+                plan = extractedFromMarkdown
+              }
+
               return {
                 ...m,
-                text: cleanedText,
+                text: textAfterThinking,
                 thinkingBlocks: thinkingBlocks.map((b) => ({ ...b, isOpen: false })),
+                planCreation: m.planCreation ? { ...m.planCreation, isComplete: true } : undefined,
                 isStreaming: false,
               }
             }),
           )
 
-          // If a plan was extracted, pause execution and show plan review dialog
+          // Extract plan for review dialog
+          setMessages((prev) => {
+            const msg = prev.find((m) => m.id === messageId)
+            if (msg?.planCreation?.isComplete) {
+              const { plan } = extractPlan(msg.planCreation.content)
+              if (plan) {
+                extractedPlan = plan
+              }
+            }
+            return prev
+          })
+
+          // If a plan was extracted, show plan review dialog
           if (extractedPlan) {
             setPendingPlan({ messageId, plan: extractedPlan })
             setIsRunning(false)

@@ -120,6 +120,10 @@
     "correction_placeholder": "例如，'等等，请改用这个 URL...' 或 '密码不同，让我给您正确的...'",
     "send_correction": "发送信息"
   },
+  "plan": {
+    "creating_plan": "Creating plan",
+    "plan_created": "Plan created"
+  },
   "settings": {
     "title": "设置",
     "general": "常规",
