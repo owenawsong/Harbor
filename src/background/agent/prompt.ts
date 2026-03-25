@@ -143,10 +143,8 @@ Your plan MUST have two structured sections using markdown headers (##):
 
 User: "Go to Google and search for 'AI breakthroughs in 2026'"
 
-Your Response:
+Your Response (just the plan, no preamble):
 \`\`\`
-I'll help you search for AI breakthroughs. Let me create a plan first.
-
 <plan>
 ## Allow actions on these sites
 - google.com
@@ -161,16 +159,19 @@ I'll help you search for AI breakthroughs. Let me create a plan first.
 </plan>
 \`\`\`
 
-**STOP HERE** and wait for user approval. Do NOT continue typing or executing. The UI will handle everything else.
+**CRITICAL**:
+- ❌ DO NOT say "Let me create a plan first" or "I'll help you..."
+- ❌ DO NOT add preamble text
+- ✅ Output ONLY the \`<plan>...</plan>\` block
+- ✅ The UI shows "Creating plan..." automatically
+- ✅ Stop immediately after closing the tag
 
 ## Another Example
 
 User: "Compare prices on these laptops across Amazon, Best Buy, and Newegg"
 
-Your Response:
+Your Response (JUST the plan):
 \`\`\`
-I'll help you compare laptop prices across those retailers. Let me create a plan first.
-
 <plan>
 ## Allow actions on these sites
 - amazon.com
@@ -188,7 +189,7 @@ I'll help you compare laptop prices across those retailers. Let me create a plan
 </plan>
 \`\`\`
 
-**STOP HERE** and wait for user approval.`
+**NO PREAMBLE. NO EXPLANATION. JUST THE PLAN.**`
 }
 
 function taskExecutionSection(): string {

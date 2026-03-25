@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react'
-import { CheckCircle2, X, Edit2, Globe } from 'lucide-react'
+import React, { useState } from 'react'
+import { CheckCircle2, X, Edit2, Globe, Lightbulb } from 'lucide-react'
 
 interface PlanReviewProps {
   plan: string
@@ -8,7 +8,7 @@ interface PlanReviewProps {
   onModify: (newPlan: string) => void
 }
 
-// Parse plan text to extract sites and steps from markdown-formatted sections
+// Parse plan from markdown format
 function parsePlan(text: string): { sites: string[]; steps: string[] } {
   const sites: string[] = []
   const steps: string[] = []
@@ -76,15 +76,15 @@ function parsePlan(text: string): { sites: string[]; steps: string[] } {
   }
 
   return {
-    sites: sites.slice(0, 5), // Limit to 5 sites for display
-    steps: steps.slice(0, 8), // Limit to 8 steps for display
+    sites: sites.slice(0, 6),
+    steps: steps.slice(0, 8),
   }
 }
 
 export default function PlanReview({ plan, onAccept, onDecline, onModify }: PlanReviewProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editedPlan, setEditedPlan] = useState(plan)
-  const { sites, steps } = useMemo(() => parsePlan(plan), [plan])
+  const { sites, steps } = React.useMemo(() => parsePlan(plan), [plan])
 
   const handleModifyClick = () => {
     if (isEditing) {
@@ -96,124 +96,135 @@ export default function PlanReview({ plan, onAccept, onDecline, onModify }: Plan
   }
 
   return (
-    <div className="mx-3 mt-3 p-4 rounded-xl border-2 bg-[rgb(var(--harbor-surface-2))] border-[rgb(var(--harbor-accent) / 0.4)] animate-scale-in">
+    <div className="mx-3 mt-3 rounded-xl border-2 overflow-hidden animate-scale-in"
+      style={{
+        background: 'rgb(var(--harbor-surface-2))',
+        borderColor: 'rgb(var(--harbor-accent) / 0.4)',
+      }}>
+
       {/* Header */}
-      <div className="mb-4">
+      <div className="px-4 py-3 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
         <h3 className="font-semibold text-sm flex items-center gap-2" style={{ color: 'rgb(var(--harbor-accent))' }}>
-          ≡ Harbor's plan
+          <Lightbulb size={16} />
+          Harbor's plan
         </h3>
-        <p className="text-xs mt-1" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-          Review the plan before Harbor takes any actions
-        </p>
       </div>
 
-      {isEditing ? (
-        <textarea
-          value={editedPlan}
-          onChange={(e) => setEditedPlan(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] text-xs text-[rgb(var(--harbor-text))] resize-none mb-4"
-          rows={8}
-          placeholder="Edit plan here..."
-        />
-      ) : (
-        <>
-          {/* Sites Section */}
-          {sites.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-xs font-medium mb-2" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-                Allow actions on these sites
-              </h4>
-              <div className="space-y-1.5">
-                {sites.map((site) => (
-                  <div
-                    key={site}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[rgb(var(--harbor-surface))] border border-[rgb(var(--harbor-border))]"
-                  >
-                    <Globe size={12} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
-                    <span className="text-xs" style={{ color: 'rgb(var(--harbor-text))' }}>
-                      {site}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Steps Section */}
-          {steps.length > 0 && (
-            <div className="mb-4">
-              <h4 className="text-xs font-medium mb-2" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
-                Approach to follow
-              </h4>
-              <ol className="space-y-2">
-                {steps.map((step, idx) => (
-                  <li
-                    key={idx}
-                    className="flex gap-2 text-xs"
-                    style={{ color: 'rgb(var(--harbor-text))' }}
-                  >
-                    <span
-                      className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium"
+      {/* Content */}
+      <div className="p-4">
+        {isEditing ? (
+          <textarea
+            value={editedPlan}
+            onChange={(e) => setEditedPlan(e.target.value)}
+            className="w-full px-3 py-2 rounded-lg border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] text-xs text-[rgb(var(--harbor-text))] resize-none mb-4"
+            rows={10}
+            placeholder="Edit plan here..."
+          />
+        ) : (
+          <>
+            {/* Sites Section */}
+            {sites.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-xs font-medium mb-3" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+                  Allow actions on these sites
+                </h4>
+                <div className="space-y-2">
+                  {sites.map((site) => (
+                    <div
+                      key={site}
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg"
                       style={{
-                        backgroundColor: 'rgb(var(--harbor-accent) / 0.2)',
-                        color: 'rgb(var(--harbor-accent))',
+                        background: 'rgb(var(--harbor-surface))',
                       }}
                     >
-                      {idx + 1}
-                    </span>
-                    <span className="pt-0.5">{step}</span>
-                  </li>
-                ))}
-              </ol>
-            </div>
-          )}
+                      <Globe size={14} style={{ color: 'rgb(var(--harbor-text-faint))', flexShrink: 0 }} />
+                      <span className="text-sm" style={{ color: 'rgb(var(--harbor-text))' }}>
+                        {site}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
-          {/* Full Plan Text */}
-          <div
-            className="p-3 rounded-lg bg-[rgb(var(--harbor-surface))] border border-[rgb(var(--harbor-border))] text-xs whitespace-pre-wrap"
-            style={{ color: 'rgb(var(--harbor-text-faint))' }}
-          >
-            {plan}
-          </div>
-        </>
-      )}
+            {/* Steps Section */}
+            {steps.length > 0 && (
+              <div className="mb-6">
+                <h4 className="text-xs font-medium mb-3" style={{ color: 'rgb(var(--harbor-text-muted))' }}>
+                  Approach to follow
+                </h4>
+                <ol className="space-y-2.5">
+                  {steps.map((step, idx) => (
+                    <li
+                      key={idx}
+                      className="flex gap-3"
+                      style={{ color: 'rgb(var(--harbor-text))' }}
+                    >
+                      <span
+                        className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold"
+                        style={{
+                          backgroundColor: 'rgb(var(--harbor-accent) / 0.15)',
+                          color: 'rgb(var(--harbor-accent))',
+                        }}
+                      >
+                        {idx + 1}
+                      </span>
+                      <span className="text-sm pt-0.5">{step}</span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            )}
 
-      {/* Buttons */}
-      <div className="flex gap-2 mt-4">
+            {/* Full plan for reference */}
+            {!isEditing && (
+              <div
+                className="p-3 rounded-lg text-xs border whitespace-pre-wrap"
+                style={{
+                  background: 'rgb(var(--harbor-surface))',
+                  borderColor: 'rgb(var(--harbor-border))',
+                  color: 'rgb(var(--harbor-text-faint))',
+                  fontSize: '11px',
+                  maxHeight: '120px',
+                  overflow: 'auto',
+                }}
+              >
+                {plan}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Action Buttons */}
+      <div className="px-4 py-3 border-t flex gap-2" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
         <button
           onClick={onAccept}
           disabled={isEditing}
-          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg font-medium text-xs transition disabled:opacity-50 disabled:cursor-not-allowed text-white"
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-medium text-sm transition disabled:opacity-50 disabled:cursor-not-allowed text-white"
           style={{
             backgroundColor: 'rgb(var(--harbor-accent))',
           }}
         >
-          <CheckCircle2 size={14} />
+          <CheckCircle2 size={16} />
           Approve plan
         </button>
         <button
           onClick={handleModifyClick}
-          className="flex-1 px-3 py-2.5 rounded-lg border font-medium text-xs transition"
+          className="flex-1 px-3 py-2.5 rounded-lg border font-medium text-sm transition"
           style={{
             borderColor: 'rgb(var(--harbor-border))',
             color: 'rgb(var(--harbor-text-muted))',
           }}
         >
-          <Edit2 size={12} className="inline mr-1" />
-          {isEditing ? 'Done' : 'Make changes'}
+          <Edit2 size={14} className="inline mr-1.5" />
+          {isEditing ? 'Save' : 'Make changes'}
         </button>
-        <button
-          onClick={onDecline}
-          disabled={isEditing}
-          className="flex-1 px-3 py-2.5 rounded-lg border font-medium text-xs transition disabled:opacity-50 disabled:cursor-not-allowed"
-          style={{
-            borderColor: 'rgb(var(--harbor-border))',
-            color: 'rgb(var(--harbor-text-muted))',
-          }}
-        >
-          <X size={12} className="inline mr-1" />
-          Decline
-        </button>
+      </div>
+
+      {/* Info text */}
+      <div className="px-4 py-2.5 text-xs" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+        Harbor will only use the sites listed. You'll be asked before accessing anything else.
       </div>
     </div>
   )
