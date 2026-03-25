@@ -747,9 +747,19 @@ export const poeProvider: ProviderAdapter = {
       return
     }
 
+    console.log('[POE] Starting Poe provider with model:', settings.provider.model)
+
     // Note: Poe API endpoint - some users may need to use a different endpoint
     // The openAICompatibleComplete function handles the streaming response
-    yield* openAICompatibleComplete('https://api.poe.com/v1', settings.provider.apiKey, options)
+    let eventCount = 0
+    for await (const event of openAICompatibleComplete('https://api.poe.com/v1', settings.provider.apiKey, options)) {
+      eventCount++
+      if (eventCount === 1 || event.type === 'error') {
+        console.log('[POE] First event or error:', event)
+      }
+      yield event
+    }
+    console.log('[POE] Provider finished, total events:', eventCount)
   },
 }
 
