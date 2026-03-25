@@ -163,8 +163,8 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   const currentMsgId = useRef<string | null>(null)
   // Holds the reconnect function so sendMessage can call it
   const connectPortRef = useRef<(() => void) | null>(null)
-  // Track plan creation state across deltas
-  const planAccumulatorRef = useRef<{ messageId: string; content: string } | null>(null)
+  // Track plan creation state across deltas AND across multiple messages
+  const planAccumulatorRef = useRef<{ content: string; isComplete: boolean } | null>(null)
 
   useEffect(() => {
     try {
@@ -178,24 +178,26 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             let regularText = text
             let planContent = ''
 
-            // Check if we're currently accumulating a plan
-            if (planAccumulatorRef.current?.messageId === messageId) {
+            // Check if we're currently accumulating a plan (from previous messages)
+            if (planAccumulatorRef.current && !planAccumulatorRef.current.isComplete) {
+              // Continue accumulating plan from previous message
               planAccumulatorRef.current.content += text
               regularText = ''
               planContent = planAccumulatorRef.current.content
+
+              // Check if plan is now complete
+              if (planAccumulatorRef.current.content.includes('</plan>')) {
+                planAccumulatorRef.current.isComplete = true
+              }
             } else if (text.includes('<plan>')) {
               // Starting a new plan
               const planStart = text.indexOf('<plan>')
               regularText = text.substring(0, planStart)
               planContent = text.substring(planStart)
 
-              if (!text.includes('</plan>')) {
-                // Plan is not complete, accumulate it
-                planAccumulatorRef.current = { messageId, content: planContent }
-              } else {
-                // Plan is complete in this delta
-                planAccumulatorRef.current = null
-              }
+              const isComplete = text.includes('</plan>')
+              // Start accumulating plan (may span across multiple messages)
+              planAccumulatorRef.current = { content: planContent, isComplete }
             }
 
             setMessages((prev) => {
@@ -349,20 +351,17 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             debouncerRef.current.flush(messageId)
           }
 
-          // Extract plan BEFORE clearing accumulator (synchronously!)
+          // Extract plan ONLY if it's complete
           let extractedPlan: string | null = null
-          if (planAccumulatorRef.current?.messageId === messageId && planAccumulatorRef.current?.content) {
-            console.log('[PLAN] Accumulator content:', planAccumulatorRef.current.content.substring(0, 100))
+          if (planAccumulatorRef.current?.isComplete && planAccumulatorRef.current?.content) {
+            console.log('[PLAN] Complete plan found:', planAccumulatorRef.current.content.substring(0, 100))
             const { plan } = extractPlan(planAccumulatorRef.current.content)
             console.log('[PLAN] Extracted plan:', plan ? 'YES' : 'NO', plan?.substring(0, 50))
             extractedPlan = plan
-          } else {
-            console.log('[PLAN] No accumulator or mismatch', { hasAccumulator: !!planAccumulatorRef.current, messageId, accId: planAccumulatorRef.current?.messageId })
-          }
-
-          // Clear plan accumulator
-          if (planAccumulatorRef.current?.messageId === messageId) {
+            // Clear accumulator only after successful extraction
             planAccumulatorRef.current = null
+          } else if (planAccumulatorRef.current?.content) {
+            console.log('[PLAN] Plan incomplete, waiting for more:', planAccumulatorRef.current.content.substring(0, 100))
           }
 
           // Update messages (collapse thinking blocks, mark plan as complete)
