@@ -411,9 +411,9 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       })
     }
 
-    // Add assistant message to history ONLY if plan is complete (not incomplete)
+    // Add assistant message to history
     const assistantParts: Array<TextPart | ToolCallPart> = []
-    if (currentText && !hasIncompletePlan) assistantParts.push({ type: 'text', text: currentText })
+    if (currentText) assistantParts.push({ type: 'text', text: currentText })
     // Only add tool calls to history if we're not waiting for plan approval
     if (!containsCompletePlan) {
       for (const tc of completedToolCalls) {
@@ -425,6 +425,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     }
 
     // If incomplete plan detected, keep looping to get the closing tag
+    // NOTE: Plan text is already in history, so provider can see it and continue
     if (hasIncompletePlan) {
       console.log('[AGENT] Incomplete plan detected, continuing to get closing tag...')
       continue
