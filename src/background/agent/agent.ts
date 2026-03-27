@@ -400,6 +400,13 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       return
     }
 
+    // If provider yielded nothing (0 events, no text, no tool calls), emit error
+    if (!currentText && completedToolCalls.length === 0 && !stopReason) {
+      console.log('[AGENT] Provider yielded no response - emitting error')
+      onEvent({ type: 'error', error: 'Provider returned empty response. The API may be unavailable or the model may not be accessible.' })
+      return
+    }
+
     // Check if message contains a COMPLETE plan (both opening and closing tags)
     const containsCompletePlan = /<plan>[\s\S]*?<\/plan>/i.test(currentText)
 
