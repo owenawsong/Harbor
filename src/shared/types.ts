@@ -27,7 +27,12 @@ export interface ImageContent {
   mimeType?: string
 }
 
-export type MessageContent = TextContent | ToolCallContent | ToolResultContent | ImageContent
+export interface ThinkingContent {
+  type: 'thinking'
+  thinkingText: string
+}
+
+export type MessageContent = TextContent | ToolCallContent | ToolResultContent | ImageContent | ThinkingContent
 
 export interface ChatMessage {
   id: string
