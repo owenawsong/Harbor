@@ -35,28 +35,32 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
     let recognition: any
     try {
       recognition = new SpeechRecognition()
+      console.log('[Voice Input] ✓ SpeechRecognition instance created successfully')
     } catch (err) {
-      console.error('[Voice Input] Failed to create SpeechRecognition instance:', err)
+      console.error('[Voice Input] ✗ Failed to create SpeechRecognition instance:', err)
       setIsSupported(false)
       setPermissionError(`Voice input setup failed: ${err instanceof Error ? err.message : 'Unknown error'}`)
       return
     }
 
     try {
-      setIsSupported(true)
+      console.log('[Voice Input] Setting up recognition properties...')
       recognition.continuous = true
+      console.log('[Voice Input] ✓ continuous set')
       recognition.interimResults = true
+      console.log('[Voice Input] ✓ interimResults set')
       recognition.language = language
-      // For extension context, ensure max alternatives is set
+      console.log('[Voice Input] ✓ language set to:', language)
       recognition.maxAlternatives = 1
+      console.log('[Voice Input] ✓ maxAlternatives set')
 
       let localInterim = ''
 
       recognition.onstart = () => {
-        console.log('[Voice Input] Listening started successfully')
+        console.log('[Voice Input] ✓ Listening started successfully')
         setIsListening(true)
         setInterimTranscript('')
-        setPermissionError(null) // Clear any previous errors
+        setPermissionError(null)
         localInterim = ''
       }
 
@@ -65,7 +69,7 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
         for (let i = event.resultIndex; i < event.results.length; i++) {
           const transcript = event.results[i][0].transcript
           if (event.results[i].isFinal) {
-            console.log('[Voice Input] Final transcript:', transcript)
+            console.log('[Voice Input] ✓ Final transcript:', transcript)
             onTranscribedRef.current(transcript)
             localInterim = ''
           } else {
@@ -76,7 +80,7 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
       }
 
       recognition.onerror = (event: any) => {
-        console.error('[Voice Input] Speech recognition error:', event.error)
+        console.error('[Voice Input] ✗ Speech recognition error:', event.error)
         setIsListening(false)
 
         // Handle different error types with helpful messages
@@ -87,7 +91,7 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
         } else if (event.error === 'permission-denied' || event.error === 'not-allowed') {
           setPermissionError('Microphone access denied. Click the microphone icon in your browser\'s address bar to enable access.')
         } else if (event.error === 'service-not-allowed') {
-          setPermissionError('Voice input service is not available. Please check browser settings.')
+          setPermissionError('Voice input service is not available. This may be a browser or extension limitation.')
         } else if (event.error === 'bad-grammar') {
           setPermissionError('Language settings issue. Please try again.')
         } else {
@@ -102,9 +106,10 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
       }
 
       recognitionRef.current = recognition
-      console.log('[Voice Input] Initialization complete')
+      setIsSupported(true)
+      console.log('[Voice Input] ✓ Initialization complete - voice input is READY')
     } catch (err) {
-      console.error('[Voice Input] Failed to initialize:', err)
+      console.error('[Voice Input] ✗ Failed to initialize recognition properties:', err)
       setIsSupported(false)
       setPermissionError(`Failed to initialize voice input: ${err instanceof Error ? err.message : String(err)}`)
     }
