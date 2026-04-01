@@ -56,7 +56,13 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   useEffect(() => {
     if (permissionError) {
       console.warn('Voice input error:', permissionError)
-      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: permissionError, type: 'error' } }))
+      // If it's a microphone permission error, show actionable message
+      if (permissionError.includes('chrome://settings')) {
+        const message = 'Enable microphone for this extension in Chrome settings'
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message, type: 'error', action: 'Open Settings', actionUrl: 'chrome://settings/content/microphone' } }))
+      } else {
+        window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: permissionError, type: 'error' } }))
+      }
     }
   }, [permissionError])
 
