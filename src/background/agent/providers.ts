@@ -792,10 +792,13 @@ export const poeProvider: ProviderAdapter = {
 
     console.log('[POE] Starting Poe provider with model:', settings.provider.model)
     console.log('[POE] API Key prefix:', settings.provider.apiKey.substring(0, 10) + '***')
+    console.log('[POE] Tools requested:', options.tools.length)
 
     // Poe API endpoint - OpenAI-compatible format
     let eventCount = 0
     let hasError = false
+    let firstError: string | null = null
+
     try {
       for await (const event of openAICompatibleComplete('https://api.poe.com/v1', settings.provider.apiKey, options)) {
         eventCount++
@@ -804,6 +807,7 @@ export const poeProvider: ProviderAdapter = {
         }
         if (event.type === 'error') {
           hasError = true
+          firstError = event.error
           console.log('[POE] ERROR:', event.error)
         }
         yield event
@@ -811,12 +815,32 @@ export const poeProvider: ProviderAdapter = {
     } catch (err) {
       console.log('[POE] Exception thrown:', err instanceof Error ? err.message : String(err))
       hasError = true
-      yield { type: 'error', error: `Poe provider error: ${err instanceof Error ? err.message : String(err)}` }
     }
 
     console.log('[POE] Provider finished - eventCount:', eventCount, 'hasError:', hasError)
-    if (eventCount === 0 && !hasError) {
-      console.log('[POE] WARNING: No events yielded and no error emitted - possible response stream issue')
+
+    // If Poe failed with 0 events and tools were sent, retry WITHOUT tools
+    // (This handles Poe models that don't support tool calling)
+    if (eventCount === 0 && options.tools.length > 0) {
+      console.log('[POE] ⚠ First attempt returned 0 events with tools. Retrying without tools...')
+      const optionsWithoutTools = { ...options, tools: [] }
+
+      let retryEventCount = 0
+      try {
+        for await (const event of openAICompatibleComplete('https://api.poe.com/v1', settings.provider.apiKey, optionsWithoutTools)) {
+          retryEventCount++
+          yield event
+        }
+        console.log('[POE] ✓ Retry successful! eventCount:', retryEventCount)
+      } catch (retryErr) {
+        console.log('[POE] Retry also failed:', retryErr instanceof Error ? retryErr.message : String(retryErr))
+        // Emit original error if retry also failed
+        if (firstError) {
+          yield { type: 'error', error: firstError }
+        }
+      }
+    } else if (eventCount === 0 && !hasError) {
+      console.log('[POE] WARNING: No events yielded and no error emitted')
     }
   },
 }
