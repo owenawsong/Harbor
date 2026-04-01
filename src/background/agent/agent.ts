@@ -179,6 +179,7 @@ function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] 
 export async function runAgent(options: AgentRunOptions): Promise<void> {
   const { sessionId, message, settings, history, onEvent, signal, attachedTabId, enablePlanning, chatModeOnly } = options
   const provider = getProvider(settings.provider.provider)
+  console.log('[AGENT] Starting agent with provider:', settings.provider.provider, 'model:', settings.provider.model, 'chatModeOnly:', chatModeOnly)
 
   // Load user profile from storage if enabled
   let memoryData = ''
@@ -402,7 +403,11 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
     // If provider yielded nothing (0 events, no text, no tool calls), emit error
     if (!currentText && completedToolCalls.length === 0 && !stopReason) {
-      console.log('[AGENT] Provider yielded no response - emitting error')
+      console.log('[AGENT] Provider yielded no response:',
+        'currentText:', currentText ? `"${currentText.substring(0, 50)}"` : 'empty',
+        'toolCalls:', completedToolCalls.length,
+        'stopReason:', stopReason || 'empty'
+      )
       onEvent({ type: 'error', error: 'Provider returned empty response. The API may be unavailable or the model may not be accessible.' })
       return
     }
