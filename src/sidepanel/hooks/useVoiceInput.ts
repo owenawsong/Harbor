@@ -145,10 +145,30 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
   const startListeningWithPermission = useCallback(() => {
     setPermissionError(null)
 
-    // In extension context, directly start speech recognition
-    // The browser will prompt for permission if needed
-    console.log('[Voice Input] Starting speech recognition (browser will prompt for permission if needed)...')
-    startListening()
+    // Request microphone permission before starting
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'microphone' as any })
+        .then((permissionStatus) => {
+          console.log('[Voice Input] Microphone permission status:', permissionStatus.state)
+          if (permissionStatus.state === 'denied') {
+            setPermissionError('Microphone permission denied. Please go to Chrome settings (chrome://settings/content/microphone) and allow microphone access for this extension.')
+            return
+          }
+          // Permission is granted or prompt - try to start listening
+          console.log('[Voice Input] Starting speech recognition (browser will prompt for permission if needed)...')
+          startListening()
+        })
+        .catch((err) => {
+          console.warn('[Voice Input] Could not query permissions:', err)
+          // Fallback: just try to start anyway
+          console.log('[Voice Input] Starting speech recognition (fallback)...')
+          startListening()
+        })
+    } else {
+      // No permissions API - just try to start
+      console.log('[Voice Input] Starting speech recognition (permissions API not available)...')
+      startListening()
+    }
   }, [startListening])
 
   return {
