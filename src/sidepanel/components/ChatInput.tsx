@@ -56,10 +56,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   useEffect(() => {
     if (permissionError) {
       console.warn('Voice input error:', permissionError)
-      // Show error toast
-      setTimeout(() => {
-        // Note: permissionError should be shown to user
-      }, 0)
+      window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: permissionError, type: 'error' } }))
     }
   }, [permissionError])
 
@@ -82,8 +79,10 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
     focus: () => textareaRef.current?.focus(),
   }))
 
-  // Allow sending if: (1) normal message with agent idle, OR (2) correction while agent running
+  // Allow sending if: (1) normal message with agent idle, OR (2) correction (any time)
   const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && (!isRunning || isCorrectionMode)
+  // Correction is typed but agent not yet running - will send when agent starts
+  const correctionPending = isCorrectionMode && value.trim().length > 0 && !isRunning
 
   // Handle correction mode toggle
   const handleCorrectionToggle = useCallback(() => {
@@ -202,8 +201,29 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         </div>
       )}
 
+      {/* Correction mode banner */}
+      {isCorrectionMode && (
+        <div className="flex items-center gap-2 px-3 py-1.5 mb-1.5 rounded-lg text-xs"
+          style={{ backgroundColor: 'rgb(var(--harbor-accent) / 0.1)', color: 'rgb(var(--harbor-accent))' }}>
+          <RefreshCw size={12} />
+          <span>
+            {correctionPending
+              ? 'Correction queued — will send when agent is running'
+              : 'Correction mode — this will guide the running agent'}
+          </span>
+        </div>
+      )}
+
       {/* Top line: Text input */}
-      <div className="flex items-stretch gap-2 rounded-xl border border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] px-3 py-2.5 focus-within:border-harbor-400 mb-2">
+      <div
+        className="flex items-stretch gap-2 rounded-xl px-3 py-2.5 focus-within:border-harbor-400 mb-2"
+        style={{
+          border: isCorrectionMode
+            ? '1px solid rgb(var(--harbor-accent) / 0.5)'
+            : '1px solid rgb(var(--harbor-border))',
+          background: 'rgb(var(--harbor-surface))',
+        }}
+      >
         <textarea
           ref={textareaRef}
           value={value}
@@ -300,23 +320,14 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         {/* Correction Button - Agent Mode Only */}
         {agentMode && (
           <button
-            onClick={() => {
-              if (!isRunning) {
-                // Show toast error message
-                const msg = 'You can only provide corrections while agent is running'
-                console.log(msg)
-                // Dispatch custom event for toast notification
-                window.dispatchEvent(new CustomEvent('show-toast', { detail: { message: msg, type: 'info' } }))
-                return
-              }
-              // Call the onCorrect callback to open the dialog
-              if (onCorrect) {
-                onCorrect()
-              }
-            }}
+            onClick={handleCorrectionToggle}
             disabled={disabled}
-            title={isRunning ? 'Provide correction or additional info' : 'Only available while agent is running'}
-            className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 text-[rgb(var(--harbor-text-faint))] hover:text-[rgb(var(--harbor-accent))] hover:bg-[rgb(var(--harbor-surface-2))] disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-[rgb(var(--harbor-text-faint))]"
+            title={isCorrectionMode ? 'Cancel correction' : 'Provide a correction or clarification'}
+            className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 disabled:opacity-40"
+            style={{
+              color: isCorrectionMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-faint))',
+              backgroundColor: isCorrectionMode ? 'rgb(var(--harbor-accent) / 0.1)' : 'transparent',
+            }}
           >
             <RefreshCw size={16} />
           </button>
@@ -381,14 +392,20 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           <button
             onClick={handleVoiceToggle}
             disabled={disabled}
-            title={isListening ? 'Stop listening' : 'Start voice input'}
+            title={permissionError ?? (isListening ? 'Stop listening' : 'Start voice input')}
             className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-              isListening
-                ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/60 animate-pulse'
-                : 'bg-harbor-600 hover:bg-harbor-700'
+              permissionError
+                ? 'bg-red-500/20 hover:bg-red-500/30'
+                : isListening
+                  ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/60 animate-pulse'
+                  : 'bg-harbor-600 hover:bg-harbor-700'
             }`}
           >
-            {isListening ? <Mic size={16} className="text-white" /> : <Mic size={16} className="text-white opacity-50" />}
+            {permissionError
+              ? <MicOff size={16} className="text-red-400" />
+              : isListening
+                ? <Mic size={16} className="text-white" />
+                : <Mic size={16} className="text-white opacity-50" />}
           </button>
         ) : null}
       </div>

@@ -9,7 +9,6 @@ import { useChat } from '../hooks/useChat'
 import ChatMessages from './ChatMessages'
 import ChatInput, { type ChatInputHandle } from './ChatInput'
 import EmptyState from './EmptyState'
-import ExecutionCorrectionDialog from './ExecutionCorrectionDialog'
 import PlanReview from './PlanReview'
 
 
@@ -61,7 +60,6 @@ export default function Chat({
 
   const [showNotifications, setShowNotifications] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [showAddInfoDialog, setShowAddInfoDialog] = useState(false)
 
   // Only show agent border when there are active tool calls, not just thinking
   const hasActiveToolCalls = messages.some((msg) =>
@@ -269,18 +267,7 @@ export default function Chat({
         placeholder={hasApiKey ? (agentMode ? t('chat.placeholder') : t('chat.placeholder_alt')) : t('chat.configure_api')}
         agentMode={agentMode}
         onToggleAgentMode={onToggleAgentMode}
-        onCorrect={() => setShowAddInfoDialog(true)}
         settings={settings}
-      />
-
-      {/* ── Execution Correction Dialog ────────────────────────────────────── */}
-      <ExecutionCorrectionDialog
-        isOpen={showAddInfoDialog}
-        onClose={() => setShowAddInfoDialog(false)}
-        onSubmit={(correction) => {
-          sendMessage(correction)
-          setShowAddInfoDialog(false)
-        }}
       />
     </div>
   )

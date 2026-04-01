@@ -182,6 +182,8 @@ chrome.runtime.onConnect.addListener((port) => {
           }
 
           let assistantText = ''
+          const assistantToolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
+          const assistantThinking: string[] = []
 
           notifyActiveTab('harbor_agent_start')
           try {
@@ -203,6 +205,14 @@ chrome.runtime.onConnect.addListener((port) => {
                 if (event.type === 'text_delta') {
                   assistantText += event.text
                 }
+                if (event.type === 'tool_call_result') {
+                  const e = event as any
+                  assistantToolCalls.push({ id: e.toolCallId, name: e.toolName, input: {} })
+                }
+                if (event.type === 'thinking') {
+                  const e = event as any
+                  assistantThinking.push(e.text)
+                }
                 send(event)
               },
               signal: controller.signal,
@@ -217,14 +227,24 @@ chrome.runtime.onConnect.addListener((port) => {
             }
           }
 
+          // Build content array preserving thinking, text, and tool calls
+          const content: import('../shared/types').MessageContent[] = []
+          if (assistantThinking.length > 0) {
+            content.push({ type: 'thinking', thinkingText: assistantThinking.join('\n\n') })
+          }
           if (assistantText) {
-            // CRITICAL FIX: Ensure incomplete plans have closing tag before storage!
-            // If text has <plan> but no </plan>, add it to prevent data loss on reload
+            // Ensure incomplete plans have closing tag before storage
             if (assistantText.includes('<plan>') && !assistantText.includes('</plan>')) {
               console.log('[STORAGE] Incomplete plan detected, adding closing tag before storage')
               assistantText += '\n</plan>'
             }
-            assistantMsg.content = [{ type: 'text', text: assistantText }]
+            content.push({ type: 'text', text: assistantText })
+          }
+          for (const tc of assistantToolCalls) {
+            content.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
+          }
+          if (content.length > 0) {
+            assistantMsg.content = content
           }
 
           await saveSession({

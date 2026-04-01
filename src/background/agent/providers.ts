@@ -402,11 +402,8 @@ async function* openAICompatibleComplete(
     body: JSON.stringify({
       model: settings.provider.model,
       messages: toOpenAIMessages(messages, systemPrompt, imageSupport),
-      // Poe doesn't support tools parameter - skip it for Poe
-      ...(baseUrl.includes('poe') ? {} : {
-        tools: tools.length > 0 ? toOpenAITools(tools) : undefined,
-        tool_choice: tools.length > 0 ? 'auto' : undefined,
-      }),
+      tools: tools.length > 0 ? toOpenAITools(tools) : undefined,
+      tool_choice: tools.length > 0 ? 'auto' : undefined,
       max_tokens: extraBody?.max_tokens ?? settings.maxTokens ?? 8192,
       stream: true,
       ...(extraBody?.temperature !== undefined ? { temperature: extraBody.temperature } : {}),
