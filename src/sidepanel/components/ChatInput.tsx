@@ -12,7 +12,7 @@ interface Attachment {
 }
 
 interface Props {
-  onSend: (text: string, attachments?: Attachment[], options?: { enablePlanning?: boolean; chatModeOnly?: boolean }) => void
+  onSend: (text: string, attachments?: Attachment[], options?: { enablePlanning?: boolean; chatModeOnly?: boolean; isCorrection?: boolean }) => void
   onStop: () => void
   isRunning: boolean
   disabled?: boolean
@@ -23,7 +23,7 @@ interface Props {
   settings?: AgentSettings
 }
 
-interface ChatInputHandle {
+export interface ChatInputHandle {
   focus: () => void
 }
 
@@ -40,7 +40,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   const modelButtonRef = useRef<HTMLDivElement>(null)
 
   // Voice input
-  const { isListening, isSupported: isVoiceSupported, interimTranscript, permissionError, startListening, stopListening } = useVoiceInput({
+  const { isListening, isSupported: isVoiceSupported, interimTranscript, permissionError, startListening, stopListening, openPermissionPage } = useVoiceInput({
     onTranscribed: (text) => {
       if (text.trim()) {
         setValue((prev) => (prev ? prev + ' ' + text : text))
@@ -67,21 +67,23 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
   }, [permissionError])
 
   const handleVoiceToggle = useCallback(() => {
+    if (permissionError) {
+      openPermissionPage()
+      return
+    }
     if (isListening) {
       stopListening()
     } else {
       startListening()
     }
-  }, [isListening, startListening, stopListening])
+  }, [isListening, openPermissionPage, permissionError, startListening, stopListening])
 
   useImperativeHandle(ref, () => ({
     focus: () => textareaRef.current?.focus(),
   }))
 
-  // Allow sending if: (1) normal message with agent idle, OR (2) correction (any time)
-  const canSend = (value.trim().length > 0 || attachments.length > 0) && !disabled && (!isRunning || isCorrectionMode)
-  // Correction is typed but agent not yet running - will send when agent starts
-  const correctionPending = isCorrectionMode && value.trim().length > 0 && !isRunning
+  const hasContent = value.trim().length > 0 || attachments.length > 0
+  const canSend = hasContent && !disabled && (isCorrectionMode ? isRunning : !isRunning)
 
   // Handle correction mode toggle
   const handleCorrectionToggle = useCallback(() => {
@@ -103,20 +105,16 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
     const text = value.trim()
     if ((!text && attachments.length === 0) || !canSend) return
 
-    // Format correction as special message type
-    const messageText = isCorrectionMode
-      ? `<user_correction>${text}</user_correction>`
-      : text
-
     setValue('')
     setNormalInputValue('')
     setAttachments([])
     setIsCorrectionMode(false) // Exit correction mode after sending
     if (textareaRef.current) textareaRef.current.style.height = 'auto'
 
-    onSend(messageText, attachments.length > 0 ? attachments : undefined, {
-      enablePlanning: agentMode && enablePlanning,
+    onSend(text, attachments.length > 0 ? attachments : undefined, {
+      enablePlanning: agentMode && enablePlanning && !isCorrectionMode,
       chatModeOnly: !agentMode,
+      isCorrection: isCorrectionMode,
     })
   }, [value, attachments, canSend, onSend, agentMode, enablePlanning, isCorrectionMode])
 
@@ -205,10 +203,22 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
         <div className="flex items-center gap-2 px-3 py-1.5 mb-1.5 rounded-lg text-xs"
           style={{ backgroundColor: 'rgb(var(--harbor-accent) / 0.1)', color: 'rgb(var(--harbor-accent))' }}>
           <RefreshCw size={12} />
-          <span>
-            {correctionPending
-              ? 'Correction queued — will send when agent is running'
-              : 'Correction mode — this will guide the running agent'}
+          <span>{isRunning ? 'Correction mode - update the running task' : 'Correction mode - type now, send while the agent is running'}</span>
+        </div>
+      )}
+
+      {isListening && !isCorrectionMode && (
+        <div
+          className="flex items-center gap-2 px-3 py-1.5 mb-1.5 rounded-lg border text-xs animate-fade-in"
+          style={{
+            backgroundColor: 'rgb(var(--harbor-surface))',
+            borderColor: 'rgb(var(--harbor-accent) / 0.25)',
+            color: 'rgb(var(--harbor-text-muted))',
+          }}
+        >
+          <Mic size={12} style={{ color: 'rgb(var(--harbor-accent))' }} />
+          <span className="truncate">
+            {interimTranscript.trim() || t('chat.listening', 'Listening...')}
           </span>
         </div>
       )}
@@ -268,10 +278,10 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           title={agentMode ? t('chat.switch_chat_mode') : t('chat.switch_agent_mode')}
           className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium flex items-center gap-1.5 border transition-all duration-300 disabled:opacity-40 hover:scale-105 active:scale-95"
           style={{
-            borderColor: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
-            backgroundColor: agentMode ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface-2))',
-            color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text))',
-            boxShadow: agentMode ? '0 0 8px rgb(var(--harbor-accent) / 0.3)' : 'none',
+            borderColor: agentMode ? 'rgb(var(--harbor-border-2))' : 'rgb(var(--harbor-border))',
+            backgroundColor: agentMode ? 'rgb(var(--harbor-surface))' : 'rgb(var(--harbor-surface-2))',
+            color: 'rgb(var(--harbor-text))',
+            boxShadow: agentMode ? 'inset 0 0 0 1px rgb(var(--harbor-accent) / 0.18)' : 'none',
             transitionProperty: 'all',
             transitionDuration: '300ms',
           }}
@@ -301,9 +311,9 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
             title={enablePlanning ? t('chat.planning_enabled') : t('chat.enable_planning')}
             className="flex-shrink-0 p-1.5 rounded-lg transition-all duration-300 disabled:opacity-40"
             style={{
-              color: enablePlanning ? 'rgb(34, 197, 94)' : 'rgb(var(--harbor-text-faint))',
-              backgroundColor: enablePlanning ? 'rgb(34, 197, 94 / 0.1)' : 'transparent',
-              boxShadow: enablePlanning ? '0 0 8px rgb(34, 197, 94 / 0.3)' : 'none',
+              color: enablePlanning ? 'rgb(var(--harbor-text))' : 'rgb(var(--harbor-text-faint))',
+              backgroundColor: enablePlanning ? 'rgb(var(--harbor-surface))' : 'transparent',
+              boxShadow: enablePlanning ? 'inset 0 0 0 1px rgb(var(--harbor-accent) / 0.25)' : 'none',
               transitionProperty: 'all',
               transitionDuration: '300ms',
             }}
@@ -341,7 +351,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           <div ref={modelButtonRef} className="relative">
             <button
               onClick={() => setShowPresets(!showPresets)}
-              disabled={disabled || isRunning}
+            disabled={disabled}
               className="flex-shrink-0 px-2 py-1.5 rounded-lg bg-[rgb(var(--harbor-surface-2))] hover:bg-[rgb(var(--harbor-surface))] text-xs text-[rgb(var(--harbor-text-muted))] max-w-[100px] truncate flex items-center gap-1 disabled:opacity-40 transition-colors"
               title={t('settings.save_preset_tooltip')}
             >
@@ -378,7 +388,7 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           <button
             onClick={send}
             title={isCorrectionMode ? 'Send correction' : t('chat.send')}
-            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all shadow-lg transition-all"
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all shadow-lg"
             style={{
               background: isCorrectionMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-accent))',
               animationDuration: '3s',
@@ -387,24 +397,43 @@ const ChatInput = forwardRef<ChatInputHandle, Props>(({ onSend, onStop, isRunnin
           >
             <ArrowUp size={16} className="text-white" />
           </button>
-        ) : isVoiceSupported ? (
+        ) : isVoiceSupported && !isCorrectionMode ? (
           <button
             onClick={handleVoiceToggle}
             disabled={disabled}
             title={permissionError ?? (isListening ? 'Stop listening' : 'Start voice input')}
-            className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all ${
-              permissionError
-                ? 'bg-red-500/20 hover:bg-red-500/30'
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all disabled:opacity-40"
+            style={{
+              background: permissionError
+                ? 'rgb(239 68 68 / 0.16)'
                 : isListening
-                  ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/60 animate-pulse'
-                  : 'bg-harbor-600 hover:bg-harbor-700'
-            }`}
+                  ? 'rgb(239 68 68)'
+                  : 'rgb(var(--harbor-surface))',
+              border: permissionError
+                ? '1px solid rgb(239 68 68 / 0.35)'
+                : isListening
+                  ? '1px solid rgb(239 68 68)'
+                  : '1px solid rgb(var(--harbor-border))',
+              boxShadow: isListening ? '0 0 14px rgb(239 68 68 / 0.45)' : 'none',
+            }}
           >
             {permissionError
               ? <MicOff size={16} className="text-red-400" />
               : isListening
                 ? <Mic size={16} className="text-white" />
-                : <Mic size={16} className="text-white opacity-50" />}
+                : <Mic size={16} style={{ color: 'rgb(var(--harbor-text-muted))' }} />}
+          </button>
+        ) : !isCorrectionMode ? (
+          <button
+            disabled
+            title={permissionError ?? t('chat.voice_unavailable', 'Voice input unavailable')}
+            className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center opacity-40"
+            style={{
+              background: 'rgb(var(--harbor-surface))',
+              border: '1px solid rgb(var(--harbor-border))',
+            }}
+          >
+            <MicOff size={16} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
           </button>
         ) : null}
       </div>

@@ -4,7 +4,7 @@ import {
   Briefcase, Search, Code, PenTool, ShoppingCart, BookOpen, Palette, Sprout
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import type { OnboardingData, ToneStyle } from '../../shared/types'
+import type { OnboardingData, ToneStyle, ThemeName } from '../../shared/types'
 
 interface Props {
   onComplete: (data: OnboardingData) => void
@@ -20,8 +20,8 @@ export default function Onboarding({ onComplete }: Props) {
   // Form state
   const [userName, setUserName] = useState('')
   const [useCases, setUseCases] = useState<string[]>([])
-  const [tone, setTone] = useState<ToneStyle>('friendly')
-  const [theme, setTheme] = useState<'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'>('system')
+  const [tone, setTone] = useState<ToneStyle>('balanced')
+  const [theme, setTheme] = useState<ThemeName>('default-system')
   const [language, setLanguage] = useState(i18n.language || 'en')
 
   const USE_CASE_ICONS: Record<string, React.ReactNode> = {
@@ -49,18 +49,18 @@ export default function Onboarding({ onComplete }: Props) {
   const TONES = [
     { id: 'professional' as const, label: t('tones.professional'), description: t('tones.professional_desc') },
     { id: 'friendly' as const, label: t('tones.friendly'), description: t('tones.friendly_desc') },
+    { id: 'balanced' as const, label: t('tones.balanced'), description: t('tones.balanced_desc') },
     { id: 'concise' as const, label: t('tones.concise'), description: t('tones.concise_desc') },
     { id: 'detailed' as const, label: t('tones.detailed'), description: t('tones.detailed_desc') },
     { id: 'playful' as const, label: t('tones.playful'), description: t('tones.playful_desc') },
   ]
 
   const THEMES = [
-    { id: 'sunlight' as const,  label: t('themes.sunlight'), description: t('themes.sunlight_desc') },
-    { id: 'moonlight' as const, label: t('themes.moonlight'), description: t('themes.moonlight_desc') },
-    { id: 'forest' as const,    label: t('themes.forest'), description: t('themes.forest_desc') },
-    { id: 'nebula' as const,    label: t('themes.nebula'), description: t('themes.nebula_desc') },
-    { id: 'sunset' as const,    label: t('themes.sunset'), description: t('themes.sunset_desc') },
-    { id: 'ocean' as const,     label: t('themes.ocean'), description: t('themes.ocean_desc') },
+    { id: 'default-system' as const, label: t('themes.default'), description: t('themes.default_desc') },
+    { id: 'forest-system' as const,  label: t('themes.forest'), description: t('themes.forest_desc') },
+    { id: 'nebula-system' as const,  label: t('themes.nebula'), description: t('themes.nebula_desc') },
+    { id: 'sunset-system' as const,  label: t('themes.sunset'), description: t('themes.sunset_desc') },
+    { id: 'ocean-system' as const,   label: t('themes.ocean'), description: t('themes.ocean_desc') },
   ]
 
   const LANGUAGES = [
@@ -499,12 +499,11 @@ function StepTheme({ selected, onSelect, themes, t }: any) {
                 className="w-12 h-8 rounded-lg border-2 shadow-md"
                 style={{
                   background:
-                    theme.id === 'sunlight' ? '#f9f8f4' :
-                    theme.id === 'moonlight' ? '#07070e' :
-                    theme.id === 'forest' ? '#1a3a2e' :
-                    theme.id === 'nebula' ? '#1a1a2e' :
-                    theme.id === 'sunset' ? '#2d1810' :
-                    theme.id === 'ocean' ? '#0f2b3e' :
+                    theme.id === 'default-system' ? 'linear-gradient(135deg, #f9f8f4 50%, #07070e 50%)' :
+                    theme.id === 'forest-system' ? 'linear-gradient(135deg, #f3f8f4 50%, #1a3a2e 50%)' :
+                    theme.id === 'nebula-system' ? 'linear-gradient(135deg, #f7f6fc 50%, #1a1a2e 50%)' :
+                    theme.id === 'sunset-system' ? 'linear-gradient(135deg, #fcf6f0 50%, #2d1810 50%)' :
+                    theme.id === 'ocean-system' ? 'linear-gradient(135deg, #f0f8fc 50%, #0f2b3e 50%)' :
                     'linear-gradient(135deg, #f9f8f4 50%, #07070e 50%)',
                   borderColor: isSelected ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border-2))',
                 }}

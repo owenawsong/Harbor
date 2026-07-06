@@ -51,13 +51,6 @@ export default function Chat({
     pendingPlan, approvePlan, denyPlan, modifyPlan,
   } = useChat(settings, currentSessionId)
 
-  // Debug logging
-  useEffect(() => {
-    if (pendingPlan) {
-      console.log('[CHAT] pendingPlan set:', pendingPlan)
-    }
-  }, [pendingPlan])
-
   const [showNotifications, setShowNotifications] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
 
@@ -108,15 +101,6 @@ export default function Chat({
 
         {/* Actions: New, History, Settings + overflow menu */}
         <div className="flex items-center gap-0.5">
-          {isRunning && agentMode && (
-            <button
-              onClick={() => setShowAddInfoDialog(true)}
-              className="icon-btn"
-              title={t('chat.add_information')}
-            >
-              <Brain size={14} />
-            </button>
-          )}
           <button onClick={onNewConversation} className="icon-btn" title={t('chat.new_conversation')}>
             <SquarePen size={14} />
           </button>

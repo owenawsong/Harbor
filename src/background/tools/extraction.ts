@@ -145,7 +145,7 @@ export const extractionTools: ToolHandler[] = [
 
         return ok({
           data: result.data,
-          count: Object.keys(result.data).length,
+          count: result.data && typeof result.data === 'object' ? Object.keys(result.data).length : 0,
         })
       } catch (err) {
         return error(String(err))

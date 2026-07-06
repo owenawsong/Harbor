@@ -11,7 +11,7 @@ export interface DebouncedTextDelta {
 }
 
 export class StreamDebouncer {
-  private timers: Map<string, NodeJS.Timeout> = new Map()
+  private timers: Map<string, ReturnType<typeof setTimeout>> = new Map()
   private buffers: Map<string, string> = new Map()
   private onFlush: (delta: DebouncedTextDelta) => void
 

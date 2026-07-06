@@ -64,6 +64,7 @@ export interface AgentRunOptions {
   attachedTabId?: number
   enablePlanning?: boolean
   chatModeOnly?: boolean  // If true, agent operates in pure chat mode without browser control
+  planningOnly?: boolean  // If true, generate a plan without exposing tools
   onEvent: (event: import('../../shared/types').AgentEvent) => void
   signal?: AbortSignal
 }

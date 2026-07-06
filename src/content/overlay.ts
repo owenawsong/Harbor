@@ -198,52 +198,6 @@ function renderCommands(commands: OverlayCommand[], filter: string): void {
       )
     : commands
 
-  list.innerHTML = filtered
-    .map((cmd, idx) => {
-      const item = document.createElement('li')
-      item.className = 'harbor-overlay-item'
-      item.dataset.commandId = cmd.id
-      if (idx === 0) item.classList.add('active')
-
-      item.innerHTML = `
-        <div class="harbor-overlay-item-label">
-          <div class="harbor-overlay-item-title">${escapeHtml(cmd.label)}</div>
-          ${cmd.description ? `<div class="harbor-overlay-item-desc">${escapeHtml(cmd.description)}</div>` : ''}
-        </div>
-      `
-
-      item.addEventListener('click', () => {
-        cmd.action()
-        hideOverlay()
-      })
-
-      return item
-    })
-    .map((el) => {
-      const li = document.createElement('li')
-      li.className = filtered[0] ? 'harbor-overlay-item active' : 'harbor-overlay-item'
-      li.innerHTML = el.innerHTML
-      li.dataset.commandId = filtered[0]?.id
-      li.addEventListener('click', () => {
-        filtered[0]?.action()
-        hideOverlay()
-      })
-      return li
-    })
-    .reduce((container, el, idx) => {
-      const item = document.createElement('li')
-      item.className = 'harbor-overlay-item'
-      if (idx === 0) item.classList.add('active')
-      item.innerHTML = `<div class="harbor-overlay-item-label"><div class="harbor-overlay-item-title">${escapeHtml(filtered[idx]?.label || '')}</div></div>`
-      item.addEventListener('click', () => {
-        filtered[idx]?.action()
-        hideOverlay()
-      })
-      container.appendChild(item)
-      return container
-    }, list)
-
-  // Better approach: clear and rebuild
   list.innerHTML = ''
   filtered.forEach((cmd, idx) => {
     const item = document.createElement('li')

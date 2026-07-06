@@ -47,8 +47,7 @@
     "clipboardWrite",
     "clipboardRead",
     "notifications",
-    "contextMenus",
-    "microphone"
+    "contextMenus"
   ],
   "host_permissions": [
     "<all_urls>"

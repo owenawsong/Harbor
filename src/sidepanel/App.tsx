@@ -15,7 +15,7 @@ import ToastContainer from './components/Toast'
 import { useToast } from './hooks/useToast'
 import { ToastProvider, useGlobalToast } from './contexts/ToastContext'
 import type {
-  AgentSettings, StoredSession, OnboardingData, IdentitySettings, ProviderName,
+  AgentSettings, StoredSession, OnboardingData, IdentitySettings, ProviderName, ThemeName, ThemeFamily, ThemeMode,
 } from '../shared/types'
 
 type View = 'loading' | 'onboarding' | 'chat' | 'settings' | 'history' | 'dashboard' | 'memory' | 'skills' | 'data-manager'
@@ -23,12 +23,23 @@ type View = 'loading' | 'onboarding' | 'chat' | 'settings' | 'history' | 'dashbo
 const ONBOARDING_KEY  = 'harbor_onboarding'
 const IDENTITY_KEY    = 'harbor_identity'
 
+function parseThemeName(theme: ThemeName): { family: ThemeFamily; mode: ThemeMode } {
+  if (theme === 'sunlight') return { family: 'default', mode: 'light' }
+  if (theme === 'moonlight') return { family: 'default', mode: 'dark' }
+  if (theme === 'system') return { family: 'default', mode: 'system' }
+  if (theme === 'forest' || theme === 'nebula' || theme === 'sunset' || theme === 'ocean') {
+    return { family: theme, mode: 'dark' }
+  }
+  const [family, mode] = theme.split('-') as [ThemeFamily, ThemeMode]
+  return { family: family ?? 'default', mode: mode ?? 'system' }
+}
+
 function AppContent() {
   const { messages: toastMessages, success, error, info, dismiss } = useToast()
 
   const [view, setView]                         = useState<View>('loading')
   const [settings, setSettings]                 = useState<AgentSettings | null>(null)
-  const [theme, setTheme]                       = useState<'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'>('system')
+  const [theme, setTheme]                       = useState<ThemeName>('system')
   const [identity, setIdentity]                 = useState<IdentitySettings | undefined>(undefined)
   const [sessions, setSessions]                 = useState<StoredSession[]>([])
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
@@ -58,7 +69,7 @@ function AppContent() {
         setSettings(settingsToUse)
 
         if (stored.theme) {
-          setTheme(stored.theme as 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean')
+          setTheme(stored.theme as ThemeName)
         }
         if (stored.identity) {
           setIdentity(stored.identity as IdentitySettings)
@@ -103,32 +114,24 @@ function AppContent() {
 
   useEffect(() => {
     const root = document.documentElement
-    const apply = (t: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean') => {
-      // Remove all theme classes first
-      root.classList.remove('dark', 'moonlight', 'forest', 'nebula', 'sunset', 'ocean')
+    const apply = (t: ThemeName) => {
+      root.classList.remove('dark', 'moonlight', 'theme-dark', 'theme-light', 'forest', 'nebula', 'sunset', 'ocean')
+      const { family, mode } = parseThemeName(t)
+      const resolvedMode = mode === 'system'
+        ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+        : mode
 
-      if (t === 'system') {
-        // Apply system preference
-        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          root.classList.add('moonlight')
-        }
-        // else keep default sunlight (no class needed for :root)
-      } else if (t === 'sunlight') {
-        // Keep default sunlight theme (no class needed)
-      } else if (t === 'moonlight') {
-        root.classList.add('moonlight')
-      } else if (t === 'forest') {
-        root.classList.add('forest')
-      } else if (t === 'nebula') {
-        root.classList.add('nebula')
-      } else if (t === 'sunset') {
-        root.classList.add('sunset')
-      } else if (t === 'ocean') {
-        root.classList.add('ocean')
-      }
+      root.classList.add(resolvedMode === 'dark' ? 'theme-dark' : 'theme-light')
+      if (family !== 'default') root.classList.add(family)
     }
     apply(theme)
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const onSystemThemeChange = () => {
+      if (parseThemeName(theme).mode === 'system') apply(theme)
+    }
+    media.addEventListener('change', onSystemThemeChange)
     chrome.storage.local.set({ harbor_theme: theme })
+    return () => media.removeEventListener('change', onSystemThemeChange)
   }, [theme])
 
   // ── Apply language from identity ───────────────────────────────────────────
@@ -155,6 +158,21 @@ function AppContent() {
     chrome.storage.onChanged.addListener(storageListener)
     return () => chrome.storage.onChanged.removeListener(storageListener)
   }, [])
+
+  useEffect(() => {
+    const root = document.documentElement
+    const sizes = {
+      xs: '12px',
+      sm: '13px',
+      base: '14px',
+      lg: '15px',
+      xl: '16px',
+    } satisfies Record<typeof fontSize, string>
+    root.style.fontSize = sizes[fontSize]
+    return () => {
+      root.style.fontSize = ''
+    }
+  }, [fontSize])
 
   // ── Command Palette Hotkey Listener DISABLED ──────────────────────────
   // The command palette hotkey is now handled ONLY by the content script
@@ -273,7 +291,7 @@ function AppContent() {
   const handleSaveSettings = useCallback(
     (
       newSettings: AgentSettings,
-      newTheme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean',
+      newTheme: ThemeName,
       newIdentity?: IdentitySettings,
     ) => {
       setSettings(newSettings)
@@ -316,13 +334,14 @@ function AppContent() {
     setSessions((prev) =>
       prev.map((s) => (s.id === id ? { ...s, isPinned: pinned } : s)),
     )
-    // Persist pinned state to storage
-    chrome.storage.local.get('harbor_sessions', (data) => {
-      const stored: StoredSession[] = data.harbor_sessions ?? []
-      const updated = stored.map((s) => (s.id === id ? { ...s, isPinned: pinned } : s))
-      chrome.storage.local.set({ harbor_sessions: updated })
+    chrome.runtime.sendMessage({ type: 'pin_session', sessionId: id, pinned }, (res) => {
+      if (!res?.success) {
+        loadSessions()
+        error(res?.error ?? 'Failed to update conversation')
+        return
+      }
+      info(pinned ? 'Conversation pinned' : 'Conversation unpinned')
     })
-    info(pinned ? 'Conversation pinned' : 'Conversation unpinned')
   }
 
   const handleSendMessage = (text: string) => {
@@ -381,7 +400,7 @@ function AppContent() {
   return (
     <ErrorBoundary>
       <div
-        className={`flex flex-col h-full ${fontSizeClass}`}
+        className={`harbor-app flex flex-col h-full ${fontSizeClass}`}
         style={{
           background: 'rgb(var(--harbor-bg))',
           color: 'rgb(var(--harbor-text))',

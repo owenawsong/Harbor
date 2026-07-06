@@ -4,12 +4,13 @@ import {
   Search, MessageSquare, Settings, Clock, Brain, Zap, LayoutDashboard,
   Plus, Moon, Sun, Monitor, Globe, ArrowRight,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 
 export interface PaletteAction {
   id: string
   label: string
   description?: string
-  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
+  icon: LucideIcon
   shortcut?: string
   keywords?: string[]
   action: () => void

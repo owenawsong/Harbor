@@ -5,8 +5,9 @@ import {
   Palette, User, Cpu,
   Shield, HelpCircle, Keyboard, ChevronLeft, ChevronRight, Save, Command, Plus,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type {
-  AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel,
+  AgentSettings, ProviderName, IdentitySettings, ToneStyle, VerbosityLevel, ThemeName, ModelParameters, ThemeFamily, ThemeMode,
 } from '../../shared/types'
 import { DEFAULT_MODELS, PROVIDER_LABELS } from '../../shared/constants'
 import ConfirmDialog from './ConfirmDialog'
@@ -14,9 +15,9 @@ import ModelPresets from './ModelPresets'
 
 interface Props {
   settings: AgentSettings
-  theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
+  theme: ThemeName
   identity?: IdentitySettings
-  onSave: (settings: AgentSettings, theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean', identity?: IdentitySettings) => void
+  onSave: (settings: AgentSettings, theme: ThemeName, identity?: IdentitySettings) => void
   onBack: () => void
 }
 
@@ -38,19 +39,26 @@ const KEY_LINKS: Partial<Record<ProviderName, string>> = {
   poe:        'https://poe.com/api_key',
 }
 
-const getThemeOptions = (t: any) => [
-  { value: 'system' as const,    label: t('settings_extended.theme_auto') },
-  { value: 'sunlight' as const,  label: t('settings_extended.theme_sunlight') },
-  { value: 'moonlight' as const, label: t('settings_extended.theme_moonlight') },
-  { value: 'forest' as const,    label: t('settings_extended.theme_forest') },
-  { value: 'nebula' as const,    label: t('settings_extended.theme_nebula') },
-  { value: 'sunset' as const,    label: t('settings_extended.theme_sunset') },
-  { value: 'ocean' as const,     label: t('settings_extended.theme_ocean') },
-]
+const THEME_FAMILIES: ThemeFamily[] = ['default', 'forest', 'nebula', 'sunset', 'ocean']
+const THEME_MODES: ThemeMode[] = ['light', 'dark', 'system']
+
+function parseThemeSelection(theme: ThemeName): { family: ThemeFamily; mode: ThemeMode } {
+  if (theme === 'system') return { family: 'default', mode: 'system' }
+  if (theme === 'sunlight') return { family: 'default', mode: 'light' }
+  if (theme === 'moonlight') return { family: 'default', mode: 'dark' }
+  if (theme === 'forest' || theme === 'nebula' || theme === 'sunset' || theme === 'ocean') return { family: theme, mode: 'dark' }
+  const [family, mode] = theme.split('-') as [ThemeFamily, ThemeMode]
+  return { family: family ?? 'default', mode: mode ?? 'system' }
+}
+
+function encodeThemeSelection(family: ThemeFamily, mode: ThemeMode): ThemeName {
+  return `${family}-${mode}` as ThemeName
+}
 
 const getTones = (t: any): { id: ToneStyle; label: string }[] => [
   { id: 'professional', label: t('settings_extended.tone_professional') },
   { id: 'friendly',     label: t('settings_extended.tone_friendly') },
+  { id: 'balanced',     label: t('settings_extended.tone_balanced') },
   { id: 'concise',      label: t('settings_extended.tone_concise') },
   { id: 'detailed',     label: t('settings_extended.tone_detailed') },
   { id: 'playful',      label: t('settings_extended.tone_playful') },
@@ -61,6 +69,35 @@ const getVerbosity = (t: any): { id: VerbosityLevel; label: string; description:
   { id: 'balanced', label: t('settings_extended.verbosity_balanced'), description: t('settings_extended.verbosity_balanced_desc') },
   { id: 'thorough', label: t('settings_extended.verbosity_thorough'), description: t('settings_extended.verbosity_thorough_desc') },
 ]
+
+function optionalNumber(value: string): number | undefined {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : undefined
+}
+
+function extraBodyToJson(extraBody: Record<string, unknown> | undefined): string {
+  return extraBody && Object.keys(extraBody).length > 0 ? JSON.stringify(extraBody, null, 2) : ''
+}
+
+function parseExtraBodyJson(value: string): Record<string, unknown> | undefined {
+  const trimmed = value.trim()
+  if (!trimmed) return undefined
+  const parsed = JSON.parse(trimmed)
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Extra body must be a JSON object')
+  }
+  return parsed as Record<string, unknown>
+}
+
+function tryParseExtraBodyJson(value: string): Record<string, unknown> | undefined {
+  try {
+    return parseExtraBodyJson(value)
+  } catch {
+    return undefined
+  }
+}
 
 const LANGUAGES = [
   { code: 'en', label: 'English' },
@@ -76,7 +113,7 @@ const LANGUAGES = [
 export default function Settings({ settings, theme, identity, onSave, onBack }: Props) {
   const { t, i18n } = useTranslation()
 
-  const NAV_ITEMS: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[] = [
+  const NAV_ITEMS: { id: SettingsSection; label: string; icon: LucideIcon }[] = [
     { id: 'provider',   label: t('settings_extended.general_section'),    icon: Cpu },
     { id: 'appearance', label: t('settings_extended.appearance_title'),  icon: Palette },
     { id: 'identity',   label: t('settings_extended.identity_title'),    icon: User },
@@ -105,6 +142,11 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   const [baseUrl, setBaseUrl]         = useState(settings.provider.baseUrl ?? '')
   const [enableMemory, setEnableMemory] = useState(settings.enableMemory ?? true)
   const [showKey, setShowKey]         = useState(false)
+  const [maxTokens, setMaxTokens]     = useState(String(settings.provider.parameters?.maxTokens ?? settings.maxTokens ?? 8192))
+  const [temperature, setTemperature] = useState(settings.provider.parameters?.temperature?.toString() ?? settings.temperature?.toString() ?? '')
+  const [topP, setTopP]               = useState(settings.provider.parameters?.topP?.toString() ?? '')
+  const [extraBodyJson, setExtraBodyJson] = useState(extraBodyToJson(settings.provider.parameters?.extraBody))
+  const [parameterError, setParameterError] = useState<string | null>(null)
 
   // Get model for current provider
   const model = modelsByProvider[provider]
@@ -113,7 +155,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
   }
 
   // Appearance
-  const [currentTheme, setCurrentTheme] = useState<'light' | 'dark' | 'system'>(theme)
+  const [currentTheme, setCurrentTheme] = useState<ThemeName>(theme)
 
   // Identity
   const [userName, setUserName]         = useState(identity?.userName ?? '')
@@ -133,6 +175,10 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     setApiKey(settings.provider.apiKey ?? '')
     setBaseUrl(settings.provider.baseUrl ?? '')
     setEnableMemory(settings.enableMemory ?? true)
+    setMaxTokens(String(settings.provider.parameters?.maxTokens ?? settings.maxTokens ?? 8192))
+    setTemperature(settings.provider.parameters?.temperature?.toString() ?? settings.temperature?.toString() ?? '')
+    setTopP(settings.provider.parameters?.topP?.toString() ?? '')
+    setExtraBodyJson(extraBodyToJson(settings.provider.parameters?.extraBody))
     setCurrentTheme(theme)
     setUserName(identity?.userName ?? '')
     setTone(identity?.tone ?? 'friendly')
@@ -159,12 +205,17 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
   // Apply language changes globally
   useEffect(() => {
-    console.log('[Settings] Language changed to:', language)
     i18n.changeLanguage(language).catch(err => console.error('[Settings] i18n.changeLanguage failed:', err))
   }, [language, i18n])
 
   const handleProviderChange = (p: ProviderName) => {
     setProvider(p)
+    if (!modelsByProvider[p]) {
+      setModelsByProvider((prev) => ({
+        ...prev,
+        [p]: DEFAULT_MODELS[p]?.[0] ?? '',
+      }))
+    }
   }
 
   // Auto-save: debounced 500ms after any change (not on initial mount)
@@ -179,6 +230,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     const currentState = JSON.stringify({
       provider, model, apiKey, baseUrl, enableMemory, currentTheme,
       userName, tone, verbosity, language, useEmoji, customPersonality,
+      maxTokens, temperature, topP, extraBodyJson,
     })
 
     // Only proceed if state actually changed
@@ -188,10 +240,28 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 
     saveTimerRef.current = setTimeout(async () => {
       try {
+        const parsedExtraBody = provider === 'poe' ? parseExtraBodyJson(extraBodyJson) : undefined
+        const parsedMaxTokens = optionalNumber(maxTokens)
+        const parsedTemperature = optionalNumber(temperature)
+        const parsedTopP = optionalNumber(topP)
+        const parameters: ModelParameters = {
+          ...(parsedMaxTokens !== undefined ? { maxTokens: parsedMaxTokens } : {}),
+          ...(parsedTemperature !== undefined ? { temperature: parsedTemperature } : {}),
+          ...(parsedTopP !== undefined ? { topP: parsedTopP } : {}),
+          ...(parsedExtraBody ? { extraBody: parsedExtraBody } : {}),
+        }
         const newSettings: AgentSettings = {
-          provider: { provider, model: provider === 'harbor-free' ? 'minimaxai/minimax-m2.5' : model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
+          provider: {
+            provider,
+            model: provider === 'harbor-free' ? 'minimaxai/minimax-m2.5' : model,
+            apiKey: apiKey || undefined,
+            baseUrl: baseUrl || undefined,
+            parameters,
+          },
           enableMemory,
           enableScreenshots: true,
+          ...(parsedMaxTokens !== undefined ? { maxTokens: parsedMaxTokens } : {}),
+          ...(parsedTemperature !== undefined ? { temperature: parsedTemperature } : {}),
         }
         const newIdentity: IdentitySettings = {
           userName: userName.trim() || undefined,
@@ -203,15 +273,17 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
           customPersonality: customPersonality.trim() || undefined,
         }
         await chrome.runtime.sendMessage({ type: 'save_settings', settings: newSettings, theme: currentTheme, identity: newIdentity })
+        if (provider === 'poe') setParameterError(null)
         lastSavedStateRef.current = currentState
         onSave(newSettings, currentTheme, newIdentity)
         setSavedIndicator(true)
         setTimeout(() => setSavedIndicator(false), 1500)
       } catch (err) {
+        if (err instanceof Error) setParameterError(err.message)
         console.error('Settings save failed:', err)
       }
     }, 500)
-  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, identity, model, onSave])
+  }, [provider, modelsByProvider, apiKey, baseUrl, enableMemory, currentTheme, userName, tone, verbosity, language, useEmoji, customPersonality, identity, model, onSave, maxTokens, temperature, topP, extraBodyJson])
 
   const handleApplyPreset = (presetSettings: AgentSettings) => {
     // Apply preset settings to current state
@@ -223,6 +295,10 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
     if (presetSettings.provider.apiKey) setApiKey(presetSettings.provider.apiKey)
     if (presetSettings.provider.baseUrl) setBaseUrl(presetSettings.provider.baseUrl)
     if (presetSettings.enableMemory !== undefined) setEnableMemory(presetSettings.enableMemory)
+    setMaxTokens(String(presetSettings.provider.parameters?.maxTokens ?? presetSettings.maxTokens ?? 8192))
+    setTemperature(presetSettings.provider.parameters?.temperature?.toString() ?? presetSettings.temperature?.toString() ?? '')
+    setTopP(presetSettings.provider.parameters?.topP?.toString() ?? '')
+    setExtraBodyJson(extraBodyToJson(presetSettings.provider.parameters?.extraBody))
   }
 
   const renderSection = () => {
@@ -231,19 +307,36 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
         return <SectionGeneral
           provider={provider} model={model}
           apiKey={apiKey} baseUrl={baseUrl} enableMemory={enableMemory}
+          maxTokens={maxTokens} temperature={temperature} topP={topP}
+          extraBodyJson={extraBodyJson} parameterError={parameterError}
           language={language}
           showKey={showKey} needsKey={needsKey} needsUrl={needsUrl} keyLink={keyLink}
           onProviderChange={handleProviderChange}
           onModelChange={handleModelChange}
           onApiKeyChange={setApiKey} onBaseUrlChange={setBaseUrl}
+          onMaxTokensChange={setMaxTokens} onTemperatureChange={setTemperature}
+          onTopPChange={setTopP} onExtraBodyJsonChange={setExtraBodyJson}
           onEnableMemoryChange={setEnableMemory}
           onLanguageChange={setLanguage}
           onShowKeyToggle={() => setShowKey((v) => !v)}
           showPresets={showPresets} setShowPresets={setShowPresets}
           currentSettings={{
-            provider: { provider, model: provider === 'harbor-free' ? 'minimaxai/minimax-m2.5' : model, apiKey: apiKey || undefined, baseUrl: baseUrl || undefined },
+            provider: {
+              provider,
+              model: provider === 'harbor-free' ? 'minimaxai/minimax-m2.5' : model,
+              apiKey: apiKey || undefined,
+              baseUrl: baseUrl || undefined,
+              parameters: {
+                ...(optionalNumber(maxTokens) !== undefined ? { maxTokens: optionalNumber(maxTokens) } : {}),
+                ...(optionalNumber(temperature) !== undefined ? { temperature: optionalNumber(temperature) } : {}),
+                ...(optionalNumber(topP) !== undefined ? { topP: optionalNumber(topP) } : {}),
+                ...(tryParseExtraBodyJson(extraBodyJson) ? { extraBody: tryParseExtraBodyJson(extraBodyJson) } : {}),
+              },
+            },
             enableMemory,
             enableScreenshots: true,
+            ...(optionalNumber(maxTokens) !== undefined ? { maxTokens: optionalNumber(maxTokens) } : {}),
+            ...(optionalNumber(temperature) !== undefined ? { temperature: optionalNumber(temperature) } : {}),
           }}
           onApplyPreset={handleApplyPreset}
         />
@@ -302,7 +395,7 @@ export default function Settings({ settings, theme, identity, onSave, onBack }: 
 function SettingsTabBar({ activeSection, onSectionChange, navItems }: {
   activeSection: SettingsSection
   onSectionChange: (section: SettingsSection) => void
-  navItems: { id: SettingsSection; label: string; icon: React.ComponentType<{ size?: number }> }[]
+  navItems: { id: SettingsSection; label: string; icon: LucideIcon }[]
 }) {
   const { t } = useTranslation()
   const tabsRef = useRef<HTMLDivElement>(null)
@@ -340,12 +433,12 @@ function SettingsTabBar({ activeSection, onSectionChange, navItems }: {
     if (tabsRef.current) {
       // Scroll by multiple tab items (more noticeable movement)
       const scrollAmount = 460 // Approximately 6-7 tab items worth
-      tabsRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
-      })
-      // Check scroll state after smooth animation completes
-      setTimeout(checkScroll, 500)
+      const max = tabsRef.current.scrollWidth - tabsRef.current.clientWidth
+      const next = direction === 'left'
+        ? Math.max(0, tabsRef.current.scrollLeft - scrollAmount)
+        : Math.min(max, tabsRef.current.scrollLeft + scrollAmount)
+      tabsRef.current.scrollTo({ left: next, behavior: 'auto' })
+      requestAnimationFrame(checkScroll)
     }
   }
 
@@ -400,8 +493,10 @@ function SettingsTabBar({ activeSection, onSectionChange, navItems }: {
 
 function SectionGeneral({
   provider, model, apiKey, baseUrl, enableMemory, language, showKey,
+  maxTokens, temperature, topP, extraBodyJson, parameterError,
   needsKey, needsUrl, keyLink,
   onProviderChange, onModelChange, onApiKeyChange, onBaseUrlChange,
+  onMaxTokensChange, onTemperatureChange, onTopPChange, onExtraBodyJsonChange,
   onEnableMemoryChange, onLanguageChange, onShowKeyToggle,
   showPresets, setShowPresets, currentSettings, onApplyPreset,
 }: any) {
@@ -435,6 +530,32 @@ function SectionGeneral({
             className="harbor-input text-xs font-mono"
           />
         </FormField>
+      )}
+
+      {provider === 'poe' && (
+        <div className="rounded-xl border p-3 flex flex-col gap-3" style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-border))' }}>
+          <div>
+            <p className="text-xs font-medium" style={{ color: 'rgb(var(--harbor-text))' }}>
+              {t('settings_extended.poe_parameters_title')}
+            </p>
+            <p className="text-[10px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+              {t('settings_extended.poe_parameters_description')}
+            </p>
+          </div>
+
+          <FormField label={t('settings_extended.poe_extra_body_label')}>
+            <textarea
+              value={extraBodyJson}
+              onChange={(e) => onExtraBodyJsonChange(e.target.value)}
+              placeholder={'{\n  "enable_thinking": true\n}'}
+              className="harbor-input text-xs font-mono resize-none min-h-[72px]"
+              spellCheck={false}
+            />
+            {parameterError && (
+              <p className="text-[10px] mt-1" style={{ color: '#ef4444' }}>{parameterError}</p>
+            )}
+          </FormField>
+        </div>
       )}
 
       {/* API Key */}
@@ -700,8 +821,8 @@ function ShortcutRecorder({ value, onChange }: { value: string; onChange: (s: st
 }
 
 function SectionAppearance({ currentTheme, onThemeChange }: {
-  currentTheme: 'light' | 'dark' | 'system'
-  onThemeChange: (t: 'light' | 'dark' | 'system') => void
+  currentTheme: ThemeName
+  onThemeChange: (t: ThemeName) => void
 }) {
   const { t } = useTranslation()
   const [shortcut, setShortcut] = useState('Ctrl+Alt+H')
@@ -756,28 +877,62 @@ function SectionAppearance({ currentTheme, onThemeChange }: {
     { value: 'lg' as const, label: t('settings_extended.font_large') },
     { value: 'xl' as const, label: t('settings_extended.font_extra_large') },
   ]
+  const themeSelection = parseThemeSelection(currentTheme)
+  const setThemeFamily = (family: ThemeFamily) => onThemeChange(encodeThemeSelection(family, themeSelection.mode))
+  const setThemeMode = (mode: ThemeMode) => onThemeChange(encodeThemeSelection(themeSelection.family, mode))
+  const themeFamilyLabels: Record<ThemeFamily, string> = {
+    default: t('settings_extended.theme_default'),
+    forest: t('settings_extended.theme_forest'),
+    nebula: t('settings_extended.theme_nebula'),
+    sunset: t('settings_extended.theme_sunset'),
+    ocean: t('settings_extended.theme_ocean'),
+  }
+  const themeModeLabels: Record<ThemeMode, string> = {
+    light: t('settings_extended.theme_light'),
+    dark: t('settings_extended.theme_dark'),
+    system: t('settings_extended.theme_auto'),
+  }
 
   return (
     <div className="px-4 py-4 flex flex-col gap-4">
       <SectionHeader title={t('settings_extended.appearance_title')} />
 
       <FormField label={t('settings_extended.theme_label')}>
-        <div className="grid grid-cols-3 gap-2">
-          {getThemeOptions(t).map(({ value, label }) => (
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-2 min-[520px]:grid-cols-5 gap-2">
+            {THEME_FAMILIES.map((family) => (
+              <button
+                key={family}
+                onClick={() => setThemeFamily(family)}
+                className="py-2 px-2 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all"
+                style={{
+                  borderColor: themeSelection.family === family ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
+                  background: themeSelection.family === family ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
+                  color: themeSelection.family === family ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
+                }}
+              >
+                {themeSelection.family === family && <Check size={10} />}
+                {themeFamilyLabels[family]}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-1 rounded-xl border p-1" style={{ borderColor: 'rgb(var(--harbor-border))', background: 'rgb(var(--harbor-surface-2))' }}>
+            {THEME_MODES.map((mode) => (
             <button
-              key={value}
-              onClick={() => onThemeChange(value)}
-              className="py-2 px-2 rounded-xl border text-xs font-medium flex items-center justify-center gap-1.5 transition-all"
+              key={mode}
+              onClick={() => setThemeMode(mode)}
+              className="py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all"
               style={{
-                borderColor: currentTheme === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-border))',
-                background: currentTheme === value ? 'rgb(var(--harbor-accent-light))' : 'rgb(var(--harbor-surface))',
-                color: currentTheme === value ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-muted))',
+                background: themeSelection.mode === mode ? 'rgb(var(--harbor-surface))' : 'transparent',
+                color: themeSelection.mode === mode ? 'rgb(var(--harbor-text))' : 'rgb(var(--harbor-text-muted))',
+                boxShadow: themeSelection.mode === mode ? '0 1px 4px rgb(0 0 0 / 0.08)' : 'none',
               }}
             >
-              {currentTheme === value && <Check size={10} />}
-              {label}
+              {themeSelection.mode === mode && <Check size={10} />}
+              {themeModeLabels[mode]}
             </button>
           ))}
+          </div>
         </div>
       </FormField>
 

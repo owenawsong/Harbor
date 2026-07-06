@@ -174,10 +174,11 @@ export const windowTools: ToolHandler[] = [
           height?: number
           left?: number
           top?: number
-          state?: chrome.windows.ValidStates
+          state?: 'normal' | 'minimized' | 'maximized' | 'fullscreen'
         }
 
-        const win = await chrome.windows.update(windowId, { width, height, left, top, state })
+        const updateInfo: chrome.windows.UpdateInfo = { width, height, left, top, state }
+        const win = await chrome.windows.update(windowId, updateInfo)
         return ok(formatWindowInfo(win))
       } catch (err) {
         return error(String(err))

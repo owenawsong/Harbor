@@ -50,12 +50,20 @@ export interface ProviderConfig {
   apiKey?: string
   model: string
   baseUrl?: string
+  parameters?: ModelParameters
   // Azure specific
   resourceName?: string
   // AWS Bedrock specific
   region?: string
   accessKeyId?: string
   secretAccessKey?: string
+}
+
+export interface ModelParameters {
+  maxTokens?: number
+  temperature?: number
+  topP?: number
+  extraBody?: Record<string, unknown>
 }
 
 export interface ModelPreset {
@@ -98,6 +106,8 @@ export interface ToolParameter {
   default?: unknown
   minimum?: number
   maximum?: number
+  minItems?: number
+  maxItems?: number
 }
 
 export interface ToolDefinition {
@@ -150,6 +160,8 @@ export interface AgentEventMessageComplete {
   type: 'message_complete'
   messageId: string
   stopReason: string
+  text?: string
+  isFinal?: boolean
 }
 
 export interface AgentEventError {
@@ -192,6 +204,9 @@ export interface PortMessageChat {
   sessionId: string
   message: string
   attachedTabId?: number
+  enablePlanning?: boolean
+  chatModeOnly?: boolean
+  planningOnly?: boolean
 }
 
 export interface PortMessageStop {
@@ -209,12 +224,47 @@ export interface PortMessageContinueExecution {
   sessionId: string
 }
 
-export type PortMessage = PortMessageChat | PortMessageStop | PortMessageClearSession | PortMessageContinueExecution
+export interface PortMessageCancelTask {
+  type: 'cancel_task'
+  sessionId: string
+}
+
+export interface PortMessageUpdatePlan {
+  type: 'update_plan'
+  sessionId: string
+  plan: string
+}
+
+export interface PortMessageCorrection {
+  type: 'correction'
+  sessionId: string
+  message: string
+}
+
+export type PortMessage =
+  | PortMessageChat
+  | PortMessageStop
+  | PortMessageClearSession
+  | PortMessageContinueExecution
+  | PortMessageCancelTask
+  | PortMessageUpdatePlan
+  | PortMessageCorrection
 
 // ─── Identity / Personality ───────────────────────────────────────────────────
 
-export type ToneStyle = 'professional' | 'friendly' | 'concise' | 'detailed' | 'playful'
+export type ToneStyle = 'professional' | 'friendly' | 'balanced' | 'concise' | 'detailed' | 'playful'
 export type VerbosityLevel = 'brief' | 'balanced' | 'thorough'
+export type ThemeFamily = 'default' | 'forest' | 'nebula' | 'sunset' | 'ocean'
+export type ThemeMode = 'light' | 'dark' | 'system'
+export type ThemeName =
+  | 'system'
+  | 'sunlight'
+  | 'moonlight'
+  | 'forest'
+  | 'nebula'
+  | 'sunset'
+  | 'ocean'
+  | `${ThemeFamily}-${ThemeMode}`
 
 export interface IdentitySettings {
   userName?: string
@@ -231,7 +281,7 @@ export interface IdentitySettings {
 export type FontSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 
 export interface AppearanceSettings {
-  theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
+  theme: ThemeName
   fontSize: FontSize
   compactMode: boolean
   accentColor?: string
@@ -297,7 +347,7 @@ export interface UserProfile {
 
 export interface UserProfileUpdate {
   field: keyof Omit<UserProfile, 'id' | 'lastUpdated' | 'confidence'>
-  value: any
+  value: unknown
   source?: string // e.g., "agent_observation", "user_input"
   confidence?: number // 0-1, how sure we are about this observation
 }
@@ -365,7 +415,7 @@ export interface OnboardingData {
   userName?: string
   useCases: string[]
   tone: ToneStyle
-  theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
+  theme: ThemeName
   language: string
   completedAt?: number
 }
@@ -374,7 +424,7 @@ export interface OnboardingData {
 
 export interface StoredSettings {
   agentSettings: AgentSettings
-  theme: 'system' | 'sunlight' | 'moonlight' | 'forest' | 'nebula' | 'sunset' | 'ocean'
+  theme: ThemeName
   identity?: IdentitySettings
   modelBlend?: ModelBlendConfig
   notifications?: {
@@ -394,6 +444,9 @@ export interface StoredSession {
   isPinned?: boolean
   tags?: string[]
 }
+
+export type StoredSessionMap = Record<string, StoredSession>
+export type Message = ChatMessage
 
 // ─── Browser Context ──────────────────────────────────────────────────────────
 

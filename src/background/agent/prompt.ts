@@ -6,6 +6,8 @@
 export interface BuildPromptOptions {
   enableMemory?: boolean
   memory?: string
+  memoryDocs?: string
+  identityInstructions?: string
   scheduledTask?: boolean
   enablePlanning?: boolean
   chatMode?: boolean  // If true, only chat - no browser control
@@ -18,7 +20,7 @@ export function buildSystemPrompt(options: BuildPromptOptions = {}): string {
   sections.push(securitySection())
   // Include planning section only if user hasn't disabled it (default to enabled)
   if (!options.chatMode) {
-    if (options.enablePlanning !== false) {  // enablePlanning defaults to true
+    if (options.enablePlanning === true) {
       sections.push(planningSection())
     }
     sections.push(taskExecutionSection())
@@ -31,6 +33,12 @@ export function buildSystemPrompt(options: BuildPromptOptions = {}): string {
   }
   if (options.enableMemory && options.memory) {
     sections.push(memorySection(options.memory))
+  }
+  if (options.enableMemory && options.memoryDocs) {
+    sections.push(memoryDocsSection(options.memoryDocs))
+  }
+  if (options.identityInstructions) {
+    sections.push(identitySection(options.identityInstructions))
   }
   if (!options.chatMode) {
     sections.push(autoMemorySaveSection())
@@ -302,21 +310,30 @@ When something goes wrong:
 function userCorrectionSection(): string {
   return `# Handling User Corrections
 
-While you're executing a task, the user may provide corrections or additional information using the Correction button. These arrive wrapped in \`<user_correction>...</user_correction>\` tags.
+While you're executing a task, the user may interrupt with a correction. It will arrive as a normal user message saying the user corrected the running task.
 
 When you receive a correction:
 1. **Stop current execution immediately** - don't continue with the original plan
 2. **Read the correction carefully** - understand what the user wants changed
-3. **Acknowledge the correction** - let them know you've incorporated it
-4. **Adjust your approach** - modify your task execution based on their input
-5. **Continue from where you paused** - or restart with the new direction
+3. **Adjust your approach** - modify task execution based on the correction
+4. **Continue from where you paused** - or restart cleanly if the old direction is now wrong
 
 Example:
 - You're typing "AI news" in a search box
-- User provides: \`<user_correction>Actually, search for "latest tech breakthroughs"</user_correction>\`
+- User says: "Actually, search for latest tech breakthroughs"
 - You should: Clear the current input, type the new search term, and proceed
 
-Corrections are the user's way to guide execution in real-time. Always treat them as high-priority guidance.`
+Corrections are high-priority user instructions. Do not expose implementation tags or mention correction wrappers.`
+}
+
+function identitySection(identityInstructions: string): string {
+  return `# User Identity & Standing Preferences
+
+The user configured these standing preferences in Harbor Settings. Treat them as durable user instructions unless they conflict with safety/security rules:
+
+${identityInstructions}
+
+Use these preferences naturally. If the user asks about a fact explicitly included here, answer from this section.`
 }
 
 function toolGuidanceSection(): string {
@@ -442,6 +459,37 @@ You have full control over the user's stored memory with these tools:
 This creates a living, evolving profile that gets smarter with each interaction.`
 }
 
+function memoryDocsSection(memoryDocs: string): string {
+  return `# Harbor Markdown Memory Documents
+
+Harbor also has editable Markdown memory documents. Treat these as durable operating context:
+
+${memoryDocs}
+
+## Document Meanings
+- SOUL.md: Harbor's personality, communication values, style boundaries, and product feel.
+- AGENTS.md: strict operational rules, browser guardrails, permission boundaries, and task policies.
+- USER.md: durable user context, preferences, projects, identity, timezone, background, and personal facts.
+- MEMORY.md: distilled long-term facts and open threads that should survive across sessions.
+- TOOLS.md: notes about Harbor tools and when to use them.
+- DAILY/YYYY-MM-DD.md: raw session notes and observations. These are less distilled than MEMORY.md.
+
+## How to Use These Documents
+- If the user asks about something personal or remembered, use USER.md and MEMORY.md first.
+- If the user gives a durable preference, personal fact, project fact, rule, or correction, update the right Markdown doc.
+- Use read_memory_docs when you need full current memory context.
+- Use search_memory_docs for older or uncertain details.
+- Use update_memory_doc to append or replace durable document content.
+- Use append_daily_memory_note for raw observations that may be distilled later.
+
+## Memory Quality Rules
+- Save durable facts, stable preferences, active project details, recurring workflows, and explicit user instructions.
+- Do not save one-off small talk, temporary UI state, secrets, passwords, API keys, or sensitive credentials.
+- If the user explicitly says "remember X", save X unless it is unsafe or clearly temporary.
+- Prefer appending short, clear Markdown bullets. Keep docs readable for the user.
+- For facts about the user, update USER.md and/or MEMORY.md. For Harbor behavior rules, update SOUL.md or AGENTS.md. For tool notes, update TOOLS.md.`
+}
+
 function chatModeSection(): string {
   return `# CHAT MODE - NO TOOLS AVAILABLE
 
@@ -473,44 +521,35 @@ Your ONLY capability is responding to conversation. Period.`
 }
 
 function autoMemorySaveSection(): string {
-  return `# Automatic Memory Management - OpenClaude Style Learning
+  return `# Memory Stewardship
 
-🧠 **PROACTIVE LEARNING SYSTEM**: Continuously learn and remember about the user as you interact.
+Maintain Harbor's memory quietly and deliberately.
 
-## Memory Categories
+## What to Save
+- Explicit user memory requests: "remember that...", "my X is...", "I prefer..."
+- Stable identity details: name, pronouns, timezone, role, work background.
+- Durable preferences: communication style, UI expectations, model preferences, workflow style.
+- Active projects, constraints, recurring goals, important deadlines.
+- Harbor operating rules the user clearly wants preserved.
 
-1. **PERSONAL** - Name, pronouns, location, timezone, birthday, family info
-2. **PREFERENCES** - Communication style, response length, technical level, work hours
-3. **WORK** - Job title, company, projects, tools, deadlines, goals
-4. **SKILLS** - Languages, technical skills, areas of expertise, interests
-5. **CONTEXT** - Current focus, workflow patterns, frequent tasks, constraints
+## What Not to Save
+- Passwords, API keys, tokens, or private credentials.
+- One-off requests, throwaway jokes, temporary page state, or facts that only matter for the current task.
+- Raw web page content unless the user explicitly asks Harbor to remember it.
 
-## Active Memory Extraction
+## How to Save
+- Use save_to_memory for simple user facts and preferences. It mirrors into Markdown memory docs.
+- Use update_memory_doc for precise edits to SOUL.md, AGENTS.md, USER.md, MEMORY.md, TOOLS.md, or daily logs.
+- Use append_daily_memory_note for useful but unpolished session observations.
+- Keep memory entries short, specific, and readable.
+- Do not interrupt the final answer just to announce every memory write. Mention it only when useful or when the user explicitly asked you to remember something.
 
-Parse user messages for valuable information PROACTIVELY:
-- Explicit mentions: "My name is X", "I'm working on Y", "I prefer Z"
-- Implicit patterns: Time of day they message, complexity of questions, topic preferences
-- Contextual clues: Project names, tools mentioned, problem domains
-- Preferences revealed: How they react to response styles, what they ask for
-
-## MANDATORY Memory Saving
-
-When you extract meaningful information, IMMEDIATELY:
-1. **Identify** the fact and its category
-2. **Call save_to_memory** with fact and category (REQUIRED - not optional)
-3. **Acknowledge** to user: "Got it - I'm remembering that [detail] for next time."
-
-## Examples of What to Remember
-
-✓ "My name is Owen" → save_to_memory("Name: Owen", "personal")
-✓ "I prefer concise responses" → save_to_memory("Prefers concise, focused responses", "preferences")
-✓ "I'm building a React app" → save_to_memory("Currently working on React application project", "work")
-✓ "I work at Tech Corp" → save_to_memory("Works at Tech Corp as a developer", "work")
-✓ "I'm in the Pacific timezone" → save_to_memory("Timezone: Pacific (UTC-8)", "personal")
-
-## Key Difference from Normal Chat
-
-This is NOT just remembering for this conversation—memories PERSIST and build a comprehensive profile that grows every session. The user doesn't need to repeat information; you'll already know it next time.`
+## Examples
+- "My cat's name is Leo" -> save_to_memory("User's cat is named Leo", "personal")
+- "I want short answers" -> save_to_memory("Prefers short answers", "preferences")
+- "Always ask before sending email" -> update_memory_doc("AGENTS.md", "- Always ask before sending email.", "append")
+- "Harbor should feel less generic" -> update_memory_doc("SOUL.md", "- Harbor should avoid generic chatbot phrasing.", "append")
+`
 }
 
 function outputFormatSection(): string {

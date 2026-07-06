@@ -291,14 +291,34 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
     message.text || message.thinkingBlocks.length > 0 || message.toolCalls.length > 0 || message.planCreation || message.error
 
   if (!hasContent && !message.isStreaming) return null
+  const isProgress = message.isProgress && !message.isFinal
+  const isFinal = message.isFinal && !message.isProgress
 
   return (
     <div className="flex items-start gap-2.5 animate-fade-up" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
       {/* Avatar */}
-      <img src="/icons/logo.png" alt="Harbor" className="w-6 h-6 rounded-sm flex-shrink-0 mt-0.5 select-none" />
+      <img
+        src="/icons/logo.png"
+        alt="Harbor"
+        className={`w-6 h-6 rounded-sm flex-shrink-0 mt-0.5 select-none ${isProgress ? 'opacity-55' : ''}`}
+      />
 
       {/* Content with action buttons */}
-      <div className="flex-1 min-w-0 flex flex-col gap-2 select-text relative group">
+      <div
+        className={`flex-1 min-w-0 flex flex-col gap-2 select-text relative group ${
+          isProgress ? 'pl-2 border-l' : ''
+        }`}
+        style={isProgress ? { borderColor: 'rgb(var(--harbor-border))' } : undefined}
+      >
+        {(isProgress || isFinal) && (
+          <div
+            className="text-[10px] uppercase font-semibold tracking-[0.12em]"
+            style={{ color: isFinal ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text-faint))' }}
+          >
+            {isFinal ? t('chat.final_answer', 'Final answer') : t('chat.progress_update', 'Progress')}
+          </div>
+        )}
+
         {/* Thinking blocks, plan creation, and tool calls, interleaved by sequence */}
         {(() => {
           const events: Array<{ type: 'thinking' | 'tool' | 'plan'; sequence: number; block?: UIThinkingBlock; toolCall?: typeof message.toolCalls[0]; planCreation?: typeof message.planCreation; index?: number }> = []
@@ -344,9 +364,14 @@ export default function ChatMessage({ message, onToggleThinking, onEditMessage }
 
         {/* Text content */}
         {(message.text || (message.isStreaming && !message.toolCalls.length)) && (
-          <div className={`text-sm text-[rgb(var(--harbor-text))] ${message.isStreaming && message.text ? 'streaming-cursor' : ''}`}>
+          <div
+            className={`${isProgress ? 'text-xs' : 'text-sm'} ${
+              message.isStreaming && message.text ? 'streaming-cursor' : ''
+            }`}
+            style={{ color: isProgress ? 'rgb(var(--harbor-text-muted))' : 'rgb(var(--harbor-text))' }}
+          >
             {message.text ? (
-              <div className="md">
+              <div className={`md ${isProgress ? 'opacity-90' : ''}`}>
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm, remarkMath]}
                   rehypePlugins={[rehypeKatex]}

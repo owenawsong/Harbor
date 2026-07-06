@@ -11,7 +11,7 @@ export const subAgentTools: ToolHandler[] = [
       name: 'create_parallel_sub_agents',
       description:
         'Create and run multiple independent sub-agents in parallel to handle subtasks. Useful for splitting complex tasks into smaller, independent problems. Each sub-agent runs in its own context and reports back results. Maximum 10 sub-agents.',
-      input_schema: {
+      parameters: {
         type: 'object' as const,
         properties: {
           briefing: {

@@ -35,9 +35,25 @@ export interface UIMessage {
   toolCalls: UIToolCall[]
   thinkingBlocks: UIThinkingBlock[]
   planCreation?: UIPlanCreation  // Plan being created
+  isProgress?: boolean
+  isFinal?: boolean
   isStreaming: boolean
   error?: string
   timestamp: number
+}
+
+interface PendingPlanState {
+  messageId: string
+  plan: string
+  originalText: string
+  attachedTabId?: number
+  options?: ChatSendOptions
+}
+
+interface ChatSendOptions {
+  enablePlanning?: boolean
+  chatModeOnly?: boolean
+  isCorrection?: boolean
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -78,27 +94,46 @@ function extractThinkingBlocks(
 
 // Extract plan from text (between <plan>...</plan> tags) and return cleaned text + plan.
 // Also handles incomplete plans (missing closing tag).
+function stripModelToolMarkup(text: string): string {
+  return text
+    .replace(/<\|DSML\|tool_calls>[\s\S]*?(?:<\/\|DSML\|tool_calls>|$)/g, '')
+    .replace(/<\|DSML\|invoke[\s\S]*?(?:<\/\|DSML\|invoke>|$)/g, '')
+    .replace(/<tool_calls>[\s\S]*?(?:<\/tool_calls>|$)/gi, '')
+    .trim()
+}
+
 function extractPlan(text: string): { text: string; plan: string | null } {
+  const sanitized = stripModelToolMarkup(text)
   // Try to match plan tags - prefer strict closing tag on its own line
-  const planMatch = text.match(/<plan>([\s\S]*?)<\/plan>\s*$/im)
-    || text.match(/<plan>([\s\S]*?)<\/plan>/i)
+  const planMatch = sanitized.match(/<plan>([\s\S]*?)<\/plan>\s*$/im)
+    || sanitized.match(/<plan>([\s\S]*?)<\/plan>/i)
 
   if (planMatch && planMatch[1]) {
     const plan = planMatch[1].trim()
     // Remove the plan section from text, keeping text before <plan> and after </plan>
-    const cleaned = text.replace(/<plan>[\s\S]*?<\/plan>\s*/i, '').trim()
+    const cleaned = sanitized.replace(/<plan>[\s\S]*?<\/plan>\s*/i, '').trim()
     return { text: cleaned, plan }
+  }
+
+  const loosePlanMatch = sanitized.match(/(## Allow actions on these sites[\s\S]*?## Approach to follow[\s\S]*)/i)
+  if (loosePlanMatch?.[1]) {
+    const plan = loosePlanMatch[1]
+      .replace(/(?:^|\n)(?:I opened|I navigated|What would you like)[\s\S]*$/i, '')
+      .trim()
+    if (plan.length >= 20) {
+      const cleaned = sanitized.replace(loosePlanMatch[1], '').trim()
+      return { text: cleaned, plan }
+    }
   }
 
   // Fallback: if no complete plan found, check for incomplete plan (missing closing tag)
   // This handles cases where AI starts a plan but doesn't finish it
-  const incompletePlanMatch = text.match(/<plan>([\s\S]+)$/i)
+  const incompletePlanMatch = sanitized.match(/<plan>([\s\S]+)$/i)
   if (incompletePlanMatch && incompletePlanMatch[1]) {
     const incompletePlan = incompletePlanMatch[1].trim()
     // Only treat as plan if it has substantial content (at least 20 chars)
     if (incompletePlan.length >= 20) {
-      console.log('[PLAN] Incomplete plan detected (no closing tag), using it anyway')
-      const cleaned = text.replace(/<plan>[\s\S]*$/i, '').trim()
+      const cleaned = sanitized.replace(/<plan>[\s\S]*$/i, '').trim()
       // Add closing tag for consistency
       const completePlan = incompletePlan.endsWith('</plan>') ? incompletePlan : incompletePlan + '\n</plan>'
       return { text: cleaned, plan: completePlan }
@@ -141,6 +176,8 @@ function convertStoredMessages(messages: ChatMessage[]): UIMessage[] {
         text,
         toolCalls,
         thinkingBlocks,
+        isProgress: false,
+        isFinal: false,
         isStreaming: false,
         timestamp: msg.timestamp,
       })
@@ -157,9 +194,14 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   const [sessionId] = useState(() => loadSessionId ?? uid())
   const [isRunning, setIsRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [pendingPlan, setPendingPlan] = useState<{ messageId: string; plan: string } | null>(null)
+  const [pendingPlan, setPendingPlan] = useState<PendingPlanState | null>(null)
   const eventSequenceRef = useRef(0)
   const debouncerRef = useRef<StreamDebouncer | null>(null)
+  const currentRequestRef = useRef<{
+    text: string
+    attachedTabId?: number
+    options?: ChatSendOptions
+  } | null>(null)
 
   // Load session when sessionId changes
   useEffect(() => {
@@ -220,7 +262,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
             setMessages((prev) => {
               const last = prev[prev.length - 1]
               if (last?.id === messageId && last.role === 'assistant') {
-                const updated = { ...last, isStreaming: true }
+              const updated = { ...last, isStreaming: true }
 
                 // Add regular text
                 if (regularText) {
@@ -245,7 +287,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
               // Create new message
               const newMsg: UIMessage = {
                 id: messageId, role: 'assistant', text: regularText, toolCalls: [],
-                thinkingBlocks: [], isStreaming: true, timestamp: Date.now(),
+                thinkingBlocks: [], isProgress: false, isFinal: false, isStreaming: true, timestamp: Date.now(),
               }
 
               if (planContent) {
@@ -363,6 +405,7 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
         // ── Message complete (one provider turn done, agent may still be running) ──
         case 'message_complete': {
           const { messageId, stopReason, text: eventText } = event as any
+          const isFinal = event.isFinal === true
           // Flush any remaining buffered text
           if (debouncerRef.current) {
             debouncerRef.current.flush(messageId)
@@ -371,22 +414,16 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           // Extract plan ONLY if it's complete
           let extractedPlan: string | null = null
           if (planAccumulatorRef.current?.isComplete && planAccumulatorRef.current?.content) {
-            console.log('[PLAN] Complete plan found:', planAccumulatorRef.current.content.substring(0, 100))
             const { plan } = extractPlan(planAccumulatorRef.current.content)
-            console.log('[PLAN] Extracted plan:', plan ? 'YES' : 'NO', plan?.substring(0, 50))
             extractedPlan = plan
             // Clear accumulator only after successful extraction
             planAccumulatorRef.current = null
-          } else if (planAccumulatorRef.current?.content) {
-            console.log('[PLAN] Plan incomplete, waiting for more:', planAccumulatorRef.current.content.substring(0, 100))
           }
 
           // Fallback: try to extract plan from event.text if provided
           if (!extractedPlan && eventText) {
-            console.log('[PLAN] Trying to extract from event.text:', eventText.substring(0, 100))
             const { plan } = extractPlan(eventText)
             if (plan) {
-              console.log('[PLAN] ✓ Extracted plan from event.text')
               extractedPlan = plan
             }
           }
@@ -403,39 +440,39 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
                 text: textAfterThinking,
                 thinkingBlocks: thinkingBlocks.map((b) => ({ ...b, isOpen: false })),
                 planCreation: m.planCreation ? { ...m.planCreation, isComplete: true } : undefined,
+                isProgress: !isFinal,
+                isFinal,
                 isStreaming: false,
               }
             }),
           )
 
           // If a plan was extracted OR backend says stopReason is 'plan_pending', show approval dialog
-          console.log('[PLAN] message_complete handler:', {
-            extractedPlan: !!extractedPlan,
-            stopReason,
-            hasAccumulator: !!planAccumulatorRef.current?.content,
-            accumulatorContent: planAccumulatorRef.current?.content?.substring(0, 100),
-          })
-
           if (extractedPlan) {
-            console.log('[PLAN] ✓ Showing plan approval dialog (extracted)')
-            setPendingPlan({ messageId, plan: extractedPlan })
+            setPendingPlan({
+              messageId,
+              plan: extractedPlan,
+              originalText: currentRequestRef.current?.text ?? '',
+              attachedTabId: currentRequestRef.current?.attachedTabId,
+              options: currentRequestRef.current?.options,
+            })
             setIsRunning(false)
           } else if (stopReason === 'plan_pending') {
             // Backend detected plan_pending, try to use accumulated content
-            console.log('[PLAN] ✓ Backend says plan_pending, stopReason detected')
             if (planAccumulatorRef.current?.content) {
               const { plan } = extractPlan(planAccumulatorRef.current.content)
-              console.log('[PLAN] Extracted from accumulator:', !!plan)
               if (plan) {
-                setPendingPlan({ messageId, plan })
+                setPendingPlan({
+                  messageId,
+                  plan,
+                  originalText: currentRequestRef.current?.text ?? '',
+                  attachedTabId: currentRequestRef.current?.attachedTabId,
+                  options: currentRequestRef.current?.options,
+                })
                 setIsRunning(false)
                 planAccumulatorRef.current = null
               }
-            } else {
-              console.log('[PLAN] ⚠ plan_pending but no accumulator content!')
             }
-          } else {
-            console.log('[PLAN] No plan detected, no stopReason')
           }
 
           currentMsgId.current = null
@@ -507,14 +544,16 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   // ─── Actions ───────────────────────────────────────────────────────────────
 
   const sendMessage = useCallback(
-    (text: string, attachedTabId?: number, options?: { enablePlanning?: boolean; chatModeOnly?: boolean }) => {
+    (text: string, attachedTabId?: number, options?: ChatSendOptions) => {
       try {
-        if (isRunning) {
+        if (isRunning && !options?.isCorrection) {
           return
         }
 
         setError(null)
         setIsRunning(true)
+        currentRequestRef.current = { text, attachedTabId, options }
+        planAccumulatorRef.current = null
 
         // Strip base64 blobs from the displayed bubble — show just "📎 filename" pills.
         // The full text (with base64) is still sent to the agent for the API call.
@@ -543,7 +582,17 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
           return
         }
 
-        portRef.current.postMessage({ type: 'chat', sessionId, message: text, attachedTabId, ...options })
+        portRef.current.postMessage({
+          type: 'chat',
+          sessionId,
+          message: options?.isCorrection
+            ? `The user corrected the running task. Stop following any previous mistaken direction and continue using this updated instruction:\n\n${text}`
+            : text,
+          attachedTabId,
+          ...options,
+          enablePlanning: Boolean(options?.enablePlanning) && !options?.isCorrection,
+          planningOnly: Boolean(options?.enablePlanning) && !options?.isCorrection,
+        })
       } catch (err) {
         setError(`Error sending message: ${err instanceof Error ? err.message : String(err)}`)
         setIsRunning(false)
@@ -594,10 +643,25 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   }, [])
 
   const approvePlan = useCallback(() => {
+    const planState = pendingPlan
+    if (!planState) return
     setPendingPlan(null)
-    if (!portRef.current) return
-    portRef.current.postMessage({ type: 'continue_execution', sessionId })
-  }, [sessionId])
+    const executionMessage = [
+      'Proceed with the approved plan below. Use browser tools to complete the original task.',
+      '',
+      '<approved_plan>',
+      planState.plan,
+      '</approved_plan>',
+      '',
+      'Original task:',
+      planState.originalText,
+    ].join('\n')
+    sendMessage(executionMessage, planState.attachedTabId, {
+      ...planState.options,
+      enablePlanning: false,
+      chatModeOnly: false,
+    })
+  }, [pendingPlan, sendMessage])
 
   const denyPlan = useCallback(() => {
     setPendingPlan(null)
@@ -611,10 +675,8 @@ export function useChat(settings: AgentSettings, loadSessionId?: string | null) 
   }, [sessionId, pendingPlan])
 
   const modifyPlan = useCallback((newPlan: string) => {
-    if (!portRef.current) return
-    portRef.current.postMessage({ type: 'update_plan', sessionId, plan: newPlan })
-    setPendingPlan(null)
-  }, [sessionId])
+    setPendingPlan((prev) => prev ? { ...prev, plan: newPlan } : prev)
+  }, [])
 
   return {
     messages, isRunning, error, sessionId,

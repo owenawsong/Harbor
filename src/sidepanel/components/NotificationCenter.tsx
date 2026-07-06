@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Bell, X, Check, AlertCircle, CheckCircle, Info, AlertTriangle } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { HarborNotification, NotificationLevel } from '../../shared/types'
 
 const STORAGE_KEY = 'harbor_notifications'
@@ -10,7 +11,7 @@ function uid(): string {
 }
 
 const LEVEL_STYLES: Record<NotificationLevel, {
-  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>
+  icon: LucideIcon
   color: string
   bg: string
   border: string

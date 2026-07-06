@@ -26,7 +26,8 @@
     --harbor-navy:         26  26  46;    /* navy dark */
   }
 
-  /* MOONLIGHT theme — dark, cool blue (renamed from dark) */
+  /* DEFAULT dark mode */
+  .theme-dark,
   .moonlight {
     --harbor-bg:             7   7  14;   /* navy-900 */
     --harbor-surface:       13  13  26;   /* navy-800 */
@@ -62,8 +63,27 @@
     --harbor-navy:           7   7  14;
   }
 
+  /* FOREST light mode */
+  .forest.theme-light {
+    --harbor-bg:           243 248 244;
+    --harbor-surface:      255 255 252;
+    --harbor-surface-2:    235 244 237;
+    --harbor-surface-3:    225 237 228;
+    --harbor-border:       201 219 205;
+    --harbor-border-2:     169 197 176;
+    --harbor-text:          24  42  34;
+    --harbor-text-muted:    77  95  82;
+    --harbor-text-faint:   116 133 120;
+    --harbor-accent:        55 132  95;
+    --harbor-accent-hover:  42 112  79;
+    --harbor-accent-light: 218 238 225;
+    --harbor-glow:          55 132  95;
+    --harbor-navy:          24  42  34;
+  }
+
   /* FOREST theme — green tones, nature-inspired */
-  .forest {
+  .forest.theme-dark,
+  .forest:not(.theme-light) {
     --harbor-bg:            26  58  46;   /* deep forest green */
     --harbor-surface:       32  68  56;   /* darker forest */
     --harbor-surface-2:     38  78  66;   /* slightly lighter */
@@ -80,8 +100,27 @@
     --harbor-navy:          26  58  46;
   }
 
+  /* NEBULA light mode */
+  .nebula.theme-light {
+    --harbor-bg:           247 246 252;
+    --harbor-surface:      255 255 255;
+    --harbor-surface-2:    239 237 249;
+    --harbor-surface-3:    230 226 244;
+    --harbor-border:       209 202 230;
+    --harbor-border-2:     181 170 214;
+    --harbor-text:          34  31  55;
+    --harbor-text-muted:    88  82 114;
+    --harbor-text-faint:   125 116 150;
+    --harbor-accent:       116  87 188;
+    --harbor-accent-hover:  96  70 164;
+    --harbor-accent-light: 232 226 249;
+    --harbor-glow:         116  87 188;
+    --harbor-navy:          34  31  55;
+  }
+
   /* NEBULA theme — purple/blue tones, space-inspired */
-  .nebula {
+  .nebula.theme-dark,
+  .nebula:not(.theme-light) {
     --harbor-bg:            26  26  46;   /* deep purple-blue */
     --harbor-surface:       35  35  60;   /* slightly lighter */
     --harbor-surface-2:     42  42  72;   /* surface variant */
@@ -98,8 +137,27 @@
     --harbor-navy:          26  26  46;
   }
 
+  /* SUNSET light mode */
+  .sunset.theme-light {
+    --harbor-bg:           252 246 240;
+    --harbor-surface:      255 255 252;
+    --harbor-surface-2:    249 235 222;
+    --harbor-surface-3:    244 222 205;
+    --harbor-border:       225 193 168;
+    --harbor-border-2:     205 162 128;
+    --harbor-text:          50  33  25;
+    --harbor-text-muted:   105  76  60;
+    --harbor-text-faint:   146 112  91;
+    --harbor-accent:       196  91  48;
+    --harbor-accent-hover: 170  75  38;
+    --harbor-accent-light: 249 225 211;
+    --harbor-glow:         196  91  48;
+    --harbor-navy:          50  33  25;
+  }
+
   /* SUNSET theme — orange/warm red tones */
-  .sunset {
+  .sunset.theme-dark,
+  .sunset:not(.theme-light) {
     --harbor-bg:            45  24  16;   /* dark orange-brown */
     --harbor-surface:       58  32  22;   /* darker orange-brown */
     --harbor-surface-2:     70  40  28;   /* slightly lighter */
@@ -116,8 +174,27 @@
     --harbor-navy:          45  24  16;
   }
 
+  /* OCEAN light mode */
+  .ocean.theme-light {
+    --harbor-bg:           240 248 252;
+    --harbor-surface:      255 255 255;
+    --harbor-surface-2:    225 240 248;
+    --harbor-surface-3:    210 231 244;
+    --harbor-border:       183 214 232;
+    --harbor-border-2:     145 190 218;
+    --harbor-text:          24  43  58;
+    --harbor-text-muted:    70  97 118;
+    --harbor-text-faint:   106 138 160;
+    --harbor-accent:        42 128 174;
+    --harbor-accent-hover:  31 105 146;
+    --harbor-accent-light: 213 235 247;
+    --harbor-glow:          42 128 174;
+    --harbor-navy:          24  43  58;
+  }
+
   /* OCEAN theme — blue/teal tones */
-  .ocean {
+  .ocean.theme-dark,
+  .ocean:not(.theme-light) {
     --harbor-bg:            15  43  62;   /* deep ocean blue */
     --harbor-surface:       22  55  78;   /* darker ocean */
     --harbor-surface-2:     28  70  95;   /* slightly lighter */

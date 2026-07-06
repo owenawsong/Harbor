@@ -27,6 +27,7 @@ export default defineConfig({
         background: resolve(__dirname, 'src/background/index.ts'),
         content: resolve(__dirname, 'src/content/index.ts'),
         sidepanel: resolve(__dirname, 'sidepanel.html'),
+        micPermission: resolve(__dirname, 'mic-permission.html'),
       },
       output: {
         entryFileNames: (chunkInfo) => {

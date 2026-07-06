@@ -10,6 +10,36 @@
 
 // Inlined from shared/constants.ts — do NOT import; content scripts are classic scripts
 const HARBOR_ELEMENT_ATTR = 'data-harbor-id'
+
+interface SnapshotElement {
+  id: number
+  tag: string
+  role: string
+  text: string
+  name?: string
+  href?: string
+  type?: string
+  value?: string
+  checked?: boolean
+  disabled?: boolean
+  placeholder?: string
+  x: number
+  y: number
+  width: number
+  height: number
+}
+
+interface PageSnapshot {
+  url: string
+  title: string
+  elements: SnapshotElement[]
+  formattedText: string
+  totalElements: number
+  currentOffset: number
+  currentLimit: number
+  hasMore: boolean
+}
+
 // ─── Element ID Registry ──────────────────────────────────────────────────────
 
 let elementCounter = 0
@@ -941,11 +971,12 @@ chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResp
           const { timeout = 30000 } = message as { type: string; timeout?: number }
           const startTime = Date.now()
           let found = false
-          let modal: Record<string, unknown> | undefined
+          let modal: DetectedModal | undefined
 
           while (Date.now() - startTime < timeout) {
-            modal = detectVisibleModal()
-            if (modal) {
+            const detected = detectVisibleModal()
+            if (detected) {
+              modal = detected
               found = true
               break
             }

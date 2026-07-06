@@ -3,7 +3,9 @@
  * Handles conversations, settings, presets, and all user state
  */
 
-import type { Message, OnboardingData, ModelPreset } from './types'
+import type { Message, OnboardingData, ModelPreset, StoredSettings, StoredSessionMap } from './types'
+import { STORAGE_KEYS as APP_STORAGE_KEYS } from './constants'
+import { MEMORY_DOCS_STORAGE_KEY, type MemoryDocMap } from './memoryDocs'
 
 export interface ExportData {
   version: string
@@ -25,20 +27,35 @@ export interface ExportData {
       url: string
       timestamp: number
     }[]
+    memoryDocs?: MemoryDocMap
+    legacyMemoryEntries?: unknown[]
+    userProfile?: unknown
   }
 }
 
 const STORAGE_KEYS = {
-  settings: 'harbor:settings',
-  onboarding: 'harbor:onboarding',
-  presets: 'harbor:presets',
-  conversations: 'harbor:conversations',
-  bookmarks: 'harbor:bookmarks',
+  settings: APP_STORAGE_KEYS.SETTINGS,
+  onboarding: 'harbor_onboarding',
+  presets: 'harbor_model_presets',
+  conversations: APP_STORAGE_KEYS.SESSIONS,
+  bookmarks: 'harbor_bookmarks',
+  memoryDocs: MEMORY_DOCS_STORAGE_KEY,
+  legacyMemoryEntries: 'harbor_memory_entries',
+  userProfile: 'harbor_user_profile',
+}
+
+function redactSettings(settings: unknown): Record<string, unknown> {
+  if (!settings || typeof settings !== 'object') return {}
+  const copy = structuredClone(settings) as StoredSettings
+  if (copy.agentSettings?.provider?.apiKey) {
+    copy.agentSettings.provider.apiKey = undefined
+  }
+  return copy as unknown as Record<string, unknown>
 }
 
 export async function exportAllData(): Promise<ExportData> {
   const data: ExportData = {
-    version: '1.0',
+    version: '1.1',
     exportDate: new Date().toISOString(),
     data: {},
   }
@@ -46,7 +63,7 @@ export async function exportAllData(): Promise<ExportData> {
   // Get settings
   const settings = await chrome.storage.local.get(STORAGE_KEYS.settings)
   if (settings[STORAGE_KEYS.settings]) {
-    data.data.settings = settings[STORAGE_KEYS.settings] as Record<string, unknown>
+    data.data.settings = redactSettings(settings[STORAGE_KEYS.settings])
   }
 
   // Get onboarding
@@ -61,11 +78,14 @@ export async function exportAllData(): Promise<ExportData> {
     data.data.presets = presets[STORAGE_KEYS.presets] as ModelPreset[]
   }
 
-  // Get conversations (limited - only last 50 to avoid huge exports)
+  // Get conversations
   const conversations = await chrome.storage.local.get(STORAGE_KEYS.conversations)
   if (conversations[STORAGE_KEYS.conversations]) {
-    const allConversations = conversations[STORAGE_KEYS.conversations] as typeof data.data.conversations
-    data.data.conversations = allConversations?.slice(-50) || []
+    const raw = conversations[STORAGE_KEYS.conversations]
+    const allConversations = Array.isArray(raw)
+      ? raw
+      : Object.values((raw ?? {}) as StoredSessionMap)
+    data.data.conversations = allConversations
   }
 
   // Get bookmarks
@@ -74,13 +94,28 @@ export async function exportAllData(): Promise<ExportData> {
     data.data.bookmarks = bookmarks[STORAGE_KEYS.bookmarks] as typeof data.data.bookmarks
   }
 
+  const memoryDocs = await chrome.storage.local.get(STORAGE_KEYS.memoryDocs)
+  if (memoryDocs[STORAGE_KEYS.memoryDocs]) {
+    data.data.memoryDocs = memoryDocs[STORAGE_KEYS.memoryDocs] as MemoryDocMap
+  }
+
+  const legacyMemoryEntries = await chrome.storage.local.get(STORAGE_KEYS.legacyMemoryEntries)
+  if (legacyMemoryEntries[STORAGE_KEYS.legacyMemoryEntries]) {
+    data.data.legacyMemoryEntries = legacyMemoryEntries[STORAGE_KEYS.legacyMemoryEntries] as unknown[]
+  }
+
+  const userProfile = await chrome.storage.local.get(STORAGE_KEYS.userProfile)
+  if (userProfile[STORAGE_KEYS.userProfile]) {
+    data.data.userProfile = userProfile[STORAGE_KEYS.userProfile]
+  }
+
   return data
 }
 
 export async function importData(exportData: ExportData, options?: { overwrite?: boolean }): Promise<{ success: boolean; message: string }> {
   try {
     // Validate version
-    if (exportData.version !== '1.0') {
+    if (exportData.version !== '1.0' && exportData.version !== '1.1') {
       return { success: false, message: 'Unsupported export version' }
     }
 
@@ -114,12 +149,26 @@ export async function importData(exportData: ExportData, options?: { overwrite?:
 
     // Import conversations
     if (exportData.data.conversations) {
-      updates[STORAGE_KEYS.conversations] = exportData.data.conversations
+      updates[STORAGE_KEYS.conversations] = Object.fromEntries(
+        exportData.data.conversations.map((session) => [session.id, session]),
+      )
     }
 
     // Import bookmarks
     if (exportData.data.bookmarks) {
       updates[STORAGE_KEYS.bookmarks] = exportData.data.bookmarks
+    }
+
+    if (exportData.data.memoryDocs) {
+      updates[STORAGE_KEYS.memoryDocs] = exportData.data.memoryDocs
+    }
+
+    if (exportData.data.legacyMemoryEntries) {
+      updates[STORAGE_KEYS.legacyMemoryEntries] = exportData.data.legacyMemoryEntries
+    }
+
+    if (exportData.data.userProfile) {
+      updates[STORAGE_KEYS.userProfile] = exportData.data.userProfile
     }
 
     await chrome.storage.local.set(updates)

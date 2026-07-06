@@ -89,7 +89,7 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
         } else if (event.error === 'network') {
           setPermissionError('Network error. Please check your internet connection.')
         } else if (event.error === 'permission-denied' || event.error === 'not-allowed') {
-          setPermissionError('Microphone access denied. Click the microphone icon in your browser\'s address bar to enable access.')
+          setPermissionError('Microphone access was blocked in the side panel. Click the mic button again to open Harbor\'s permission page.')
         } else if (event.error === 'service-not-allowed') {
           setPermissionError('Voice input service is not available. This may be a browser or extension limitation.')
         } else if (event.error === 'bad-grammar') {
@@ -142,6 +142,11 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
     }
   }, [])
 
+  const openPermissionPage = useCallback(() => {
+    const url = chrome.runtime.getURL('mic-permission.html')
+    chrome.tabs.create({ url })
+  }, [])
+
   const startListeningWithPermission = useCallback(() => {
     setPermissionError(null)
 
@@ -151,7 +156,7 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
         .then((permissionStatus) => {
           console.log('[Voice Input] Microphone permission status:', permissionStatus.state)
           if (permissionStatus.state === 'denied') {
-            setPermissionError('Microphone permission denied. Please go to Chrome settings (chrome://settings/content/microphone) and allow microphone access for this extension.')
+            setPermissionError('Microphone permission denied. Click the mic button again to open Harbor\'s permission page, or allow microphone access in Chrome settings.')
             return
           }
           // Permission is granted or prompt - try to start listening
@@ -178,5 +183,6 @@ export function useVoiceInput({ onTranscribed, language = 'en-US' }: UseVoiceInp
     permissionError,
     startListening: startListeningWithPermission,
     stopListening,
+    openPermissionPage,
   }
 }

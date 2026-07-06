@@ -98,15 +98,17 @@ function extractModalInfo(element: Element, type: DetectedModal['type']): Detect
   const zIndex = parseInt(style.zIndex) || 0
 
   // Detect close button
-  const hasCloseButton = !!element.querySelector(
-    '[aria-label="close"], [class*="close"], button:contains("×"), button:contains("✕")'
-  )
+  const hasCloseButton = Array.from(element.querySelectorAll('button, [role="button"], [aria-label], [class*="close"]'))
+    .some((el) => {
+      const label = `${el.getAttribute('aria-label') ?? ''} ${el.textContent ?? ''} ${el.className ?? ''}`.toLowerCase()
+      return label.includes('close') || label.includes('×') || label.includes('x')
+    })
 
   return {
     id: element.id || `modal-${Math.random().toString(36).slice(2, 9)}`,
     element,
     type,
-    title,
+    title: title ?? undefined,
     content,
     buttons,
     hasCloseButton,

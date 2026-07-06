@@ -6,10 +6,11 @@ import {
   Bookmark, Bell, Layers, BookmarkPlus, Save, Camera, FileText,
   ChevronLeft, ChevronRight,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { Skill, SkillCategory } from '../../shared/types'
 import { BUILT_IN_SKILLS, SKILL_CATEGORIES } from '../../shared/skills'
 
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   ShoppingCart, BookOpen, Table, FileEdit, Shuffle,
   Bookmark, Bell, Layers, BookmarkPlus, Save, Camera, FileText,
 }
@@ -407,9 +408,9 @@ function SkillsCategoryBar({
   categoriesWithCounts,
   skillsLength,
 }: {
-  activeCategory: 'all' | string
-  onCategoryChange: (cat: 'all' | string) => void
-  categoriesWithCounts: any[]
+  activeCategory: SkillCategory | 'all'
+  onCategoryChange: (cat: SkillCategory | 'all') => void
+  categoriesWithCounts: SkillCategory[]
   skillsLength: number
 }) {
   const { t } = useTranslation()
@@ -434,11 +435,12 @@ function SkillsCategoryBar({
   const scroll = (direction: 'left' | 'right') => {
     if (tabsRef.current) {
       const scrollAmount = 120
-      tabsRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth',
-      })
-      setTimeout(checkScroll, 500)
+      const max = tabsRef.current.scrollWidth - tabsRef.current.clientWidth
+      const next = direction === 'left'
+        ? Math.max(0, tabsRef.current.scrollLeft - scrollAmount)
+        : Math.min(max, tabsRef.current.scrollLeft + scrollAmount)
+      tabsRef.current.scrollTo({ left: next, behavior: 'auto' })
+      requestAnimationFrame(checkScroll)
     }
   }
 

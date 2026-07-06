@@ -92,10 +92,10 @@ export default function DataManager({ onBack }: Props) {
         {/* Export Section */}
         <div className="border rounded-lg p-6" style={{ borderColor: 'rgb(var(--harbor-border))', background: 'rgb(var(--harbor-surface))' }}>
           <h3 className="font-semibold mb-2" style={{ color: 'rgb(var(--harbor-text))' }}>
-            📥 Export All Data
+            Export All Data
           </h3>
           <p className="text-sm mb-4" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
-            Download a backup of your settings, conversations, and preferences. This file is safe to share — it doesn't contain API keys.
+            Download a local-first backup of your settings, conversations, context docs, and preferences. API keys are removed, but this file can contain private memory and should not be shared.
           </p>
           <button
             onClick={handleExport}
@@ -118,7 +118,7 @@ export default function DataManager({ onBack }: Props) {
         {/* Import Section */}
         <div className="border rounded-lg p-6" style={{ borderColor: 'rgb(var(--harbor-border))', background: 'rgb(var(--harbor-surface))' }}>
           <h3 className="font-semibold mb-2" style={{ color: 'rgb(var(--harbor-text))' }}>
-            📤 Import Data
+            Import Data
           </h3>
           <p className="text-sm mb-4" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
             Restore a previously exported backup. Choose whether to merge with existing data or replace everything.

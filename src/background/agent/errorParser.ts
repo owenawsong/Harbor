@@ -11,6 +11,10 @@ export interface ParsedError {
   originalText: string
 }
 
+function asErrorCode(value: unknown): string | number | undefined {
+  return typeof value === 'string' || typeof value === 'number' ? value : undefined
+}
+
 /**
  * Parses error responses from various API formats.
  */
@@ -48,7 +52,7 @@ function parseJSONError(obj: unknown, originalText: string): ParsedError {
     const err = errorObj.error as Record<string, unknown>
     return {
       message: String(err.message || 'Unknown Anthropic error'),
-      code: err.type || err.code,
+      code: asErrorCode(err.type) ?? asErrorCode(err.code),
       details: { status: errorObj.status, ...err },
       originalText,
     }
@@ -58,7 +62,7 @@ function parseJSONError(obj: unknown, originalText: string): ParsedError {
   if (errorObj.error && typeof errorObj.error === 'string') {
     return {
       message: String(errorObj.error),
-      code: errorObj.code,
+      code: asErrorCode(errorObj.code),
       originalText,
     }
   }
@@ -68,7 +72,7 @@ function parseJSONError(obj: unknown, originalText: string): ParsedError {
     const err = errorObj.error as Record<string, unknown>
     return {
       message: String(err.message || 'Unknown Google error'),
-      code: err.code,
+      code: asErrorCode(err.code),
       details: err,
       originalText,
     }
@@ -78,7 +82,7 @@ function parseJSONError(obj: unknown, originalText: string): ParsedError {
   if (errorObj.message) {
     return {
       message: String(errorObj.message),
-      code: errorObj.code || errorObj.error_code,
+      code: asErrorCode(errorObj.code) ?? asErrorCode(errorObj.error_code),
       details: errorObj,
       originalText,
     }
@@ -89,7 +93,7 @@ function parseJSONError(obj: unknown, originalText: string): ParsedError {
     if (typeof value === 'string' && value.length > 0 && key.toLowerCase().includes('error')) {
       return {
         message: String(value),
-        code: errorObj.code,
+        code: asErrorCode(errorObj.code),
         originalText,
       }
     }

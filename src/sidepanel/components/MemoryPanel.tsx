@@ -1,17 +1,27 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  ArrowLeft, Plus, Search, Pin, Trash2, Tag, Brain,
-  User, Settings as SettingsIcon, FolderOpen, Wrench, Heart, Users, MessageSquare,
+  ArrowLeft, Search, Pin, Trash2, Brain,
+  User, FolderOpen, Wrench, Heart, Users, MessageSquare,
+  FileText, Save,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { MemoryEntry, MemoryCategory } from '../../shared/types'
+import {
+  CORE_MEMORY_DOC_IDS,
+  MEMORY_DOCS_STORAGE_KEY,
+  getTodayDailyDocId,
+  normalizeMemoryDocs,
+  type MemoryDoc,
+  type MemoryDocMap,
+} from '../../shared/memoryDocs'
 
 interface Props {
   onBack: () => void
 }
 
 // CATEGORY_META will have labels injected via t() in the component where it's used
-const CATEGORY_META: Record<MemoryCategory, { icon: React.ComponentType<{ size?: number }>; color: string }> = {
+const CATEGORY_META: Record<MemoryCategory, { icon: LucideIcon; color: string }> = {
   identity:    { icon: User,          color: 'text-purple-500 bg-purple-50 dark:bg-purple-950/30' },
   preferences: { icon: Heart,         color: 'text-rose-500 bg-rose-50 dark:bg-rose-950/30' },
   projects:    { icon: FolderOpen,    color: 'text-blue-500 bg-blue-50 dark:bg-blue-950/30' },
@@ -25,17 +35,18 @@ const ALL_CATEGORIES: MemoryCategory[] = ['identity', 'preferences', 'projects',
 
 const STORAGE_KEY = 'harbor_memory_entries'
 
-function uid(): string {
-  return Math.random().toString(36).slice(2, 11)
-}
-
 export default function MemoryPanel({ onBack }: Props) {
   const { t } = useTranslation()
   const [entries, setEntries] = useState<MemoryEntry[]>([])
+  const [docs, setDocs] = useState<MemoryDocMap>(() => normalizeMemoryDocs(undefined))
+  const [selectedDocId, setSelectedDocId] = useState<string>('MEMORY.md')
+  const [docDraft, setDocDraft] = useState('')
+  const [docSavedAt, setDocSavedAt] = useState<number | null>(null)
   const [activeCategory, setActiveCategory] = useState<MemoryCategory | 'all'>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [showAdd, setShowAdd] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const selectedDoc = docs[selectedDocId] ?? docs['MEMORY.md']
+  const isDocDirty = Boolean(selectedDoc && docDraft !== selectedDoc.content)
 
   // Category labels with translations
   const getCategoryLabel = (cat: MemoryCategory): string => {
@@ -53,29 +64,39 @@ export default function MemoryPanel({ onBack }: Props) {
 
   // Load from storage
   useEffect(() => {
-    chrome.storage.local.get(STORAGE_KEY, (data) => {
+    chrome.storage.local.get([STORAGE_KEY, MEMORY_DOCS_STORAGE_KEY], (data) => {
       if (data[STORAGE_KEY]) setEntries(data[STORAGE_KEY])
+      const nextDocs = normalizeMemoryDocs(data[MEMORY_DOCS_STORAGE_KEY])
+      setDocs(nextDocs)
+      setSelectedDocId((current) => nextDocs[current] ? current : 'MEMORY.md')
+      setDocDraft(nextDocs['MEMORY.md']?.content ?? '')
     })
   }, [])
+
+  useEffect(() => {
+    const nextDoc = docs[selectedDocId]
+    if (nextDoc) setDocDraft(nextDoc.content)
+  }, [docs, selectedDocId])
 
   const save = useCallback((newEntries: MemoryEntry[]) => {
     setEntries(newEntries)
     chrome.storage.local.set({ [STORAGE_KEY]: newEntries })
   }, [])
 
-  const addEntry = (content: string, category: MemoryCategory, tags: string[]) => {
-    const entry: MemoryEntry = {
-      id: uid(),
-      category,
-      content,
-      tags,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-      isPinned: false,
+  const saveDoc = useCallback(() => {
+    if (!selectedDoc) return
+    const nextDocs = {
+      ...docs,
+      [selectedDoc.id]: {
+        ...selectedDoc,
+        content: docDraft,
+        updatedAt: Date.now(),
+      },
     }
-    save([entry, ...entries])
-    setShowAdd(false)
-  }
+    setDocs(nextDocs)
+    setDocSavedAt(Date.now())
+    chrome.storage.local.set({ [MEMORY_DOCS_STORAGE_KEY]: nextDocs })
+  }, [docDraft, docs, selectedDoc])
 
   const deleteEntry = (id: string) => {
     save(entries.filter((e) => e.id !== id))
@@ -124,14 +145,19 @@ export default function MemoryPanel({ onBack }: Props) {
         >
           {t('memory.header')}
         </h2>
-        <button
-          onClick={() => setShowAdd(true)}
-          className="icon-btn"
-          title={t('memory.add')}
-        >
-          <Plus size={15} />
-        </button>
       </div>
+
+      <MemoryDocsEditor
+        docs={docs}
+        selectedDocId={selectedDocId}
+        selectedDoc={selectedDoc}
+        draft={docDraft}
+        isDirty={isDocDirty}
+        savedAt={docSavedAt}
+        onSelect={(id) => setSelectedDocId(id)}
+        onChange={setDocDraft}
+        onSave={saveDoc}
+      />
 
       {/* Search */}
       <div className="px-3 py-2.5 border-b" style={{ borderColor: 'rgb(var(--harbor-border))' }}>
@@ -180,14 +206,7 @@ export default function MemoryPanel({ onBack }: Props) {
 
       {/* Entries */}
       <div className="flex-1 overflow-y-auto harbor-scroll px-3 py-3 flex flex-col gap-2">
-        {showAdd && (
-          <AddEntryForm
-            onAdd={addEntry}
-            onCancel={() => setShowAdd(false)}
-          />
-        )}
-
-        {filtered.length === 0 && !showAdd && (
+        {filtered.length === 0 && (
           <div className="flex flex-col items-center justify-center flex-1 gap-3 py-12 text-center">
             <Brain size={32} style={{ color: 'rgb(var(--harbor-text-faint))' }} />
             <div>
@@ -198,11 +217,6 @@ export default function MemoryPanel({ onBack }: Props) {
                 {searchQuery ? t('memory.try_search') : t('memory.empty_help')}
               </p>
             </div>
-            {!searchQuery && (
-              <button onClick={() => setShowAdd(true)} className="harbor-btn-primary text-xs px-4 py-2">
-                <Plus size={13} /> {t('memory.add_first')}
-              </button>
-            )}
           </div>
         )}
 
@@ -218,6 +232,115 @@ export default function MemoryPanel({ onBack }: Props) {
             onTogglePin={() => togglePin(entry.id)}
           />
         ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Markdown Memory Docs ─────────────────────────────────────────────────────
+
+interface MemoryDocsEditorProps {
+  docs: MemoryDocMap
+  selectedDocId: string
+  selectedDoc?: MemoryDoc
+  draft: string
+  isDirty: boolean
+  savedAt: number | null
+  onSelect: (id: string) => void
+  onChange: (value: string) => void
+  onSave: () => void
+}
+
+function MemoryDocsEditor({
+  docs,
+  selectedDocId,
+  selectedDoc,
+  draft,
+  isDirty,
+  savedAt,
+  onSelect,
+  onChange,
+  onSave,
+}: MemoryDocsEditorProps) {
+  const { t } = useTranslation()
+  const todayId = getTodayDailyDocId()
+  const docIds = [
+    ...CORE_MEMORY_DOC_IDS,
+    todayId,
+    ...Object.keys(docs).filter((id) => id.startsWith('DAILY/') && id !== todayId).sort().slice(-4),
+  ].filter((id, index, arr) => docs[id] && arr.indexOf(id) === index)
+
+  return (
+    <div
+      className="border-b px-3 py-3"
+      style={{ borderColor: 'rgb(var(--harbor-border))' }}
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <FileText size={14} style={{ color: 'rgb(var(--harbor-accent))' }} />
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>
+            {t('memory.docs_title', 'Memory docs')}
+          </p>
+          <p className="text-[11px] truncate" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+            {selectedDoc?.description ?? t('memory.docs_description', 'Editable Markdown context Harbor can read and update.')}
+          </p>
+        </div>
+        <button
+          onClick={onSave}
+          disabled={!isDirty || !selectedDoc}
+          className="harbor-btn-primary text-xs px-3 py-1.5 disabled:opacity-40"
+          title={t('memory.save_doc', 'Save document')}
+        >
+          <Save size={12} />
+          {t('memory.save', 'Save')}
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 min-[760px]:grid-cols-[180px_minmax(0,1fr)] gap-2">
+        <div className="flex min-[760px]:flex-col gap-1 overflow-x-auto min-[760px]:overflow-visible harbor-scroll pb-1 min-[760px]:pb-0">
+          {docIds.map((id) => (
+            <button
+              key={id}
+              onClick={() => onSelect(id)}
+              className="flex-shrink-0 min-[760px]:flex-shrink min-[760px]:w-full px-2.5 py-1.5 rounded-lg border text-left text-[11px] font-medium transition-colors"
+              style={{
+                background: selectedDocId === id ? 'rgb(var(--harbor-accent) / 0.12)' : 'rgb(var(--harbor-surface))',
+                borderColor: selectedDocId === id ? 'rgb(var(--harbor-accent) / 0.35)' : 'rgb(var(--harbor-border))',
+                color: selectedDocId === id ? 'rgb(var(--harbor-text))' : 'rgb(var(--harbor-text-muted))',
+              }}
+            >
+              <span className="block truncate">{id}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="min-w-0">
+          <textarea
+            value={draft}
+            onChange={(event) => onChange(event.target.value)}
+            spellCheck={false}
+            className="w-full h-[190px] min-[760px]:h-[260px] rounded-lg border p-2.5 text-xs leading-relaxed font-mono resize-y outline-none focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)]"
+            style={{
+              background: 'rgb(var(--harbor-surface))',
+              borderColor: 'rgb(var(--harbor-border))',
+              color: 'rgb(var(--harbor-text))',
+            }}
+          />
+          <div className="flex items-center justify-between gap-2 mt-1.5">
+            <p className="text-[10px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+              {isDirty
+                ? t('memory.unsaved', 'Unsaved changes')
+                : savedAt
+                  ? t('memory.saved_now', 'Saved')
+                  : selectedDoc
+                    ? `${t('memory.updated', 'Updated')} ${new Date(selectedDoc.updatedAt).toLocaleDateString()}`
+                    : ''}
+            </p>
+            <p className="text-[10px]" style={{ color: 'rgb(var(--harbor-text-faint))' }}>
+              {draft.length.toLocaleString()} {t('memory.characters', 'chars')}
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -360,97 +483,3 @@ function MemoryCard({ entry, isEditing, onEdit, onSave, onCancelEdit, onDelete, 
   )
 }
 
-// ─── Add Entry Form ────────────────────────────────────────────────────────────
-
-function AddEntryForm({ onAdd, onCancel }: { onAdd: (content: string, category: MemoryCategory, tags: string[]) => void; onCancel: () => void }) {
-  const { t } = useTranslation()
-  const [content, setContent] = useState('')
-  const [category, setCategory] = useState<MemoryCategory>('general')
-  const [tagsInput, setTagsInput] = useState('')
-
-  // Get translated category label
-  const getCategoryLabel = (cat: MemoryCategory): string => {
-    const labels: Record<MemoryCategory, string> = {
-      identity: t('memory.identity'),
-      preferences: t('memory.preferences'),
-      projects: t('memory.projects'),
-      tools: t('memory.tools'),
-      habits: t('memory.habits'),
-      people: t('memory.people'),
-      general: t('memory.general'),
-    }
-    return labels[cat]
-  }
-
-  const handleAdd = () => {
-    if (!content.trim()) return
-    const tags = tagsInput.split(',').map((t) => t.trim()).filter(Boolean)
-    onAdd(content.trim(), category, tags)
-  }
-
-  return (
-    <div
-      className="rounded-xl border p-3 flex flex-col gap-3 animate-fade-in"
-      style={{ background: 'rgb(var(--harbor-surface))', borderColor: 'rgb(var(--harbor-accent) / 0.3)' }}
-    >
-      <p className="text-xs font-semibold" style={{ color: 'rgb(var(--harbor-text))' }}>{t('memory.new_memory')}</p>
-      <textarea
-        value={content}
-        onChange={(e) => setContent(e.target.value)}
-        placeholder={t('memory.what_remember')}
-        className="w-full text-xs rounded-lg p-2 border outline-none resize-none min-h-[60px] focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
-        style={{
-          background: 'rgb(var(--harbor-surface-2))',
-          borderColor: 'rgb(var(--harbor-border))',
-          color: 'rgb(var(--harbor-text))',
-        }}
-        autoFocus
-      />
-      <div className="flex flex-col gap-2">
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value as MemoryCategory)}
-          className="text-xs rounded-lg px-2 py-1.5 border outline-none focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
-          style={{
-            background: 'rgb(var(--harbor-surface))',
-            borderColor: 'rgb(var(--harbor-border))',
-            color: 'rgb(var(--harbor-text))',
-          }}
-        >
-          {ALL_CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>{getCategoryLabel(cat)}</option>
-          ))}
-        </select>
-        <input
-          type="text"
-          value={tagsInput}
-          onChange={(e) => setTagsInput(e.target.value)}
-          placeholder={t('memory.tags_placeholder')}
-          className="text-xs rounded-lg px-2 py-1.5 border outline-none focus:border-[rgb(var(--harbor-accent))] focus:shadow-[0_0_0_3px_rgb(var(--harbor-accent)_/_0.12)] transition-shadow"
-          style={{
-            background: 'rgb(var(--harbor-surface))',
-            borderColor: 'rgb(var(--harbor-border))',
-            color: 'rgb(var(--harbor-text))',
-          }}
-        />
-      </div>
-      <div className="flex gap-1.5">
-        <button
-          onClick={handleAdd}
-          disabled={!content.trim()}
-          className="text-xs px-3 py-1.5 rounded-lg font-medium disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
-          style={{ background: 'rgb(var(--harbor-accent))', color: 'white' }}
-        >
-          {t('memory.save')}
-        </button>
-        <button
-          onClick={onCancel}
-          className="text-xs px-3 py-1.5 rounded-lg focus-visible:outline-1 focus-visible:outline-offset-1 focus-visible:outline-[rgb(var(--harbor-accent))]"
-          style={{ color: 'rgb(var(--harbor-text-muted))' }}
-        >
-          {t('memory.cancel')}
-        </button>
-      </div>
-    </div>
-  )
-}

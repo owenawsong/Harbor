@@ -5,10 +5,78 @@
 
 import type { ToolHandler } from '../agent/types'
 import { ok, error, sendToContentScript } from './response'
+import {
+  CORE_MEMORY_DOC_IDS,
+  MEMORY_DOCS_STORAGE_KEY,
+  createDailyMemoryDoc,
+  getTodayDailyDocId,
+  normalizeMemoryDocs,
+  scoreMemoryDoc,
+  type MemoryDoc,
+  type MemoryDocMap,
+} from '../../shared/memoryDocs'
 
 async function getActiveTabId(): Promise<number | undefined> {
   const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true })
   return tab?.id
+}
+
+function readMemoryLines(profile: unknown): string[] {
+  if (typeof profile === 'string') {
+    return profile.split('\n').map((line) => line.trim()).filter(Boolean)
+  }
+
+  if (profile && typeof profile === 'object' && !Array.isArray(profile)) {
+    const notes = (profile as { notes?: unknown }).notes
+    if (Array.isArray(notes)) {
+      return notes.filter((note): note is string => typeof note === 'string').map((note) => note.trim()).filter(Boolean)
+    }
+  }
+
+  return []
+}
+
+function writeMemoryProfile(existingProfile: unknown, lines: string[]): string | Record<string, unknown> {
+  if (existingProfile && typeof existingProfile === 'object' && !Array.isArray(existingProfile)) {
+    return {
+      ...(existingProfile as Record<string, unknown>),
+      notes: lines,
+      lastUpdated: Date.now(),
+    }
+  }
+
+  return lines.join('\n')
+}
+
+async function loadMemoryDocs(): Promise<MemoryDocMap> {
+  const storageData = await new Promise<Record<string, unknown>>((resolve) => {
+    chrome.storage.local.get(MEMORY_DOCS_STORAGE_KEY, (data) => resolve(data))
+  })
+  const docs = normalizeMemoryDocs(storageData[MEMORY_DOCS_STORAGE_KEY])
+  await saveMemoryDocs(docs)
+  return docs
+}
+
+async function saveMemoryDocs(docs: MemoryDocMap): Promise<void> {
+  await new Promise<void>((resolve) => {
+    chrome.storage.local.set({ [MEMORY_DOCS_STORAGE_KEY]: docs }, () => resolve())
+  })
+}
+
+function appendToDoc(doc: MemoryDoc, text: string): MemoryDoc {
+  const trimmed = text.trim()
+  if (!trimmed) return doc
+  const separator = doc.content.endsWith('\n') ? '' : '\n'
+  return {
+    ...doc,
+    content: `${doc.content}${separator}${trimmed}\n`,
+    updatedAt: Date.now(),
+  }
+}
+
+function factToMemoryLine(fact: string, category: string): string {
+  const timestamp = new Date().toISOString().split('T')[0]
+  return `- [${timestamp}] [${category.toUpperCase()}] ${fact.trim()}`
 }
 
 export const storageTools: ToolHandler[] = [
@@ -213,6 +281,188 @@ export const storageTools: ToolHandler[] = [
 
   {
     definition: {
+      name: 'read_memory_docs',
+      description: 'Read Harbor Markdown memory documents such as SOUL.md, AGENTS.md, USER.md, MEMORY.md, TOOLS.md, or daily logs. Use this before answering questions about stored preferences, durable facts, or operational rules.',
+      parameters: {
+        type: 'object',
+        properties: {
+          docId: {
+            type: 'string',
+            description: 'Optional document ID to read, for example USER.md, MEMORY.md, SOUL.md, AGENTS.md, TOOLS.md, or DAILY/YYYY-MM-DD.md. If omitted, returns the core docs plus today.',
+          },
+        },
+      },
+    },
+    async execute(input) {
+      try {
+        const { docId } = input as { docId?: string }
+        const docs = await loadMemoryDocs()
+
+        if (docId) {
+          const doc = docs[docId]
+          if (!doc) return error(`Memory document not found: ${docId}`)
+          return ok({ doc })
+        }
+
+        const todayId = getTodayDailyDocId()
+        const ids = [...CORE_MEMORY_DOC_IDS, todayId].filter((id, index, arr) => arr.indexOf(id) === index)
+        const selected = ids.map((id) => docs[id]).filter(Boolean)
+        return ok({
+          docs: selected,
+          availableDocIds: Object.keys(docs).sort(),
+        })
+      } catch (err) {
+        return error(`Failed to read memory docs: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    },
+  },
+
+  {
+    definition: {
+      name: 'search_memory_docs',
+      description: 'Search Harbor Markdown memory documents with keyword scoring. Use this when the user asks about something possibly remembered from earlier sessions.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description: 'Search query. Use concrete keywords from the user request.',
+          },
+          limit: {
+            type: 'number',
+            description: 'Maximum number of matching documents to return. Defaults to 5.',
+          },
+        },
+        required: ['query'],
+      },
+    },
+    async execute(input) {
+      try {
+        const { query, limit = 5 } = input as { query: string; limit?: number }
+        if (!query || !query.trim()) return error('query is required')
+
+        const docs = await loadMemoryDocs()
+        const matches = Object.values(docs)
+          .map((doc) => ({ doc, score: scoreMemoryDoc(doc, query) }))
+          .filter((item) => item.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, Math.max(1, Math.min(20, limit)))
+          .map(({ doc, score }) => ({
+            id: doc.id,
+            title: doc.title,
+            description: doc.description,
+            updatedAt: doc.updatedAt,
+            score,
+            preview: doc.content.slice(0, 1200),
+          }))
+
+        return ok({ query, matches, count: matches.length })
+      } catch (err) {
+        return error(`Failed to search memory docs: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    },
+  },
+
+  {
+    definition: {
+      name: 'update_memory_doc',
+      description: 'Create, replace, or append to a Harbor Markdown memory document. Use this for durable user facts, user preferences, operational rules, tool notes, and evolving agent behavior.',
+      parameters: {
+        type: 'object',
+        properties: {
+          docId: {
+            type: 'string',
+            description: 'Document ID, for example USER.md, MEMORY.md, SOUL.md, AGENTS.md, TOOLS.md, or DAILY/YYYY-MM-DD.md.',
+          },
+          content: {
+            type: 'string',
+            description: 'Markdown content to write or append.',
+          },
+          mode: {
+            type: 'string',
+            enum: ['replace', 'append'],
+            description: 'replace overwrites the whole document. append adds content to the end. Defaults to append.',
+          },
+          description: {
+            type: 'string',
+            description: 'Optional document description when creating a new document.',
+          },
+        },
+        required: ['docId', 'content'],
+      },
+    },
+    async execute(input) {
+      try {
+        const { docId, content, mode = 'append', description } = input as {
+          docId: string
+          content: string
+          mode?: 'replace' | 'append'
+          description?: string
+        }
+        if (!docId || !docId.trim()) return error('docId is required')
+        if (!content || !content.trim()) return error('content is required')
+        if (mode !== 'replace' && mode !== 'append') return error('mode must be replace or append')
+
+        const docs = await loadMemoryDocs()
+        const existing = docs[docId]
+        const now = Date.now()
+        const nextDoc: MemoryDoc = existing
+          ? mode === 'replace'
+            ? { ...existing, content, updatedAt: now }
+            : appendToDoc(existing, content)
+          : {
+              id: docId as MemoryDoc['id'],
+              title: docId,
+              description: description ?? '',
+              content: mode === 'replace' ? content : `${content.trim()}\n`,
+              updatedAt: now,
+            }
+
+        docs[docId] = nextDoc
+        await saveMemoryDocs(docs)
+        return ok({ updated: true, doc: nextDoc })
+      } catch (err) {
+        return error(`Failed to update memory doc: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    },
+  },
+
+  {
+    definition: {
+      name: 'append_daily_memory_note',
+      description: 'Append a raw observation or session note to today\'s daily memory log. Use for facts that may be useful later but still need distillation.',
+      parameters: {
+        type: 'object',
+        properties: {
+          note: {
+            type: 'string',
+            description: 'Short Markdown note to append to today\'s daily log.',
+          },
+        },
+        required: ['note'],
+      },
+    },
+    async execute(input) {
+      try {
+        const { note } = input as { note: string }
+        if (!note || !note.trim()) return error('note is required')
+
+        const docs = await loadMemoryDocs()
+        const todayId = getTodayDailyDocId()
+        const today = docs[todayId] ?? createDailyMemoryDoc()
+        const timestamp = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        docs[todayId] = appendToDoc(today, `- ${timestamp}: ${note.trim()}`)
+        await saveMemoryDocs(docs)
+
+        return ok({ appended: true, docId: todayId })
+      } catch (err) {
+        return error(`Failed to append daily note: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    },
+  },
+
+  {
+    definition: {
       name: 'save_to_memory',
       description: 'Save important information about the user to persistent memory. Use this to remember facts about the user, their preferences, goals, timeline, or any other important information.',
       parameters: {
@@ -246,7 +496,7 @@ export const storageTools: ToolHandler[] = [
           })
         })
 
-        let profileLines = storageData.harbor_user_profile?.split('\n').filter((l: string) => l.trim()) || []
+        let profileLines = readMemoryLines(storageData.harbor_user_profile)
 
         // Remove empty lines and add new fact with category
         profileLines = profileLines.filter((line: string) => line.trim().length > 0)
@@ -262,10 +512,26 @@ export const storageTools: ToolHandler[] = [
           profileLines.push(newLine)
         }
 
+        const docs = await loadMemoryDocs()
+        const memoryDoc = docs['MEMORY.md']
+        const userDoc = docs['USER.md']
+        const dailyId = getTodayDailyDocId()
+        const dailyDoc = docs[dailyId] ?? createDailyMemoryDoc()
+        const memoryLine = factToMemoryLine(fact, category)
+        const shouldAddToMemoryDoc = !memoryDoc.content.toLowerCase().includes(fact.toLowerCase())
+        if (shouldAddToMemoryDoc) {
+          docs['MEMORY.md'] = appendToDoc(memoryDoc, memoryLine)
+        }
+        if (category === 'personal' || category === 'preferences' || category === 'work' || category === 'goals') {
+          docs['USER.md'] = appendToDoc(userDoc, memoryLine)
+        }
+        docs[dailyId] = appendToDoc(dailyDoc, memoryLine)
+
         // Save back to storage
         await new Promise<void>((resolve) => {
           chrome.storage.local.set({
-            harbor_user_profile: profileLines.join('\n'),
+            harbor_user_profile: writeMemoryProfile(storageData.harbor_user_profile, profileLines),
+            [MEMORY_DOCS_STORAGE_KEY]: docs,
           }, () => {
             resolve()
           })
@@ -308,7 +574,7 @@ export const storageTools: ToolHandler[] = [
           })
         })
 
-        const profileLines = storageData.harbor_user_profile?.split('\n').filter((l: string) => l.trim()) || []
+        const profileLines = readMemoryLines(storageData.harbor_user_profile)
 
         let memories = profileLines
         if (category) {
@@ -374,7 +640,7 @@ export const storageTools: ToolHandler[] = [
           })
         })
 
-        let profileLines = storageData.harbor_user_profile?.split('\n').filter((l: string) => l.trim()) || []
+        let profileLines = readMemoryLines(storageData.harbor_user_profile)
 
         // Find and replace the fact
         const timestamp = new Date().toISOString().split('T')[0]
@@ -396,7 +662,7 @@ export const storageTools: ToolHandler[] = [
         // Save back to storage
         await new Promise<void>((resolve) => {
           chrome.storage.local.set({
-            harbor_user_profile: profileLines.join('\n'),
+            harbor_user_profile: writeMemoryProfile(storageData.harbor_user_profile, profileLines),
           }, () => {
             resolve()
           })
@@ -447,7 +713,7 @@ export const storageTools: ToolHandler[] = [
           })
         })
 
-        let profileLines = storageData.harbor_user_profile?.split('\n').filter((l: string) => l.trim()) || []
+        let profileLines = readMemoryLines(storageData.harbor_user_profile)
         const originalCount = profileLines.length
 
         // Filter out matching lines
@@ -474,7 +740,7 @@ export const storageTools: ToolHandler[] = [
         // Save back to storage
         await new Promise<void>((resolve) => {
           chrome.storage.local.set({
-            harbor_user_profile: profileLines.length > 0 ? profileLines.join('\n') : '',
+            harbor_user_profile: writeMemoryProfile(storageData.harbor_user_profile, profileLines),
           }, () => {
             resolve()
           })

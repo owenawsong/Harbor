@@ -379,7 +379,7 @@ async function* openAICompatibleComplete(
   baseUrl: string,
   apiKey: string,
   options: CompletionOptions,
-  extraBody?: { temperature?: number; top_p?: number; max_tokens?: number; chat_template_kwargs?: Record<string, unknown> },
+  extraBody?: Record<string, unknown>,
   imageSupport = false,
 ): AsyncGenerator<CompletionEvent> {
   const { settings, messages, tools, systemPrompt, signal } = options
@@ -390,6 +390,24 @@ async function* openAICompatibleComplete(
     return
   }
 
+  const parameters = settings.provider.parameters
+  const maxTokens = extraBody?.max_tokens ?? parameters?.maxTokens ?? settings.maxTokens ?? 8192
+  const temperature = extraBody?.temperature ?? parameters?.temperature ?? settings.temperature
+  const topP = extraBody?.top_p ?? extraBody?.topP ?? parameters?.topP
+  const requestBody: Record<string, unknown> = {
+    ...parameters?.extraBody,
+    ...extraBody,
+    model: settings.provider.model,
+    messages: toOpenAIMessages(messages, systemPrompt, imageSupport),
+    tools: tools.length > 0 ? toOpenAITools(tools) : undefined,
+    tool_choice: tools.length > 0 ? 'auto' : undefined,
+    max_tokens: maxTokens,
+    stream: true,
+    ...(temperature !== undefined ? { temperature } : {}),
+    ...(topP !== undefined ? { top_p: topP } : {}),
+  }
+  delete requestBody.topP
+
   const response = await fetch(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: {
@@ -399,75 +417,36 @@ async function* openAICompatibleComplete(
         ? { 'HTTP-Referer': 'https://harbor-extension.app', 'X-Title': 'Harbor AI Agent' }
         : {}),
     },
-    body: JSON.stringify({
-      model: settings.provider.model,
-      messages: toOpenAIMessages(messages, systemPrompt, imageSupport),
-      tools: tools.length > 0 ? toOpenAITools(tools) : undefined,
-      tool_choice: tools.length > 0 ? 'auto' : undefined,
-      max_tokens: extraBody?.max_tokens ?? settings.maxTokens ?? 8192,
-      stream: true,
-      ...(extraBody?.temperature !== undefined ? { temperature: extraBody.temperature } : {}),
-      ...(extraBody?.top_p !== undefined ? { top_p: extraBody.top_p } : {}),
-      ...(extraBody?.chat_template_kwargs !== undefined ? { chat_template_kwargs: extraBody.chat_template_kwargs } : {}),
-    }),
+    body: JSON.stringify(requestBody),
     signal,
   })
 
   if (!response.ok) {
     const errorText = await response.text()
     const errorMsg = `API error ${response.status}: ${errorText}`
-    if (baseUrl.includes('poe')) {
-      console.log('[POE-HTTP] ERROR - Status:', response.status)
-      console.log('[POE-HTTP] ERROR - Headers:', {
-        'content-type': response.headers.get('content-type'),
-        'content-length': response.headers.get('content-length'),
-      })
-      console.log('[POE-HTTP] ERROR - Body:', errorText.substring(0, 200))
-    }
     yield { type: 'error', error: errorMsg }
     return
   }
 
-  // Debug: Log Poe API details
-  if (baseUrl.includes('poe')) {
-    console.log('[POE-HTTP] ✓ Response OK - Status:', response.status, 'Content-Type:', response.headers.get('content-type'))
-  }
-
-  const toolCallBuffers: Record<number, { id: string; name: string; args: string }> = {}
+  const toolCallBuffers: Record<number, { id: string; name: string; args: string; started?: boolean }> = {}
   const thinkState: ThinkParseState = { inThink: false, buf: '' }
 
-  let sseEventCount = 0
-  let totalDataSize = 0
   for await (const data of parseSSE(response, signal)) {
-    sseEventCount++
-    totalDataSize += data.length
-    if (baseUrl.includes('poe') && sseEventCount <= 3) {
-      console.log(`[POE-HTTP] SSE event ${sseEventCount} (${data.length} bytes):`, data.substring(0, 100))
-    }
     let chunk: Record<string, unknown>
     try {
       chunk = JSON.parse(data)
-    } catch (e) {
-      if (baseUrl.includes('poe')) {
-        console.log('[POE-HTTP] Failed to parse JSON:', data.substring(0, 100))
-      }
+    } catch {
       continue
     }
 
     const choices = chunk.choices as Array<Record<string, unknown>>
     if (!choices || choices.length === 0) {
-      if (baseUrl.includes('poe') && sseEventCount <= 3) {
-        console.log('[POE-HTTP] No choices in chunk:', JSON.stringify(chunk).substring(0, 100))
-      }
       continue
     }
 
     const choice = choices[0]
     const delta = choice.delta as Record<string, unknown>
     if (!delta) {
-      if (baseUrl.includes('poe') && sseEventCount <= 3) {
-        console.log('[POE-HTTP] No delta in choice:', JSON.stringify(choice).substring(0, 100))
-      }
       continue
     }
 
@@ -502,8 +481,8 @@ async function* openAICompatibleComplete(
           if (fn.arguments) {
             buf.args += fn.arguments as string
 
-            if (!buf._started) {
-              buf._started = true
+            if (!buf.started) {
+              buf.started = true
               yield { type: 'tool_call_start', id: buf.id, name: buf.name }
             }
             yield { type: 'tool_call_input_delta', id: buf.id, delta: fn.arguments as string }
@@ -526,15 +505,6 @@ async function* openAICompatibleComplete(
       }
       yield { type: 'message_complete', stopReason: finishReason }
     }
-  }
-
-  // Log final SSE stats for Poe
-  if (baseUrl.includes('poe')) {
-    console.log('[POE-HTTP] ✓ SSE parsing complete -', {
-      eventCount: sseEventCount,
-      totalDataSize,
-      avgEventSize: sseEventCount > 0 ? Math.round(totalDataSize / sseEventCount) : 0,
-    })
   }
 }
 
@@ -709,6 +679,14 @@ async function* harborFreeComplete(options: CompletionOptions): AsyncGenerator<C
   // Harbor Free ALWAYS uses the shared API key, never user-provided keys
   const apiKey = HARBOR_FREE_KEY
 
+  if (!apiKey) {
+    yield {
+      type: 'error',
+      error: 'Harbor Free is not configured in this build. Set VITE_HARBOR_FREE_API_KEY at build time or choose another provider.',
+    }
+    return
+  }
+
   // If images detected, use Qwen (image-capable model)
   if (hasImages) {
     yield* openAICompatibleComplete(
@@ -790,33 +768,12 @@ export const poeProvider: ProviderAdapter = {
       return
     }
 
-    console.log('[POE] Starting Poe provider with model:', settings.provider.model)
-    console.log('[POE] API Key prefix:', settings.provider.apiKey.substring(0, 10) + '***')
-
-    // Poe API endpoint - OpenAI-compatible format
-    let eventCount = 0
-    let hasError = false
     try {
       for await (const event of openAICompatibleComplete('https://api.poe.com/v1', settings.provider.apiKey, options)) {
-        eventCount++
-        if (eventCount === 1) {
-          console.log('[POE] First event received:', event.type)
-        }
-        if (event.type === 'error') {
-          hasError = true
-          console.log('[POE] ERROR:', event.error)
-        }
         yield event
       }
     } catch (err) {
-      console.log('[POE] Exception thrown:', err instanceof Error ? err.message : String(err))
-      hasError = true
       yield { type: 'error', error: `Poe provider error: ${err instanceof Error ? err.message : String(err)}` }
-    }
-
-    console.log('[POE] Provider finished - eventCount:', eventCount, 'hasError:', hasError)
-    if (eventCount === 0 && !hasError) {
-      console.log('[POE] WARNING: No events yielded and no error emitted - possible response stream issue')
     }
   },
 }

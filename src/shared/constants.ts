@@ -1,5 +1,5 @@
 export const EXTENSION_NAME = 'Harbor'
-export const VERSION = '1.24.0'
+export const VERSION = '1.25.0'
 export const PORT_NAME = 'harbor-agent'
 export const STORAGE_KEYS = {
   SETTINGS: 'harbor_settings',
@@ -49,15 +49,14 @@ export const DEFAULT_MODELS: Record<string, string[]> = {
   ],
   'openai-compatible': [],
   poe: [
-    'Claude-3-7-Sonnet',
+    'gpt-5.4',
+    'Claude-Sonnet-4.6',
+    'Claude-Opus-4.7',
+    'Gemini-3.1-Pro',
+    'deepseek-v4-flash-el',
+    'deepseek-v4-flash-n',
     'GPT-4o',
-    'Gemini-1.5-Pro',
-    'Claude-3-5-Sonnet',
-    'Llama-3.1-405B-T',
-    'Gemini-2.0-Flash-Thinking',
     'DeepSeek-R1',
-    'o3-mini',
-    'Grok-2',
   ],
   'harbor-free': ['minimaxai/minimax-m2.5', 'qwen/qwen3.5-122b-a10b'],
 }
@@ -86,7 +85,7 @@ export const API_ENDPOINTS: Record<string, string> = {
 // Users MUST configure NVIDIA API key via VITE_HARBOR_FREE_API_KEY env var
 // Can be configured via VITE_HARBOR_FREE_API_KEY and VITE_HARBOR_FREE_BASE_URL env vars
 export const HARBOR_FREE_CONFIG = {
-  apiKey: import.meta.env.VITE_HARBOR_FREE_API_KEY || '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',
+  apiKey: import.meta.env.VITE_HARBOR_FREE_API_KEY || '',
   baseUrl: import.meta.env.VITE_HARBOR_FREE_BASE_URL || 'https://integrate.api.nvidia.com/v1',
   textModel: 'minimaxai/minimax-m2.5',
   imageModel: 'qwen/qwen3.5-122b-a10b',

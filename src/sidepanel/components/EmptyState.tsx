@@ -4,9 +4,10 @@ import {
   Globe, Search, ShoppingCart, Table, Shuffle,
   Layers, BookOpen, Camera,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { getGreeting } from '../../shared/greetings'
 
-const ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+const ICON_MAP: Record<string, LucideIcon> = {
   Globe, Search, ShoppingCart, Table, Shuffle, Layers, BookOpen, Camera,
 }
 
@@ -44,12 +45,12 @@ export default function EmptyState({ onSuggestionClick, userName, agentMode = tr
     : t('empty_state.chat_description')
 
   return (
-    <div className="flex flex-col h-full overflow-y-auto harbor-scroll justify-center items-center">
-      <div className="flex flex-col gap-7 px-5 py-8 animate-fade-in w-full max-w-sm text-center">
+    <div className="flex flex-col h-full overflow-y-auto harbor-scroll justify-center items-center px-4">
+      <div className="flex flex-col gap-7 py-8 animate-fade-in w-full max-w-3xl text-center">
         {/* Greeting */}
         <div className="flex flex-col gap-2">
           <h2
-            className="harbor-serif text-4xl font-semibold leading-tight empty-greeting"
+            className="harbor-serif text-4xl font-semibold leading-tight empty-greeting max-w-2xl mx-auto"
             style={{ color: 'rgb(var(--harbor-text))' }}
           >
             {greeting}
@@ -69,20 +70,18 @@ export default function EmptyState({ onSuggestionClick, userName, agentMode = tr
           }}>
             {t('suggestions.try_asking')}
           </p>
-          <div className={`grid gap-2 suggestions-grid ${agentMode ? 'grid-cols-2' : 'grid-cols-2'}`}>
+          <div className="grid gap-2 suggestions-grid grid-cols-2 min-[720px]:grid-cols-3">
             {suggestions.map(({ icon, text }, i) => {
               const Icon = ICON_MAP[icon]
               return (
                 <button
                   key={text}
                   onClick={() => onSuggestionClick(text)}
-                  className={`suggestion-chip flex items-center gap-2 px-2.5 py-2.5 rounded-lg border text-left animate-fade-up transition-all hover:scale-105 ${
-                    agentMode
-                      ? 'border-[rgb(var(--harbor-accent))] bg-[rgb(var(--harbor-accent-light))] hover:shadow-md hover:shadow-harbor-500/20'
-                      : 'border-[rgb(var(--harbor-border))] bg-[rgb(var(--harbor-surface))] hover:border-[rgb(var(--harbor-accent))]'
-                  }`}
+                  className="suggestion-chip flex items-center gap-2 px-3 py-2.5 rounded-lg border text-left animate-fade-up transition-all hover:-translate-y-0.5"
                   style={{
                     animationDelay: `${i * 50}ms`,
+                    borderColor: 'rgb(var(--harbor-border))',
+                    background: 'rgb(var(--harbor-surface))',
                   }}
                 >
                   {Icon && (
@@ -90,14 +89,14 @@ export default function EmptyState({ onSuggestionClick, userName, agentMode = tr
                       size={agentMode ? 14 : 13}
                       className="flex-shrink-0"
                       style={{
-                        color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-accent))',
-                        opacity: agentMode ? 1 : 0.8,
+                        color: 'rgb(var(--harbor-accent))',
+                        opacity: 0.9,
                       }}
                     />
                   )}
                   <span
                     className={`text-[11px] leading-tight font-medium`}
-                    style={{ color: agentMode ? 'rgb(var(--harbor-accent))' : 'rgb(var(--harbor-text))' }}
+                    style={{ color: 'rgb(var(--harbor-text))' }}
                   >
                     {text}
                   </span>

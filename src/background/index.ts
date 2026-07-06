@@ -3,7 +3,7 @@
  */
 
 import { runAgent } from './agent/agent'
-import type { AgentSettings, StoredSettings, StoredSession, ChatMessage } from '../shared/types'
+import type { AgentSettings, StoredSettings, StoredSession, StoredSessionMap, ChatMessage, ThemeName } from '../shared/types'
 import type { PortMessage, AgentEvent } from '../shared/types'
 import { PORT_NAME, STORAGE_KEYS, VERSION } from '../shared/constants'
 
@@ -66,11 +66,33 @@ async function getStoredSettings(): Promise<StoredSettings> {
   return stored
 }
 
-async function saveSettings(settings: AgentSettings, theme: string, identity?: any): Promise<void> {
+function normalizeTheme(theme: unknown): ThemeName {
+  const allowed: ThemeName[] = [
+    'system', 'sunlight', 'moonlight', 'forest', 'nebula', 'sunset', 'ocean',
+    'default-light', 'default-dark', 'default-system',
+    'forest-light', 'forest-dark', 'forest-system',
+    'nebula-light', 'nebula-dark', 'nebula-system',
+    'sunset-light', 'sunset-dark', 'sunset-system',
+    'ocean-light', 'ocean-dark', 'ocean-system',
+  ]
+  return allowed.includes(theme as ThemeName) ? theme as ThemeName : 'system'
+}
+
+function normalizeSessions(raw: unknown): StoredSessionMap {
+  if (Array.isArray(raw)) {
+    return Object.fromEntries(raw.map((session: StoredSession) => [session.id, session]))
+  }
+  if (raw && typeof raw === 'object') {
+    return raw as StoredSessionMap
+  }
+  return {}
+}
+
+async function saveSettings(settings: AgentSettings, theme: string, identity?: unknown): Promise<void> {
   const stored: StoredSettings = {
     agentSettings: settings,
-    theme: (theme as 'light' | 'dark' | 'system') || 'system',
-    identity,
+    theme: normalizeTheme(theme),
+    identity: identity as StoredSettings['identity'],
   }
 
   await chrome.storage.local.set({ [STORAGE_KEYS.SETTINGS]: stored })
@@ -86,14 +108,14 @@ async function saveSettings(settings: AgentSettings, theme: string, identity?: a
 
 async function getSession(sessionId: string): Promise<StoredSession | null> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.SESSIONS)
-  const sessions = (data[STORAGE_KEYS.SESSIONS] ?? {}) as Record<string, StoredSession>
+  const sessions = normalizeSessions(data[STORAGE_KEYS.SESSIONS])
   return sessions[sessionId] ?? null
 }
 
 async function saveSession(session: StoredSession): Promise<void> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.SESSIONS)
-  const sessions = (data[STORAGE_KEYS.SESSIONS] ?? {}) as Record<string, StoredSession>
-  sessions[session.id] = session
+  const sessions = normalizeSessions(data[STORAGE_KEYS.SESSIONS])
+  sessions[session.id] = { ...sessions[session.id], ...session }
   await chrome.storage.local.set({ [STORAGE_KEYS.SESSIONS]: sessions })
   // Auto-save as last session for persistence
   await chrome.storage.local.set({ [STORAGE_KEYS.LAST_SESSION]: session.id })
@@ -101,15 +123,24 @@ async function saveSession(session: StoredSession): Promise<void> {
 
 async function deleteSession(sessionId: string): Promise<void> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.SESSIONS)
-  const sessions = (data[STORAGE_KEYS.SESSIONS] ?? {}) as Record<string, StoredSession>
+  const sessions = normalizeSessions(data[STORAGE_KEYS.SESSIONS])
   delete sessions[sessionId]
   await chrome.storage.local.set({ [STORAGE_KEYS.SESSIONS]: sessions })
 }
 
 async function getAllSessions(): Promise<StoredSession[]> {
   const data = await chrome.storage.local.get(STORAGE_KEYS.SESSIONS)
-  const sessions = (data[STORAGE_KEYS.SESSIONS] ?? {}) as Record<string, StoredSession>
+  const sessions = normalizeSessions(data[STORAGE_KEYS.SESSIONS])
   return Object.values(sessions).sort((a, b) => b.updatedAt - a.updatedAt)
+}
+
+async function updateSession(sessionId: string, patch: Partial<StoredSession>): Promise<void> {
+  const data = await chrome.storage.local.get(STORAGE_KEYS.SESSIONS)
+  const sessions = normalizeSessions(data[STORAGE_KEYS.SESSIONS])
+  const existing = sessions[sessionId]
+  if (!existing) return
+  sessions[sessionId] = { ...existing, ...patch, updatedAt: Date.now() }
+  await chrome.storage.local.set({ [STORAGE_KEYS.SESSIONS]: sessions })
 }
 
 // ─── Active Agents ────────────────────────────────────────────────────────────
@@ -147,7 +178,7 @@ chrome.runtime.onConnect.addListener((port) => {
     try {
       switch (message.type) {
         case 'chat': {
-          const { sessionId, message: userMessage, attachedTabId, enablePlanning, chatModeOnly } = message
+          const { sessionId, message: userMessage, attachedTabId, enablePlanning, chatModeOnly, planningOnly } = message
 
           activeControllers.get(sessionId)?.abort()
           const controller = new AbortController()
@@ -182,7 +213,8 @@ chrome.runtime.onConnect.addListener((port) => {
           }
 
           let assistantText = ''
-          const assistantToolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
+          const assistantToolCalls = new Map<string, { id: string; name: string; input: Record<string, unknown> }>()
+          const toolInputBuffers = new Map<string, string>()
           const assistantThinking: string[] = []
 
           notifyActiveTab('harbor_agent_start')
@@ -195,9 +227,10 @@ chrome.runtime.onConnect.addListener((port) => {
               attachedTabId,
               enablePlanning,
               chatModeOnly,
+              planningOnly,
               onEvent: (event) => {
                 // Show indicator only on first tool call, not at start
-                if ((event.type === 'tool_call_started' || event.type === 'tool_call') && !indicatorShown && indicatorTabId !== undefined) {
+                if (event.type === 'tool_call_start' && !indicatorShown && indicatorTabId !== undefined) {
                   chrome.tabs.sendMessage(indicatorTabId, { type: 'harbor_agent_running' }).catch(() => {})
                   indicatorShown = true
                 }
@@ -205,13 +238,38 @@ chrome.runtime.onConnect.addListener((port) => {
                 if (event.type === 'text_delta') {
                   assistantText += event.text
                 }
+                if (event.type === 'tool_call_start') {
+                  toolInputBuffers.set(event.toolCallId, '')
+                  assistantToolCalls.set(event.toolCallId, {
+                    id: event.toolCallId,
+                    name: event.toolName,
+                    input: {},
+                  })
+                }
+                if (event.type === 'tool_call_input') {
+                  toolInputBuffers.set(
+                    event.toolCallId,
+                    (toolInputBuffers.get(event.toolCallId) ?? '') + event.partialInput,
+                  )
+                }
                 if (event.type === 'tool_call_result') {
-                  const e = event as any
-                  assistantToolCalls.push({ id: e.toolCallId, name: e.toolName, input: {} })
+                  const bufferedInput = toolInputBuffers.get(event.toolCallId)
+                  let parsedInput: Record<string, unknown> = {}
+                  if (bufferedInput) {
+                    try {
+                      parsedInput = JSON.parse(bufferedInput) as Record<string, unknown>
+                    } catch {
+                      parsedInput = {}
+                    }
+                  }
+                  assistantToolCalls.set(event.toolCallId, {
+                    id: event.toolCallId,
+                    name: event.toolName,
+                    input: parsedInput,
+                  })
                 }
                 if (event.type === 'thinking') {
-                  const e = event as any
-                  assistantThinking.push(e.text)
+                  assistantThinking.push(event.text)
                 }
                 send(event)
               },
@@ -240,7 +298,7 @@ chrome.runtime.onConnect.addListener((port) => {
             }
             content.push({ type: 'text', text: assistantText })
           }
-          for (const tc of assistantToolCalls) {
+          for (const tc of assistantToolCalls.values()) {
             content.push({ type: 'tool_call', id: tc.id, name: tc.name, input: tc.input })
           }
           if (content.length > 0) {
@@ -269,9 +327,23 @@ chrome.runtime.onConnect.addListener((port) => {
         }
 
         case 'continue_execution': {
-          // Plan was approved by user - continue execution
-          // Note: The agent loop will continue naturally when it tries to get the next provider response
-          // This message is mainly for synchronization; the actual resumption happens through normal agent flow
+          // Legacy no-op kept for older sidepanels. New plan execution sends a fresh chat message.
+          break
+        }
+
+        case 'cancel_task': {
+          activeControllers.get(message.sessionId)?.abort()
+          activeControllers.delete(message.sessionId)
+          break
+        }
+
+        case 'update_plan': {
+          // The sidepanel owns edited plan state and will send the final execution message.
+          break
+        }
+
+        case 'correction': {
+          send({ type: 'error', error: 'Live correction is temporarily disabled while the agent runtime is being stabilized.' })
           break
         }
       }
@@ -292,7 +364,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
           break
 
         case 'save_settings': {
-          const { settings, theme, identity } = message as { settings: AgentSettings; theme: string; identity?: any }
+          const { settings, theme, identity } = message as { settings: AgentSettings; theme: string; identity?: unknown }
           try {
             await saveSettings(settings, theme ?? 'system', identity)
             sendResponse({ success: true })
@@ -313,6 +385,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 
         case 'delete_session':
           await deleteSession(message.sessionId as string)
+          sendResponse({ success: true })
+          break
+
+        case 'pin_session':
+          await updateSession(message.sessionId as string, { isPinned: Boolean(message.pinned) })
           sendResponse({ success: true })
           break
 

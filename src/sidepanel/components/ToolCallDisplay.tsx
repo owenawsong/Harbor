@@ -8,11 +8,12 @@ import {
   GripHorizontal, LayoutGrid, Search, Bookmark, Download, Save,
   Clock, Square, Layers, Wrench,
 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import type { UIToolCall } from '../hooks/useChat'
 
 // ─── Icon Map ─────────────────────────────────────────────────────────────────
 
-type Icon = React.ComponentType<{ size?: number; className?: string }>
+type Icon = LucideIcon
 
 const TOOL_ICON_MAP: Record<string, Icon> = {
   navigate_to_url:    Globe,

@@ -4,12 +4,13 @@
  */
 
 import type { AgentRunOptions, NormalizedMessage, ToolCallPart, TextPart, ToolResultPart, BrowserContext } from './types'
-import type { AgentEvent, ChatMessage, AgentSettings } from '../../shared/types'
+import type { AgentEvent, ChatMessage, AgentSettings, StoredSettings } from '../../shared/types'
 import { getProvider } from './providers'
 import { buildSystemPrompt } from './prompt'
 import { getToolByName, getToolDefinitions } from '../tools/index'
 import { MAX_TOOL_ITERATIONS } from '../../shared/constants'
 import { RateLimitManager, sleep, isRateLimitError } from './rateLimitManager'
+import { MEMORY_DOCS_STORAGE_KEY, formatMemoryDocsForPrompt, normalizeMemoryDocs } from '../../shared/memoryDocs'
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 11)
@@ -177,47 +178,62 @@ function chatMessagesToNormalized(messages: ChatMessage[]): NormalizedMessage[] 
 }
 
 export async function runAgent(options: AgentRunOptions): Promise<void> {
-  const { sessionId, message, settings, history, onEvent, signal, attachedTabId, enablePlanning, chatModeOnly } = options
+  const { sessionId, message, settings, history, onEvent, signal, attachedTabId, enablePlanning, chatModeOnly, planningOnly } = options
   const provider = getProvider(settings.provider.provider)
-  console.log('[AGENT] Starting agent with provider:', settings.provider.provider, 'model:', settings.provider.model, 'chatModeOnly:', chatModeOnly)
+  console.log('[AGENT] Starting agent with provider:', settings.provider.provider, 'model:', settings.provider.model, 'chatModeOnly:', chatModeOnly, 'planningOnly:', planningOnly)
 
   // Load user profile from storage if enabled
   let memoryData = ''
+  let memoryDocsData = ''
+  let identityInstructions = ''
   if (settings.enableMemory) {
     try {
       const storageData = await new Promise<Record<string, any>>((resolve) => {
-        chrome.storage.local.get('harbor_user_profile', (data) => {
+        chrome.storage.local.get(['harbor_user_profile', 'harbor_settings', MEMORY_DOCS_STORAGE_KEY], (data) => {
           resolve(data)
         })
       })
+      const storedSettings = storageData.harbor_settings as StoredSettings | undefined
+      const identity = storedSettings?.identity
+      if (identity) {
+        const identityLines: string[] = []
+        if (identity.userName) identityLines.push(`User name: ${identity.userName}`)
+        if (identity.tone) identityLines.push(`Preferred tone: ${identity.tone}`)
+        if (identity.verbosity) identityLines.push(`Preferred detail level: ${identity.verbosity}`)
+        if (identity.language) identityLines.push(`Preferred language: ${identity.language}`)
+        if (identity.customPersonality) identityLines.push(`User-provided standing instruction: ${identity.customPersonality}`)
+        identityInstructions = identityLines.join('\n')
+      }
       const profile = storageData.harbor_user_profile
-      if (profile) {
+      if (typeof profile === 'string') {
+        memoryData = profile
+      } else if (profile && typeof profile === 'object') {
         // Format user profile for system prompt
         const profileLines: string[] = []
 
-        if (profile.name) profileLines.push(`**User Name**: ${profile.name}`)
-        if (profile.role) profileLines.push(`**Role/Title**: ${profile.role}`)
-        if (profile.timezone) profileLines.push(`**Timezone**: ${profile.timezone}`)
-        if (profile.workingHours) profileLines.push(`**Working Hours**: ${profile.workingHours}`)
+        if (typeof profile.name === 'string') profileLines.push(`**User Name**: ${profile.name}`)
+        if (typeof profile.role === 'string') profileLines.push(`**Role/Title**: ${profile.role}`)
+        if (typeof profile.timezone === 'string') profileLines.push(`**Timezone**: ${profile.timezone}`)
+        if (typeof profile.workingHours === 'string') profileLines.push(`**Working Hours**: ${profile.workingHours}`)
 
-        if (profile.communicationStyle) {
+        if (typeof profile.communicationStyle === 'string') {
           profileLines.push(`**Communication Style**: The user prefers ${profile.communicationStyle} communication.`)
         }
-        if (profile.responseDetailLevel) {
+        if (typeof profile.responseDetailLevel === 'string') {
           profileLines.push(`**Response Detail**: The user prefers ${profile.responseDetailLevel} responses.`)
         }
 
-        if (profile.expertise && profile.expertise.length > 0) {
+        if (Array.isArray(profile.expertise) && profile.expertise.length > 0) {
           profileLines.push(`**Expertise**: ${profile.expertise.join(', ')}`)
         }
-        if (profile.learningInterests && profile.learningInterests.length > 0) {
+        if (Array.isArray(profile.learningInterests) && profile.learningInterests.length > 0) {
           profileLines.push(`**Learning Interests**: ${profile.learningInterests.join(', ')}`)
         }
-        if (profile.activeProjects && profile.activeProjects.length > 0) {
+        if (Array.isArray(profile.activeProjects) && profile.activeProjects.length > 0) {
           profileLines.push(`**Current Projects**: ${profile.activeProjects.join(', ')}`)
         }
 
-        if (profile.notes && profile.notes.length > 0) {
+        if (Array.isArray(profile.notes) && profile.notes.length > 0) {
           profileLines.push(`**Important Notes**:\n${profile.notes.map((n: string) => `- ${n}`).join('\n')}`)
         }
 
@@ -225,19 +241,27 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
           memoryData = profileLines.join('\n')
         }
       }
+
+      const memoryDocs = normalizeMemoryDocs(storageData[MEMORY_DOCS_STORAGE_KEY])
+      memoryDocsData = formatMemoryDocsForPrompt(memoryDocs)
+      await new Promise<void>((resolve) => {
+        chrome.storage.local.set({ [MEMORY_DOCS_STORAGE_KEY]: memoryDocs }, () => resolve())
+      })
     } catch (err) {
       console.error('Error loading user profile:', err)
     }
   }
 
   const systemPrompt = buildSystemPrompt({
-    enableMemory: settings.enableMemory && memoryData.length > 0,
+    enableMemory: settings.enableMemory && (memoryData.length > 0 || memoryDocsData.length > 0),
     memory: memoryData,
-    enablePlanning,
+    memoryDocs: memoryDocsData,
+    identityInstructions,
+    enablePlanning: planningOnly ? true : enablePlanning,
     chatMode: options.chatModeOnly,
   })
-  // In chat mode, don't provide any tools - pure conversation only
-  const tools = options.chatModeOnly ? [] : getToolDefinitions()
+  // In chat or plan-preview mode, don't provide tools.
+  const tools = options.chatModeOnly || options.planningOnly ? [] : getToolDefinitions()
 
   // Initialize rate limit manager with settings config
   const rateLimitManager = new RateLimitManager(settings.rateLimitConfig)
@@ -278,9 +302,10 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
   normalizedHistory.push(userMessage)
 
   let iterations = 0
-  const messageId = generateId()
   let planRetries = 0
   let planDetectedInLoop = false  // Track if ANY plan was found in ANY message
+  let pausedForPlanApproval = false
+  let needsFinalResponse = false
   const MAX_PLAN_RETRIES = 3
 
   while (iterations < MAX_TOOL_ITERATIONS) {
@@ -290,6 +315,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     }
 
     iterations++
+    const messageId = generateId()
 
     // Check if we're rate limited and need to wait
     if (rateLimitManager.getState().isLimited && !rateLimitManager.shouldRetry()) {
@@ -376,7 +402,13 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
             // Emit message_complete so the frontend stops the streaming cursor on this message.
             // NOTE: isRunning stays true — agent_complete is emitted at the end of the full loop.
             // Include currentText so frontend can extract plan from it
-            onEvent({ type: 'message_complete', messageId, stopReason: event.stopReason, text: currentText })
+            onEvent({
+              type: 'message_complete',
+              messageId,
+              stopReason: event.stopReason,
+              text: currentText,
+              isFinal: completedToolCalls.length === 0 && !/tool|function/i.test(event.stopReason) && !/<plan>/i.test(currentText),
+            })
             break
 
           case 'error':
@@ -428,13 +460,15 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     const shouldPauseForPlan = planDetectedInLoop && completedToolCalls.length > 0
 
     if (shouldPauseForPlan) {
+      pausedForPlanApproval = true
       // Plan detected and tools were called - pause execution for user approval
       // Include currentText so frontend can extract plan from it
       onEvent({
         type: 'message_complete',
         messageId,
         stopReason: 'plan_pending',
-        text: currentText
+        text: currentText,
+        isFinal: false,
       })
     }
 
@@ -473,6 +507,7 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
 
     // Execute any tool calls that were made
     if (completedToolCalls.length > 0) {
+      needsFinalResponse = true
       const toolResults: Array<ToolResultPart> = []
       const executionMode = settings.toolExecutionMode ?? 'parallel'
 
@@ -619,12 +654,14 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
     // Support various formats: 'tool_use', 'tool_calls', 'TOOL_USE', 'function_calls', etc.
     const isToolUseReason = stopReason && /tool|function/i.test(stopReason)
     if (stopReason && !isToolUseReason) {
+      if (currentText.trim()) needsFinalResponse = false
       // Model finished naturally without requesting more tools
       break
     }
 
     // If no tools were called AND stop reason is unknown/empty, assume we're done
     if (!stopReason) {
+      if (currentText.trim()) needsFinalResponse = false
       break
     }
   }
@@ -634,6 +671,13 @@ export async function runAgent(options: AgentRunOptions): Promise<void> {
       type: 'error',
       error: `Agent reached maximum iterations (${MAX_TOOL_ITERATIONS}). Task may be incomplete.`,
     })
+  }
+
+  if (!pausedForPlanApproval && needsFinalResponse) {
+    const fallback = 'Done. I completed the browser actions, but the model did not return a final summary.'
+    const fallbackMessageId = generateId()
+    onEvent({ type: 'text_delta', text: fallback, messageId: fallbackMessageId })
+    onEvent({ type: 'message_complete', messageId: fallbackMessageId, stopReason: 'stop', text: fallback, isFinal: true })
   }
 
   onEvent({ type: 'agent_complete' })

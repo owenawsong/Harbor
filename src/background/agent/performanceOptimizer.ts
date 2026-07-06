@@ -131,7 +131,7 @@ export function generateCacheKey(tool: string, input: Record<string, unknown>): 
  * Debouncer for high-frequency operations.
  */
 export class Debouncer<T extends (...args: unknown[]) => Promise<unknown>> {
-  private timeoutId: NodeJS.Timeout | null = null
+  private timeoutId: ReturnType<typeof setTimeout> | null = null
   private lastArgs: unknown[] | null = null
 
   constructor(private fn: T, private delayMs: number) {}
@@ -171,7 +171,7 @@ export class Debouncer<T extends (...args: unknown[]) => Promise<unknown>> {
  */
 export class BatchProcessor<T, R> {
   private batch: T[] = []
-  private timeoutId: NodeJS.Timeout | null = null
+  private timeoutId: ReturnType<typeof setTimeout> | null = null
 
   constructor(
     private processor: (batch: T[]) => Promise<R[]>,
@@ -186,7 +186,8 @@ export class BatchProcessor<T, R> {
     this.batch.push(item)
 
     if (this.batch.length >= this.maxBatchSize) {
-      return this.flush()[0]
+      const results = await this.flush()
+      return results[0]
     }
 
     // Schedule flush if not already scheduled
